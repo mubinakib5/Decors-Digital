@@ -4,4 +4,4 @@ deployment:
     - export DEPLOYPATH=/home/thedvozp/public_html/
     - npm install
     - npm run build
-    - /bin/cp -R out/* $DEPLOYPATH
+    - /bin/cp -a out/. $DEPLOYPATH
