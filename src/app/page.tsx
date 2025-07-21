@@ -539,7 +539,7 @@ export default function Home() {
             <div className="text-white text-base md:text-lg font-medium">
               +880 1958-029671 <br />
               info@thedecorbd.com<br />
-              www.thedecorbd.com/decorsdigital<br />
+              www.thedecorbd.com<br />
               Southland Center (4th floor), Agrabad, Chattogram - 4100
             </div>
             <div className="flex flex-row gap-4 mt-2">
