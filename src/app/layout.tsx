@@ -1,5 +1,5 @@
-import type { Metadata } from "next";
 import { Cormorant, Geist, Geist_Mono, Manrope } from "next/font/google";
+import Navbar from "../components/Navbar";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -25,21 +25,18 @@ const cormorant = Cormorant({
   style: ["italic", "normal"],
 });
 
-export const metadata: Metadata = {
-  title: "Decor's Digital - Digital Excellence",
-  description: "Transforming ideas into digital excellence. Professional web design and digital solutions.",
-};
-
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
+      <head>
+        <link rel="icon" type="image/svg+xml" href="/DECOR'S DIGITAL.svg" sizes="any" />
+        <link rel="shortcut icon" type="image/svg+xml" href="/DECOR'S DIGITAL.svg" sizes="any" />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${manrope.variable} ${cormorant.variable} antialiased font-manrope`}
+        style={{ background: "#fff" }}
       >
+        <Navbar />
         <main className="min-h-screen">
           {children}
         </main>
