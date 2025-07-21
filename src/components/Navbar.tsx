@@ -41,37 +41,40 @@ function Navbar() {
     }
   };
 
+  const onBookCallClick = () => {
+    handleNavClick('footer');
+  };
+
   return (
-    <nav className="fixed top-0 left-1/2 transform -translate-x-1/2 z-50 w-full max-w-full md:max-w-[60vw] px-2 sm:px-4 md:px-6 backdrop-blur-xl bg-white/30 border-b border-white/20 shadow-lg rounded-full flex justify-center items-center overflow-x-visible" style={{ marginTop: 40 }}>
+    <nav className="fixed top-0 left-1/2 transform -translate-x-1/2 z-50 w-full max-w-full md:max-w-[60vw] px-2 sm:px-4 md:px-6 backdrop-blur-xl bg-white/30 border-b border-white/20 shadow-lg rounded-full flex items-center overflow-x-visible" style={{ marginTop: 40 }}>
       <div className="flex items-center justify-between w-full px-2 md:px-4 py-2">
-        <button onClick={() => handleNavClick('hero')} className="flex items-center gap-2">
-          <Image src="/DECOR'S DIGITAL.svg" alt="Decor's Digital Logo" width={48} height={48} className="w-12 h-12" />
-        </button>
-        <div className="hidden md:flex gap-6 items-center mx-auto">
-          {sections.map(({ id, label }) => (
+        {/* Left: Logo */}
+        <div className="flex-shrink-0 flex items-center">
+          <button onClick={() => handleNavClick('hero')} className="flex items-center gap-2">
+            <Image src="/DECOR'S DIGITAL.svg" alt="Decor's Digital Logo" width={48} height={48} className="w-12 h-12" />
+          </button>
+        </div>
+        {/* Center: Menu */}
+        <div className="flex-1 flex justify-center items-center gap-6">
+          {sections.map((item) => (
             <button
-              key={id}
-              onClick={() => handleNavClick(id)}
-              className={`nav-link${activeSection === id ? ' text-red-600 font-bold' : ''}`}
+              key={item.id}
+              onClick={() => handleNavClick(item.id)}
+              className={`text-base font-medium transition-colors duration-200 px-2 md:px-3 lg:px-4 ${activeSection === item.id ? 'text-red-600 font-bold' : 'text-black hover:text-red-500'}`}
             >
-              {label}
+              {item.label}
             </button>
           ))}
-          <button onClick={() => handleNavClick('footer')} className="ml-4 px-4 py-2 rounded-full bg-gradient-to-r from-pink-500 to-red-500 text-white font-bold shadow-lg hover:scale-105 transition-transform">Book a Call</button>
         </div>
-        <button className="md:hidden flex flex-col gap-1 mr-5" onClick={() => setMenuOpen(!menuOpen)} aria-label={menuOpen ? "Close menu" : "Open menu"}>
-          {menuOpen ? (
-            <span className="w-7 h-7 flex items-center justify-center">
-              <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
-            </span>
-          ) : (
-            <>
-              <span className="w-7 h-1 bg-black rounded-full" />
-              <span className="w-7 h-1 bg-black rounded-full" />
-              <span className="w-7 h-1 bg-black rounded-full" />
-            </>
-          )}
-        </button>
+        {/* Right: CTA */}
+        <div className="flex-shrink-0 flex items-center">
+          <button
+            onClick={onBookCallClick}
+            className="ml-2 md:ml-4 px-5 py-2 rounded-full bg-gradient-to-r from-pink-500 to-red-500 text-white font-semibold shadow-md hover:from-red-500 hover:to-pink-500 transition-colors duration-200"
+          >
+            Book a Call
+          </button>
+        </div>
       </div>
       {/* Mobile Menu */}
       {menuOpen && (
