@@ -1,6 +1,7 @@
 "use client";
 import Image from "next/image";
 import { useEffect, useState } from "react";
+import { HiMenu, HiX } from "react-icons/hi";
 
 function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -54,8 +55,8 @@ function Navbar() {
             <Image src="/DECOR'S DIGITAL.svg" alt="Decor's Digital Logo" width={48} height={48} className="w-12 h-12" />
           </button>
         </div>
-        {/* Center: Menu */}
-        <div className="flex-1 flex justify-center items-center gap-6">
+        {/* Center: Menu (hidden on mobile) */}
+        <div className="flex-1 justify-center items-center gap-6 hidden md:flex">
           {sections.map((item) => (
             <button
               key={item.id}
@@ -66,13 +67,25 @@ function Navbar() {
             </button>
           ))}
         </div>
-        {/* Right: CTA */}
+        {/* Right: CTA & Hamburger */}
         <div className="flex-shrink-0 flex items-center">
           <button
             onClick={onBookCallClick}
-            className="ml-2 md:ml-4 px-5 py-2 rounded-full bg-gradient-to-r from-pink-500 to-red-500 text-white font-semibold shadow-md hover:from-red-500 hover:to-pink-500 transition-colors duration-200"
+            className="ml-2 md:ml-4 px-5 py-2 rounded-full bg-gradient-to-r from-pink-500 to-red-500 text-white font-semibold shadow-md hover:from-red-500 hover:to-pink-500 transition-colors duration-200 hidden md:block"
           >
             Book a Call
+          </button>
+          {/* Hamburger (mobile only) */}
+          <button
+            className="ml-2 flex md:hidden items-center justify-center w-10 h-10 rounded-full hover:bg-white/60 transition"
+            onClick={() => setMenuOpen((v) => !v)}
+            aria-label={menuOpen ? "Close menu" : "Open menu"}
+          >
+            {menuOpen ? (
+              <HiX className="w-7 h-7 text-black" />
+            ) : (
+              <HiMenu className="w-7 h-7 text-black" />
+            )}
           </button>
         </div>
       </div>

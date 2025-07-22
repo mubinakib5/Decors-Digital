@@ -19,6 +19,14 @@ export default function ServicesPage() {
         </p>
       </motion.section>
 
+      {/* Centered Service Images */}
+      <div className="flex flex-col items-center justify-center gap-4 mb-10 w-full">
+        <img src="/DD_Services_2.png" alt="Service 2" className="mx-auto w-full max-w-xs md:max-w-sm lg:max-w-md services-image-responsive" />
+        <img src="/DD_Services_3.png" alt="Service 3" className="mx-auto w-full max-w-xs md:max-w-sm lg:max-w-md services-image-responsive" />
+        <img src="/DD_Services_4.png" alt="Service 4" className="mx-auto w-full max-w-xs md:max-w-sm lg:max-w-md services-image-responsive" />
+        <img src="/DD_Services_5.png" alt="Service 5" className="mx-auto w-full max-w-xs md:max-w-sm lg:max-w-md services-image-responsive" />
+      </div>
+
       {/* Services Cards */}
       <motion.section
         initial={{ opacity: 0, y: 40 }}
@@ -27,7 +35,7 @@ export default function ServicesPage() {
         viewport={{ once: true }}
         className="mb-20"
       >
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 place-items-center">
           {[
             {
               title: "Digital Marketing",
@@ -53,7 +61,7 @@ export default function ServicesPage() {
             <motion.div
               key={service.title}
               whileHover={{ scale: 1.05 }}
-              className="bg-brand-charcoal/80 rounded-2xl p-8 flex flex-col items-center text-center shadow-xl border border-brand-charcoal group cursor-pointer hover:border-brand-redAccent transition-colors"
+              className="bg-brand-charcoal/80 rounded-2xl p-8 flex flex-col items-center text-center shadow-xl border border-brand-charcoal group cursor-pointer hover:border-brand-redAccent transition-colors max-w-xs w-full mx-auto"
             >
               <div className="text-4xl mb-4 group-hover:scale-110 transition-transform">{service.icon}</div>
               <div className="text-xl font-semibold text-brand-white mb-2">{service.title}</div>
