@@ -1,6 +1,4 @@
 import { Cormorant, Geist, Geist_Mono, Manrope } from "next/font/google";
-import Navbar from "../components/Navbar";
-import OnboardingScreen from "../components/OnboardingScreen";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -68,12 +66,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         className={`${geistSans.variable} ${geistMono.variable} ${manrope.variable} ${cormorant.variable} antialiased font-manrope`}
         style={{ background: "#fff" }}
       >
-        <OnboardingScreen />
         {/* Skip to main content link for accessibility */}
         <a href="#main-content" className="sr-only focus:not-sr-only focus:ring-4 focus:ring-red-500 focus:outline-none bg-white text-black font-bold px-4 py-2 rounded absolute top-2 left-2 z-[1000] transition-all">Skip to main content</a>
-        <header>
+        {/* <header>
           <Navbar />
-        </header>
+        </header> */}
         <main id="main-content" className="min-h-screen">
           {/* Visually hidden h1 for homepage accessibility/SEO */}
           <h1 className="sr-only">Decor&apos;s Digital - Creative Marketing Agency</h1>
