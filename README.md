@@ -1,299 +1,302 @@
 # Decor's Digital - Next.js Website
 
-一个现代化的数字营销和网站开发公司网站，使用 Next.js 13+ App Router 构建。
+[![Next.js](https://img.shields.io/badge/Next.js-15.4.6-black.svg)](https://nextjs.org/)
+[![React](https://img.shields.io/badge/React-19.1.0-blue.svg)](https://reactjs.org/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-4.0-blue.svg)](https://tailwindcss.com/)
+[![Bootstrap](https://img.shields.io/badge/Bootstrap-5.3.7-purple.svg)](https://getbootstrap.com/)
+[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
-## 🚀 特性
+A modern, responsive business website built with Next.js 15, featuring clean design, smooth animations, and comprehensive page layouts for professional businesses and agencies. This project combines the power of Next.js with Bootstrap and Tailwind CSS for optimal performance and design flexibility.
 
-- **现代化技术栈**: Next.js 13+ App Router, React 18, Bootstrap 5
-- **响应式设计**: 完全响应式，支持所有设备
-- **性能优化**: 图片优化、代码分割、静态生成
-- **SEO 友好**: 元数据优化、结构化数据
-- **可访问性**: WCAG 2.1 兼容
-- **动画效果**: AOS (Animate On Scroll) 库
-- **组件化架构**: 可重用的 UI 组件
-- **数据驱动**: 集中式数据管理
+## 🚀 Live Demo
 
-## 📁 项目结构
+- **[Live Preview](https://decorsdigital.com)** (when deployed)
+- **[GitHub Repository](https://github.com/mubinakib5/Decors-Digital)**
+
+## ✨ Features
+
+### 🎨 Design & UI/UX
+
+- **Modern & Clean Design**: Professional business aesthetic with contemporary styling
+- **Fully Responsive**: Optimized for all devices (desktop, tablet, mobile)
+- **Smooth Animations**: AOS (Animate On Scroll) integration for engaging user experience
+- **Accessibility**: WCAG compliant with proper semantic HTML structure
+- **SEO Optimized**: Meta tags, structured data, and performance optimized
+
+### 📱 Pages & Components
+
+- **Homepage**: Hero section with video background, services showcase, testimonials, portfolio
+- **About Us**: Company information, team members, mission & vision
+- **Services**: Detailed service offerings with interactive tabs
+- **Portfolio/Projects**: Project showcase with carousel functionality
+- **Blog**: Article listings and detailed blog posts with dynamic routing
+- **Contact**: Contact forms and location information with Calendly integration
+- **Authentication**: Sign-in and sign-up pages
+- **Legal Pages**: Privacy policy, terms & conditions
+- **404 Error Page**: Custom error handling
+
+### 🛠 Technical Features
+
+- **Next.js 15.4.6**: Latest React framework with App Router
+- **React 19.1.0**: Latest React features and performance improvements
+- **Tailwind CSS v4**: Modern utility-first CSS framework
+- **Bootstrap 5.3.7**: Additional UI components and utilities
+- **Static Export**: Optimized for static hosting and CDN deployment
+- **Owl Carousel**: Touch-enabled carousel for testimonials and portfolios
+- **Iconify**: Modern icon system with extensive icon library
+- **Calendly Integration**: Seamless appointment booking system
+
+## 📦 Installation
+
+### Prerequisites
+
+- **Node.js**: 18.0+ (recommended: 20.0+)
+- **npm** or **yarn** package manager
+- **Git** for version control
+
+### Quick Start
+
+1. **Clone the repository**
+
+   ```bash
+   git clone https://github.com/mubinakib5/Decors-Digital.git
+   cd Decors-Digital
+   ```
+
+2. **Install dependencies**
+
+   ```bash
+   npm install
+   # or
+   yarn install
+   ```
+
+3. **Start development server**
+
+   ```bash
+   npm run dev
+   # or
+   yarn dev
+   ```
+
+4. **Open your browser**
+   - Navigate to `http://localhost:3000`
+   - The website should now be running locally
+
+## 📁 Project Structure
 
 ```
-app/
-├── components/          # 可重用组件
-│   ├── ui/             # UI 组件
-│   │   ├── Button.js
-│   │   ├── PageBanner.js
-│   │   ├── ServiceCard.js
-│   │   ├── TeamCard.js
-│   │   ├── ProjectCard.js
-│   │   ├── BlogCard.js
-│   │   ├── DocCard.js
-│   │   └── ScrollToTop.js
-│   ├── Header.js       # 导航头部
-│   ├── Footer.js       # 页脚
-│   ├── BannerSection.js
-│   ├── ServicesSection.js
-│   ├── FaqSection.js
-│   └── ...
-├── data/               # 数据文件
-│   └── index.js        # 所有静态数据
-├── utils/              # 工具函数
-│   └── helpers.js      # 通用工具函数
-├── constants/          # 常量定义
-│   └── index.js        # 应用常量
-├── (pages)/            # 页面组件
-│   ├── page.js         # 首页
-│   ├── about-us/
-│   ├── services/
-│   ├── projects/
-│   ├── blog/
-│   ├── contact/
-│   └── ...
-└── layout.js           # 根布局
+Decors-Digital/
+├── app/                      # Next.js App Router directory
+│   ├── components/           # React components
+│   │   ├── ui/              # Reusable UI components
+│   │   └── ...              # Page-specific components
+│   ├── about-us/            # About page
+│   ├── blog/                # Blog pages with dynamic routing
+│   ├── contact/             # Contact page
+│   ├── projects/            # Projects page
+│   ├── services/            # Services page
+│   ├── globals.css          # Global styles
+│   ├── layout.js            # Root layout component
+│   └── page.js              # Homepage
+├── public/                  # Static assets
+│   ├── assets/              # Images, icons, and media
+│   │   ├── images/          # Image assets
+│   │   ├── js/              # JavaScript files
+│   │   └── libs/            # Third-party libraries
+│   ├── favicon.ico          # Website favicon
+│   ├── robots.txt           # SEO robots file
+│   ├── sitemap.xml          # SEO sitemap
+│   └── site.webmanifest     # PWA manifest
+├── .cpanel.yml              # cPanel deployment configuration
+├── next.config.mjs          # Next.js configuration
+├── package.json             # Project dependencies
+├── tailwind.config.js       # Tailwind CSS configuration
+├── postcss.config.mjs       # PostCSS configuration
+└── README.md               # This file
 ```
 
-## 🛠️ 技术栈
+## 🎯 Key Pages
 
-- **框架**: Next.js 13+ (App Router)
-- **语言**: JavaScript/JSX
-- **样式**: Bootstrap 5 + 自定义 CSS
-- **图标**: Iconify
-- **动画**: AOS (Animate On Scroll)
-- **字体**: Google Fonts
-- **图片**: Next.js Image 组件
-- **部署**: Vercel (推荐)
+| Page         | Description                    | Features                                               |
+| ------------ | ------------------------------ | ------------------------------------------------------ |
+| **Homepage** | Landing page with hero section | Video background, services, testimonials, portfolio preview |
+| **About Us** | Company information            | Team showcase, company history, mission statement      |
+| **Services** | Service offerings              | Interactive tabs, service cards, feature comparison    |
+| **Projects** | Portfolio showcase             | Project carousel, filtering, detailed project pages    |
+| **Blog**     | Content marketing              | Article listings, dynamic routing, search functionality |
+| **Contact**  | Contact information            | Contact forms, Calendly integration, business hours    |
 
-## 📦 安装和运行
+## 🚀 Deployment
 
-### 前提条件
+### Vercel Deployment (Recommended)
 
-- Node.js 18+ 
-- npm 或 yarn
+1. **Connect to Vercel**
+   - Push your code to GitHub
+   - Connect your repository to Vercel
+   - Deploy automatically on every push
 
-### 安装依赖
+2. **Manual Deployment**
+   ```bash
+   npm run build
+   # Deploy the 'out' directory to your hosting provider
+   ```
+
+### cPanel Deployment
+
+1. **Configure Git Repository**
+   - Set up Git Version Control in cPanel
+   - Update `.cpanel.yml` with your username
+   - Push changes to trigger automatic deployment
+
+2. **Manual Deployment**
+   ```bash
+   npm run build
+   # Upload the 'out' directory to public_html/
+   ```
+
+### Static Hosting
+
+The project is configured for static export, making it compatible with:
+- **Netlify**
+- **GitHub Pages**
+- **AWS S3**
+- **Any static hosting service**
+
+## 🎨 Customization
+
+### Colors & Branding
+
+- Primary colors are defined in `tailwind.config.js`
+- Logo files are located in `public/assets/images/logos/`
+- Customize brand colors and typography in the Tailwind configuration
+
+### Content Management
+
+- Update content in React components under `app/components/`
+- Replace images in `public/assets/images/` directory
+- Modify text content in respective page components
+
+### Styling
+
+- Main stylesheet: `app/globals.css`
+- Tailwind configuration: `tailwind.config.js`
+- Component-specific styles: Inline or CSS modules
+
+## 🚀 Performance Optimization
+
+- **Static Export**: Pre-rendered pages for optimal performance
+- **Image Optimization**: Next.js Image component with lazy loading
+- **Code Splitting**: Automatic code splitting by Next.js
+- **SEO Optimized**: Meta tags, structured data, and sitemap
+- **CDN Ready**: Optimized for content delivery networks
+
+## 🌐 Browser Support
+
+- **Chrome** (latest)
+- **Firefox** (latest)
+- **Safari** (latest)
+- **Edge** (latest)
+- **Mobile browsers** (iOS Safari, Chrome Mobile)
+
+## 📱 Responsive Breakpoints
+
+- **Mobile**: < 576px
+- **Tablet**: 576px - 991px
+- **Desktop**: 992px+
+
+## 🔧 Dependencies
+
+### Core Dependencies
+
+- **Next.js**: 15.4.6 - React framework
+- **React**: 19.1.0 - UI library
+- **React DOM**: 19.1.0 - React DOM rendering
+- **Tailwind CSS**: 4.0 - Utility-first CSS framework
+- **Bootstrap**: 5.3.7 - CSS framework
+- **AOS**: 2.3.4 - Animate On Scroll library
+- **jQuery**: 3.7.1 - JavaScript library
+- **Owl Carousel**: 2.3.4 - Touch-enabled carousel
+- **Iconify**: 1.0.8 - Icon system
+
+### Development Dependencies
+
+- **@tailwindcss/postcss**: 4.0 - PostCSS plugin
+- **autoprefixer**: 10.4.21 - CSS vendor prefixing
+
+## 🛠 Available Scripts
 
 ```bash
-npm install
-# 或
-yarn install
+# Development
+npm run dev          # Start development server
+npm run build        # Build for production
+npm run start        # Start production server
+npm run lint         # Run ESLint
+
+# Static Export
+npm run export       # Export static files
 ```
 
-### 开发环境
+## 🤝 Contributing
 
-```bash
-npm run dev
-# 或
-yarn dev
-```
+We welcome contributions! Please feel free to submit a Pull Request.
 
-访问 [http://localhost:3000](http://localhost:3000) 查看应用。
+### Development Guidelines
 
-### 构建生产版本
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
-```bash
-npm run build
-# 或
-yarn build
-```
+### Code Style
 
-### 启动生产服务器
+- Follow Next.js best practices
+- Use TypeScript for type safety (optional)
+- Follow ESLint configuration
+- Write meaningful commit messages
 
-```bash
-npm start
-# 或
-yarn start
-```
+## 📄 License
 
-## 🎨 组件使用
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-### Button 组件
+- **Design & Code**: Copyright © [Decor's Digital](https://www.decorsdigital.com/)
+- **Original Template**: [ThemeWagon](https://themewagon.com)
 
-```jsx
-import Button from '../components/ui/Button';
+## 👥 Authors
 
-// 基础按钮
-<Button>Click me</Button>
+- **Decor's Digital Team** - _Design and Development_ - [Decor's Digital](https://www.decorsdigital.com/)
+- **Mubin Akib** - _Next.js Implementation_ - [GitHub](https://github.com/mubinakib5)
 
-// 带图标的按钮
-<Button icon="lucide:arrow-right" iconPosition="right">
-  Next
-</Button>
+## 🙏 Acknowledgments
 
-// 链接按钮
-<Button href="/contact" variant="dark">
-  Contact Us
-</Button>
-```
+- [Next.js](https://nextjs.org/) - React Framework
+- [Tailwind CSS](https://tailwindcss.com/) - CSS Framework
+- [Bootstrap](https://getbootstrap.com/) - CSS Framework
+- [AOS](https://michalsnik.github.io/aos/) - Animate On Scroll
+- [Owl Carousel](https://owlcarousel2.github.io/OwlCarousel2/) - Carousel Component
+- [Iconify](https://iconify.design/) - Icon System
+- [Calendly](https://calendly.com/) - Appointment Scheduling
 
-### PageBanner 组件
+## 📞 Support
 
-```jsx
-import PageBanner from '../components/ui/PageBanner';
+- **Documentation**: [Next.js Documentation](https://nextjs.org/docs)
+- **Issues**: [GitHub Issues](https://github.com/mubinakib5/Decors-Digital/issues)
+- **Email**: contact@decorsdigital.com
 
-<PageBanner
-  title="About Us"
-  description="Learn more about our company"
-  backgroundImage="/assets/images/banner.jpg"
-/>
-```
+## 🔄 Changelog
 
-### ServiceCard 组件
+### Version 1.0.0 (Current)
+- ✅ Initial Next.js implementation
+- ✅ Static export configuration
+- ✅ SEO optimization
+- ✅ Responsive design
+- ✅ Calendly integration
+- ✅ Scroll-to-top functionality
+- ✅ Deployment configurations
 
-```jsx
-import ServiceCard from '../components/ui/ServiceCard';
+---
 
-<ServiceCard
-  title="Web Design"
-  description="Create stunning websites"
-  icon="lucide:monitor"
-  href="/contact"
-/>
-```
+**Made with ❤️ by Decor's Digital Team**
 
-## 📊 数据管理
-
-所有静态数据都集中在 `app/data/index.js` 文件中：
-
-```javascript
-// 导航数据
-export const navigationData = {
-  mainMenu: [...],
-  footerMenu: [...],
-  socialLinks: [...]
-};
-
-// 服务数据
-export const servicesData = [...];
-
-// 团队数据
-export const teamData = [...];
-
-// 项目数据
-export const projectsData = [...];
-```
-
-## 🎯 自定义配置
-
-### 修改颜色主题
-
-在 `app/constants/index.js` 中修改颜色常量：
-
-```javascript
-export const COLORS = {
-  PRIMARY: '#your-primary-color',
-  SECONDARY: '#your-secondary-color',
-  // ...
-};
-```
-
-### 添加新页面
-
-1. 在 `app/` 目录下创建新文件夹
-2. 添加 `page.js` 文件
-3. 在 `app/data/index.js` 中添加页面配置
-4. 在导航数据中添加链接
-
-### 添加新组件
-
-1. 在 `app/components/ui/` 目录下创建组件文件
-2. 遵循现有的组件命名约定
-3. 添加适当的 PropTypes 或 TypeScript 类型
-4. 在 README 中更新文档
-
-## 🔧 工具函数
-
-项目包含多个实用工具函数：
-
-```javascript
-import { 
-  formatDate, 
-  truncateText, 
-  debounce, 
-  validateEmail 
-} from '../utils/helpers';
-
-// 格式化日期
-const formattedDate = formatDate('2024-01-01');
-
-// 截断文本
-const shortText = truncateText('Long text...', 100);
-
-// 防抖函数
-const debouncedSearch = debounce(searchFunction, 300);
-
-// 验证邮箱
-const isValidEmail = validateEmail('test@example.com');
-```
-
-## 📱 响应式设计
-
-项目使用 Bootstrap 5 的响应式网格系统：
-
-- **移动设备**: < 768px
-- **平板设备**: 768px - 1024px  
-- **桌面设备**: > 1024px
-
-## 🚀 部署
-
-### Vercel (推荐)
-
-1. 将代码推送到 GitHub
-2. 在 Vercel 中导入项目
-3. 自动部署
-
-### 其他平台
-
-```bash
-# 构建项目
-npm run build
-
-# 启动生产服务器
-npm start
-```
-
-## 📈 性能优化
-
-- **图片优化**: 使用 Next.js Image 组件
-- **代码分割**: 自动代码分割
-- **静态生成**: 预渲染静态页面
-- **缓存**: 浏览器和 CDN 缓存
-- **压缩**: 自动压缩 CSS 和 JavaScript
-
-## 🔍 SEO 优化
-
-- 元数据优化
-- 结构化数据
-- 语义化 HTML
-- 图片 alt 属性
-- 页面标题和描述
-
-## ♿ 可访问性
-
-- 键盘导航支持
-- 屏幕阅读器兼容
-- 高对比度支持
-- ARIA 标签
-- 语义化 HTML
-
-## 🤝 贡献
-
-1. Fork 项目
-2. 创建功能分支 (`git checkout -b feature/AmazingFeature`)
-3. 提交更改 (`git commit -m 'Add some AmazingFeature'`)
-4. 推送到分支 (`git push origin feature/AmazingFeature`)
-5. 打开 Pull Request
-
-## 📄 许可证
-
-本项目采用 MIT 许可证 - 查看 [LICENSE](LICENSE) 文件了解详情。
-
-## 📞 联系
-
-- 网站: [https://decorsdigital.com](https://decorsdigital.com)
-- 邮箱: info@thedecorbd.com
-- 地址: Agrabad Access Rd, Chattogram, Bangladesh
-
-## 🙏 致谢
-
-- [Next.js](https://nextjs.org/) - React 框架
-- [Bootstrap](https://getbootstrap.com/) - CSS 框架
-- [Iconify](https://iconify.design/) - 图标库
-- [AOS](https://michalsnik.github.io/aos/) - 滚动动画库
+*Built with Next.js, Tailwind CSS, and Bootstrap*
