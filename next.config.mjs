@@ -18,11 +18,6 @@ const nextConfig = {
   
   // Configure asset prefix if needed
   // assetPrefix: process.env.NODE_ENV === 'production' ? '/your-subdirectory' : '',
-  
-  // Ensure all pages are statically generated
-  generateStaticParams: async () => {
-    return [];
-  },
 };
 
 export default nextConfig;

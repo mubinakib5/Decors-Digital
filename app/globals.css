@@ -1,202 +1,27 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
-/* Owl Carousel Basic Styles */
-.owl-carousel {
-  display: block !important;
-}
-
-.owl-carousel .owl-item {
-  display: block;
-}
-
-.owl-carousel .owl-stage {
-  display: flex;
-}
-
-.owl-carousel .owl-stage-outer {
-  overflow: hidden;
-}
-
-/* Ensure portfolio images are visible */
-.portfolio-img {
-  position: relative;
-  overflow: hidden;
-  border-radius: 8px;
-}
-
-.portfolio-img img {
-  width: 100%;
-  height: auto;
-  display: block;
-}
-
-/* Featured projects slider specific styles */
-.featured-projects-slider {
-  overflow: hidden;
-}
-
-.featured-projects-slider .owl-carousel {
-  display: block !important;
-}
-
-.featured-projects-slider .owl-carousel .owl-item {
-  padding: 0 15px;
-}
-
-/* Scroll to Top Button Styles */
-.get-template {
-  position: fixed !important;
-  bottom: 20px !important;
-  right: 20px !important;
-  z-index: 9999 !important;
-  display: block !important;
-}
-
-#scrollToTopBtn {
-  width: 50px !important;
-  height: 50px !important;
-  border-radius: 50% !important;
-  background-color: #dc3545 !important; /* Red color */
-  border: 2px solid #dc3545 !important;
-  color: white !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  cursor: pointer !important;
-  transition: all 0.3s ease !important;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
-  opacity: 1 !important;
-  visibility: visible !important;
-}
-
-#scrollToTopBtn:hover {
-  background-color: white !important;
-  border-color: #dc3545 !important;
-  color: #dc3545 !important;
-  transform: translateY(-2px) !important;
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2) !important;
-}
-
-#scrollToTopBtn:active {
-  transform: translateY(0) !important;
-}
-
-#scrollToTopBtn.hidden {
-  display: none !important;
-}
-
-#scrollToTopBtn.visible {
-  display: flex !important;
-}
-
-/* TEMPORARY: Force button to be visible for testing */
-#scrollToTopBtn {
-  display: flex !important;
-  opacity: 1 !important;
-  visibility: visible !important;
-}
-
-.get-template {
-  display: block !important;
-  opacity: 1 !important;
-  visibility: visible !important;
-}
-
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, Helvetica, sans-serif;
-}
-
-/* Font fallback for better loading */
-@font-face {
-  font-family: 'Inter';
-  font-style: normal;
-  font-weight: 300;
-  font-display: swap;
-  src: local('Inter Light'), local('Inter-Light');
-}
-
-@font-face {
-  font-family: 'Inter';
-  font-style: normal;
-  font-weight: 400;
-  font-display: swap;
-  src: local('Inter Regular'), local('Inter-Regular');
-}
-
-@font-face {
-  font-family: 'Inter';
-  font-style: normal;
-  font-weight: 500;
-  font-display: swap;
-  src: local('Inter Medium'), local('Inter-Medium');
-}
-
-@font-face {
-  font-family: 'Inter';
-  font-style: normal;
-  font-weight: 600;
-  font-display: swap;
-  src: local('Inter SemiBold'), local('Inter-SemiBold');
-}
-
-@font-face {
-  font-family: 'Inter';
-  font-style: normal;
-  font-weight: 700;
-  font-display: swap;
-  src: local('Inter Bold'), local('Inter-Bold');
-}
+@import "tailwindcss";
 
 /* Custom styles to resolve conflicts between Tailwind and Bootstrap */
 @layer components {
-  /* Ensure Bootstrap classes work properly with Tailwind */
   .btn {
-    @apply inline-flex items-center justify-center px-4 py-2 text-sm font-medium rounded-md transition-colors;
+    @apply inline-flex items-center justify-center gap-2;
   }
   
-  /* Button styles are handled by Bootstrap CSS variables */
-  
   .btn-secondary {
-    @apply bg-gray-200 text-gray-900 hover:bg-gray-300;
+    @apply bg-gray-500 text-white;
   }
   
   .btn-dark {
-    @apply bg-gray-900 text-white hover:bg-gray-800;
+    @apply bg-gray-900 text-white;
   }
   
   .btn-outline-light {
-    @apply border border-gray-300 bg-white text-gray-700 hover:bg-gray-50;
+    @apply border border-white text-white hover:bg-white hover:text-gray-900;
   }
   
-  /* Container styles */
   .container {
-    @apply mx-auto px-4 sm:px-6 lg:px-8;
+    @apply max-w-7xl mx-auto px-4;
   }
   
-  /* Utility classes for layout */
   .d-flex {
     @apply flex;
   }
@@ -337,7 +162,6 @@ body {
     @apply bottom-0;
   }
   
-  /* Display utilities */
   .d-none {
     @apply hidden;
   }
@@ -351,10 +175,9 @@ body {
   }
   
   .flex-column {
-    @apply flex flex-col;
+    @apply flex-col;
   }
   
-  /* Opacity utilities */
   .opacity-75 {
     @apply opacity-75;
   }
@@ -367,7 +190,6 @@ body {
     @apply m-4;
   }
   
-  /* Background utilities */
   .bg-white {
     @apply bg-white;
   }
@@ -381,81 +203,200 @@ body {
   }
   
   .bg-secondary {
-    @apply bg-gray-600;
+    @apply bg-gray-500;
   }
 }
 
-/* Specific button hover styles to ensure they work */
+/* Button styles with proper hover effects */
 .btn-primary {
-  background-color: var(--bs-btn-bg) !important;
-  border-color: var(--bs-btn-border-color) !important;
-  color: var(--bs-btn-color) !important;
+  background-color: #dc3545 !important;
+  border-color: #dc3545 !important;
+  color: white !important;
 }
 
 .btn-primary:hover {
-  background-color: #ffffff !important;
-  border-color: #ff0000 !important;
-  color: #000000 !important;
+  background-color: white !important;
+  border-color: #dc3545 !important;
+  color: #dc3545 !important;
 }
 
 .btn-primary:focus {
-  background-color: #ffffff !important;
-  border-color: #ff0000 !important;
-  color: #000000 !important;
-  box-shadow: 0 0 0 0.25rem rgba(255, 0, 0, 0.5) !important;
+  background-color: white !important;
+  border-color: #dc3545 !important;
+  color: #dc3545 !important;
+  box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25) !important;
 }
 
 .btn-primary:active {
-  background-color: #ffffff !important;
-  border-color: #ff0000 !important;
-  color: #000000 !important;
+  background-color: white !important;
+  border-color: #dc3545 !important;
+  color: #dc3545 !important;
 }
 
-/* Additional specificity for button elements */
-button.btn-primary:hover,
-a.btn-primary:hover,
-input.btn-primary:hover {
-  background-color: #ffffff !important;
-  border-color: #ff0000 !important;
-  color: #000000 !important;
+/* Scroll to Top Button Styles */
+.get-template {
+  position: fixed !important;
+  bottom: 20px !important;
+  right: 20px !important;
+  z-index: 9999 !important;
+  display: block !important;
 }
 
-/* Even more specific selectors to override any conflicting styles */
-.btn.btn-primary:hover,
-.btn.btn-primary:focus,
-.btn.btn-primary:active {
-  background-color: #ffffff !important;
-  border-color: #ff0000 !important;
-  color: #000000 !important;
+#scrollToTopBtn {
+  width: 50px !important;
+  height: 50px !important;
+  border-radius: 50% !important;
+  background-color: #dc3545 !important; /* Red color */
+  border: 2px solid #dc3545 !important;
+  color: white !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  cursor: pointer !important;
+  transition: all 0.3s ease !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+  opacity: 1 !important;
+  visibility: visible !important;
 }
 
-/* Target specific button classes used in components */
-button[class*="btn-primary"]:hover,
-button[class*="btn-primary"]:focus,
-button[class*="btn-primary"]:active {
-  background-color: #ffffff !important;
-  border-color: #ff0000 !important;
-  color: #000000 !important;
+#scrollToTopBtn:hover {
+  background-color: white !important;
+  border-color: #dc3545 !important;
+  color: #dc3545 !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2) !important;
 }
 
-/* Most specific selector for the exact button structure used */
-button.btn.btn-primary.fs-6.px-4.py-3.hstack.justify-content-center.gap-2:hover,
-button.btn.btn-primary.fs-6.px-4.py-3.hstack.justify-content-center.gap-2:focus,
-button.btn.btn-primary.fs-6.px-4.py-3.hstack.justify-content-center.gap-2:active {
-  background-color: #ffffff !important;
-  border-color: #ff0000 !important;
-  color: #000000 !important;
+#scrollToTopBtn:active {
+  transform: translateY(0) !important;
 }
 
-/* Ensure the CSS variables are properly set */
+#scrollToTopBtn.hidden {
+  display: none !important;
+}
+
+#scrollToTopBtn.visible {
+  display: flex !important;
+}
+
+/* TEMPORARY: Force button to be visible for testing */
+#scrollToTopBtn {
+  display: flex !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+.get-template {
+  display: block !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+/* Basic styles */
 :root {
-  --bs-btn-hover-bg: #ffffff;
-  --bs-btn-hover-border-color: #ff0000;
-  --bs-btn-hover-color: #000000;
-  --bs-btn-focus-shadow-rgb: 255, 0, 0;
-  --bs-btn-active-bg: #ffffff;
-  --bs-btn-active-border-color: #ff0000;
-  --bs-btn-active-color: #000000;
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, Helvetica, sans-serif;
+}
+
+/* Font fallback for better loading */
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 300;
+  font-display: swap;
+  src: local('Inter Light'), local('Inter-Light');
+}
+
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Inter Regular'), local('Inter-Regular');
+}
+
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: local('Inter Medium'), local('Inter-Medium');
+}
+
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: local('Inter SemiBold'), local('Inter-SemiBold');
+}
+
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: local('Inter Bold'), local('Inter-Bold');
+}
+
+/* Carousel and other component styles */
+.owl-carousel {
+  display: block;
+}
+
+.owl-carousel .owl-item {
+  display: block;
+}
+
+.owl-carousel .owl-stage {
+  display: flex;
+}
+
+.owl-carousel .owl-stage-outer {
+  overflow: hidden;
+}
+
+.portfolio-img {
+  position: relative;
+  overflow: hidden;
+}
+
+.portfolio-img img {
+  width: 100%;
+  height: auto;
+  transition: transform 0.3s ease;
+}
+
+.featured-projects-slider {
+  overflow: hidden;
+}
+
+.featured-projects-slider .owl-carousel {
+  display: block;
+}
+
+.featured-projects-slider .owl-carousel .owl-item {
+  display: block;
 }
 
 
