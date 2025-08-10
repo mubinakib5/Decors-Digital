@@ -1,0 +1,23 @@
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://decorsdigital.com/sitemap.xml
+
+# Disallow admin and private areas
+Disallow: /admin/
+Disallow: /private/
+Disallow: /api/
+Disallow: /_next/
+Disallow: /static/
+
+# Allow important pages
+Allow: /about-us
+Allow: /services
+Allow: /projects
+Allow: /blog
+Allow: /contact
+Allow: /docs
+
+# Crawl delay (optional)
+Crawl-delay: 1

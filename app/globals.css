@@ -1,4 +1,108 @@
-@import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Owl Carousel Basic Styles */
+.owl-carousel {
+  display: block !important;
+}
+
+.owl-carousel .owl-item {
+  display: block;
+}
+
+.owl-carousel .owl-stage {
+  display: flex;
+}
+
+.owl-carousel .owl-stage-outer {
+  overflow: hidden;
+}
+
+/* Ensure portfolio images are visible */
+.portfolio-img {
+  position: relative;
+  overflow: hidden;
+  border-radius: 8px;
+}
+
+.portfolio-img img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* Featured projects slider specific styles */
+.featured-projects-slider {
+  overflow: hidden;
+}
+
+.featured-projects-slider .owl-carousel {
+  display: block !important;
+}
+
+.featured-projects-slider .owl-carousel .owl-item {
+  padding: 0 15px;
+}
+
+/* Scroll to Top Button Styles */
+.get-template {
+  position: fixed !important;
+  bottom: 20px !important;
+  right: 20px !important;
+  z-index: 9999 !important;
+  display: block !important;
+}
+
+#scrollToTopBtn {
+  width: 50px !important;
+  height: 50px !important;
+  border-radius: 50% !important;
+  background-color: #dc3545 !important; /* Red color */
+  border: 2px solid #dc3545 !important;
+  color: white !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  cursor: pointer !important;
+  transition: all 0.3s ease !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+#scrollToTopBtn:hover {
+  background-color: white !important;
+  border-color: #dc3545 !important;
+  color: #dc3545 !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2) !important;
+}
+
+#scrollToTopBtn:active {
+  transform: translateY(0) !important;
+}
+
+#scrollToTopBtn.hidden {
+  display: none !important;
+}
+
+#scrollToTopBtn.visible {
+  display: flex !important;
+}
+
+/* TEMPORARY: Force button to be visible for testing */
+#scrollToTopBtn {
+  display: flex !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+.get-template {
+  display: block !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
 
 :root {
   --background: #ffffff;
@@ -22,5 +126,336 @@
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, Helvetica, sans-serif;
 }
+
+/* Font fallback for better loading */
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 300;
+  font-display: swap;
+  src: local('Inter Light'), local('Inter-Light');
+}
+
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Inter Regular'), local('Inter-Regular');
+}
+
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: local('Inter Medium'), local('Inter-Medium');
+}
+
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: local('Inter SemiBold'), local('Inter-SemiBold');
+}
+
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: local('Inter Bold'), local('Inter-Bold');
+}
+
+/* Custom styles to resolve conflicts between Tailwind and Bootstrap */
+@layer components {
+  /* Ensure Bootstrap classes work properly with Tailwind */
+  .btn {
+    @apply inline-flex items-center justify-center px-4 py-2 text-sm font-medium rounded-md transition-colors;
+  }
+  
+  /* Button styles are handled by Bootstrap CSS variables */
+  
+  .btn-secondary {
+    @apply bg-gray-200 text-gray-900 hover:bg-gray-300;
+  }
+  
+  .btn-dark {
+    @apply bg-gray-900 text-white hover:bg-gray-800;
+  }
+  
+  .btn-outline-light {
+    @apply border border-gray-300 bg-white text-gray-700 hover:bg-gray-50;
+  }
+  
+  /* Container styles */
+  .container {
+    @apply mx-auto px-4 sm:px-6 lg:px-8;
+  }
+  
+  /* Utility classes for layout */
+  .d-flex {
+    @apply flex;
+  }
+  
+  .align-items-center {
+    @apply items-center;
+  }
+  
+  .justify-content-between {
+    @apply justify-between;
+  }
+  
+  .justify-content-center {
+    @apply justify-center;
+  }
+  
+  .gap-4 {
+    @apply gap-4;
+  }
+  
+  .gap-3 {
+    @apply gap-3;
+  }
+  
+  .gap-2 {
+    @apply gap-2;
+  }
+  
+  .gap-1 {
+    @apply gap-1;
+  }
+  
+  .gap-6 {
+    @apply gap-6;
+  }
+  
+  /* Text utilities */
+  .text-dark {
+    @apply text-gray-900;
+  }
+  
+  .text-white {
+    @apply text-white;
+  }
+  
+  .fs-5 {
+    @apply text-lg;
+  }
+  
+  .fs-6 {
+    @apply text-base;
+  }
+  
+  .fs-7 {
+    @apply text-sm;
+  }
+  
+  .fs-8 {
+    @apply text-xs;
+  }
+  
+  .fw-bold {
+    @apply font-bold;
+  }
+  
+  /* Margin and padding utilities */
+  .mb-0 {
+    @apply mb-0;
+  }
+  
+  .pb-6 {
+    @apply pb-6;
+  }
+  
+  .p-4 {
+    @apply p-4;
+  }
+  
+  .p-2 {
+    @apply p-2;
+  }
+  
+  .px-3 {
+    @apply px-3;
+  }
+  
+  .py-2 {
+    @apply py-2;
+  }
+  
+  .w-50 {
+    @apply w-1/2;
+  }
+  
+  .w-100 {
+    @apply w-full;
+  }
+  
+  /* Border utilities */
+  .border-bottom {
+    @apply border-b;
+  }
+  
+  .border-top {
+    @apply border-t;
+  }
+  
+  .border-primary {
+    @apply border-red-500;
+  }
+  
+  .rounded-circle {
+    @apply rounded-full;
+  }
+  
+  .rounded-45 {
+    @apply rounded-[45px];
+  }
+  
+  /* Position utilities */
+  .position-fixed {
+    @apply fixed;
+  }
+  
+  .start-0 {
+    @apply left-0;
+  }
+  
+  .top-0 {
+    @apply top-0;
+  }
+  
+  .end-0 {
+    @apply right-0;
+  }
+  
+  .bottom-0 {
+    @apply bottom-0;
+  }
+  
+  /* Display utilities */
+  .d-none {
+    @apply hidden;
+  }
+  
+  .list-unstyled {
+    @apply list-none;
+  }
+  
+  .hstack {
+    @apply flex items-center;
+  }
+  
+  .flex-column {
+    @apply flex flex-col;
+  }
+  
+  /* Opacity utilities */
+  .opacity-75 {
+    @apply opacity-75;
+  }
+  
+  .z-1000 {
+    @apply z-[1000];
+  }
+  
+  .m-4 {
+    @apply m-4;
+  }
+  
+  /* Background utilities */
+  .bg-white {
+    @apply bg-white;
+  }
+  
+  .bg-primary {
+    @apply bg-red-500;
+  }
+  
+  .bg-dark {
+    @apply bg-gray-900;
+  }
+  
+  .bg-secondary {
+    @apply bg-gray-600;
+  }
+}
+
+/* Specific button hover styles to ensure they work */
+.btn-primary {
+  background-color: var(--bs-btn-bg) !important;
+  border-color: var(--bs-btn-border-color) !important;
+  color: var(--bs-btn-color) !important;
+}
+
+.btn-primary:hover {
+  background-color: #ffffff !important;
+  border-color: #ff0000 !important;
+  color: #000000 !important;
+}
+
+.btn-primary:focus {
+  background-color: #ffffff !important;
+  border-color: #ff0000 !important;
+  color: #000000 !important;
+  box-shadow: 0 0 0 0.25rem rgba(255, 0, 0, 0.5) !important;
+}
+
+.btn-primary:active {
+  background-color: #ffffff !important;
+  border-color: #ff0000 !important;
+  color: #000000 !important;
+}
+
+/* Additional specificity for button elements */
+button.btn-primary:hover,
+a.btn-primary:hover,
+input.btn-primary:hover {
+  background-color: #ffffff !important;
+  border-color: #ff0000 !important;
+  color: #000000 !important;
+}
+
+/* Even more specific selectors to override any conflicting styles */
+.btn.btn-primary:hover,
+.btn.btn-primary:focus,
+.btn.btn-primary:active {
+  background-color: #ffffff !important;
+  border-color: #ff0000 !important;
+  color: #000000 !important;
+}
+
+/* Target specific button classes used in components */
+button[class*="btn-primary"]:hover,
+button[class*="btn-primary"]:focus,
+button[class*="btn-primary"]:active {
+  background-color: #ffffff !important;
+  border-color: #ff0000 !important;
+  color: #000000 !important;
+}
+
+/* Most specific selector for the exact button structure used */
+button.btn.btn-primary.fs-6.px-4.py-3.hstack.justify-content-center.gap-2:hover,
+button.btn.btn-primary.fs-6.px-4.py-3.hstack.justify-content-center.gap-2:focus,
+button.btn.btn-primary.fs-6.px-4.py-3.hstack.justify-content-center.gap-2:active {
+  background-color: #ffffff !important;
+  border-color: #ff0000 !important;
+  color: #000000 !important;
+}
+
+/* Ensure the CSS variables are properly set */
+:root {
+  --bs-btn-hover-bg: #ffffff;
+  --bs-btn-hover-border-color: #ff0000;
+  --bs-btn-hover-color: #000000;
+  --bs-btn-focus-shadow-rgb: 255, 0, 0;
+  --bs-btn-active-bg: #ffffff;
+  --bs-btn-active-border-color: #ff0000;
+  --bs-btn-active-color: #000000;
+}
+
+

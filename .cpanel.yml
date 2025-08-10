@@ -1,0 +1,26 @@
+---
+deployment:
+  tasks:
+    # Export the deployment path - update this to match your cPanel account
+    - export DEPLOYPATH=/home/thedvozp/public_html/
+    
+    # Install dependencies and build the application
+    - npm install
+    - npm run build
+    
+    # Copy the static export files to the deployment directory
+    - /bin/cp -R out/* $DEPLOYPATH
+    
+    # Copy essential assets
+    - /bin/cp -R public $DEPLOYPATH
+    
+    # Set proper permissions
+    - chmod 755 $DEPLOYPATH
+    - find $DEPLOYPATH -type f -exec chmod 644 {} \;
+    - find $DEPLOYPATH -type d -exec chmod 755 {} \;
+    
+    # Create .htaccess for proper routing (if needed)
+    - echo 'RewriteEngine On' > $DEPLOYPATH/.htaccess
+    - echo 'RewriteCond %{REQUEST_FILENAME} !-f' >> $DEPLOYPATH/.htaccess
+    - echo 'RewriteCond %{REQUEST_FILENAME} !-d' >> $DEPLOYPATH/.htaccess
+    - echo 'RewriteRule ^(.*)$ /index.html [L]' >> $DEPLOYPATH/.htaccess
