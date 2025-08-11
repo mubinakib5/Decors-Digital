@@ -4,6 +4,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import AosInit from '../components/AosInit';
 import Footer from '../components/Footer';
+import { teamData } from '../data';
 
 export default function AboutUs() {
   return (
@@ -349,266 +350,64 @@ export default function AboutUs() {
                 </div>
               </div>
               <div className="row">
-                <div className="col-md-6 col-xl-3 mb-7 mb-xl-0">
-                  <div
-                    className="meet-team d-flex flex-column gap-4"
-                    data-aos="fade-up"
-                    data-aos-delay="100"
-                    data-aos-duration="1000"
-                  >
-                    <div className="meet-team-img position-relative overflow-hidden">
-                      <Image
-                        src="/assets/images/team/team-img-1.jpg"
-                        alt="team-img"
-                        width={300}
-                        height={400}
-                        className="img-fluid w-100"
-                      />
-                      <div className="meet-team-overlay p-7 d-flex flex-column justify-content-end">
-                        <ul className="social list-unstyled mb-0 hstack gap-2 justify-content-end">
-                          <li>
-                            <a
-                              href="#!"
-                              className="btn bg-white p-2 round-45 rounded-circle hstack justify-content-center"
-                            >
-                              <Image
-                                src="/assets/images/svgs/icon-twitter.svg"
-                                alt="twitter"
-                                width={20}
-                                height={20}
-                              />
-                            </a>
-                          </li>
-                          <li>
-                            <a
-                              href="#!"
-                              className="btn bg-white p-2 round-45 rounded-circle hstack justify-content-center"
-                            >
-                              <Image
-                                src="/assets/images/svgs/icon-be.svg"
-                                alt="be"
-                                width={20}
-                                height={20}
-                              />
-                            </a>
-                          </li>
-                          <li>
-                            <a
-                              href="#!"
-                              className="btn bg-white p-2 round-45 rounded-circle hstack justify-content-center"
-                            >
-                              <Image
-                                src="/assets/images/svgs/icon-linkedin.svg"
-                                alt="linkedin"
-                                width={20}
-                                height={20}
-                              />
-                            </a>
-                          </li>
-                        </ul>
+                {teamData.map((member, index) => (
+                  <div key={member.id} className="col-md-6 col-xl-3 mb-7 mb-xl-0">
+                    <div
+                      className="meet-team d-flex flex-column gap-4"
+                      data-aos="fade-up"
+                      data-aos-delay={`${(index + 1) * 100}`}
+                      data-aos-duration="1000"
+                    >
+                      <div className="meet-team-img position-relative overflow-hidden">
+                        <Image
+                          src={member.image}
+                          alt={member.name}
+                          width={300}
+                          height={400}
+                          className="img-fluid w-100"
+                        />
+                        <div className="meet-team-overlay p-7 d-flex flex-column justify-content-end">
+                          <ul className="social list-unstyled mb-0 hstack gap-2 justify-content-end">
+                            {member.socialLinks && member.socialLinks.length > 0 ? (
+                              member.socialLinks.map((link, linkIndex) => (
+                                <li key={linkIndex}>
+                                  <a
+                                    href={link.href}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="btn bg-white p-2 round-45 rounded-circle hstack justify-content-center"
+                                  >
+                                    <Image
+                                      src={`/assets/images/svgs/icon-${link.platform}.svg`}
+                                      alt={link.platform}
+                                      width={20}
+                                      height={20}
+                                    />
+                                  </a>
+                                </li>
+                              ))
+                            ) : (
+                              <li>
+                                <span className="btn bg-white p-2 round-45 rounded-circle hstack justify-content-center opacity-50">
+                                  <Image
+                                    src="/assets/images/svgs/icon-linkedin.svg"
+                                    alt="no social"
+                                    width={20}
+                                    height={20}
+                                  />
+                                </span>
+                              </li>
+                            )}
+                          </ul>
+                        </div>
+                      </div>
+                      <div className="meet-team-details">
+                        <h4 className="mb-0">{member.name}</h4>
+                        <p className="mb-0">{member.position}</p>
                       </div>
                     </div>
-                    <div className="meet-team-details">
-                      <h4 className="mb-0">Martha Finley</h4>
-                      <p className="mb-0">Creative Director</p>
-                    </div>
                   </div>
-                </div>
-                <div className="col-md-6 col-xl-3 mb-7 mb-xl-0">
-                  <div
-                    className="meet-team d-flex flex-column gap-4"
-                    data-aos="fade-up"
-                    data-aos-delay="200"
-                    data-aos-duration="1000"
-                  >
-                    <div className="meet-team-img position-relative overflow-hidden">
-                      <Image
-                        src="/assets/images/team/team-img-2.jpg"
-                        alt="team-img"
-                        width={300}
-                        height={400}
-                        className="img-fluid w-100"
-                      />
-                      <div className="meet-team-overlay p-7 d-flex flex-column justify-content-end">
-                        <ul className="social list-unstyled mb-0 hstack gap-2 justify-content-end">
-                          <li>
-                            <a
-                              href="#!"
-                              className="btn bg-white p-2 round-45 rounded-circle hstack justify-content-center"
-                            >
-                              <Image
-                                src="/assets/images/svgs/icon-twitter.svg"
-                                alt="twitter"
-                                width={20}
-                                height={20}
-                              />
-                            </a>
-                          </li>
-                          <li>
-                            <a
-                              href="#!"
-                              className="btn bg-white p-2 round-45 rounded-circle hstack justify-content-center"
-                            >
-                              <Image
-                                src="/assets/images/svgs/icon-be.svg"
-                                alt="be"
-                                width={20}
-                                height={20}
-                              />
-                            </a>
-                          </li>
-                          <li>
-                            <a
-                              href="#!"
-                              className="btn bg-white p-2 round-45 rounded-circle hstack justify-content-center"
-                            >
-                              <Image
-                                src="/assets/images/svgs/icon-linkedin.svg"
-                                alt="linkedin"
-                                width={20}
-                                height={20}
-                              />
-                            </a>
-                          </li>
-                        </ul>
-                      </div>
-                    </div>
-                    <div className="meet-team-details">
-                      <h4 className="mb-0">Floyd Miles</h4>
-                      <p className="mb-0">Marketing Strategist</p>
-                    </div>
-                  </div>
-                </div>
-                <div className="col-md-6 col-xl-3 mb-7 mb-xl-0">
-                  <div
-                    className="meet-team d-flex flex-column gap-4"
-                    data-aos="fade-up"
-                    data-aos-delay="300"
-                    data-aos-duration="1000"
-                  >
-                    <div className="meet-team-img position-relative overflow-hidden">
-                      <Image
-                        src="/assets/images/team/team-img-3.jpg"
-                        alt="team-img"
-                        width={300}
-                        height={400}
-                        className="img-fluid w-100"
-                      />
-                      <div className="meet-team-overlay p-7 d-flex flex-column justify-content-end">
-                        <ul className="social list-unstyled mb-0 hstack gap-2 justify-content-end">
-                          <li>
-                            <a
-                              href="#!"
-                              className="btn bg-white p-2 round-45 rounded-circle hstack justify-content-center"
-                            >
-                              <Image
-                                src="/assets/images/svgs/icon-twitter.svg"
-                                alt="twitter"
-                                width={20}
-                                height={20}
-                              />
-                            </a>
-                          </li>
-                          <li>
-                            <a
-                              href="#!"
-                              className="btn bg-white p-2 round-45 rounded-circle hstack justify-content-center"
-                            >
-                              <Image
-                                src="/assets/images/svgs/icon-be.svg"
-                                alt="be"
-                                width={20}
-                                height={20}
-                              />
-                            </a>
-                          </li>
-                          <li>
-                            <a
-                              href="#!"
-                              className="btn bg-white p-2 round-45 rounded-circle hstack justify-content-center"
-                            >
-                              <Image
-                                src="/assets/images/svgs/icon-linkedin.svg"
-                                alt="linkedin"
-                                width={20}
-                                height={20}
-                              />
-                            </a>
-                          </li>
-                        </ul>
-                      </div>
-                    </div>
-                    <div className="meet-team-details">
-                      <h4 className="mb-0">Glenna Snyder</h4>
-                      <p className="mb-0">Lead Designer</p>
-                    </div>
-                  </div>
-                </div>
-                <div className="col-md-6 col-xl-3 mb-7 mb-xl-0">
-                  <div
-                    className="meet-team d-flex flex-column gap-4"
-                    data-aos="fade-up"
-                    data-aos-delay="400"
-                    data-aos-duration="1000"
-                  >
-                    <div className="meet-team-img position-relative overflow-hidden">
-                      <Image
-                        src="/assets/images/team/team-img-4.jpg"
-                        alt="team-img"
-                        width={300}
-                        height={400}
-                        className="img-fluid w-100"
-                      />
-                      <div className="meet-team-overlay p-7 d-flex flex-column justify-content-end">
-                        <ul className="social list-unstyled mb-0 hstack gap-2 justify-content-end">
-                          <li>
-                            <a
-                              href="#!"
-                              className="btn bg-white p-2 round-45 rounded-circle hstack justify-content-center"
-                            >
-                              <Image
-                                src="/assets/images/svgs/icon-twitter.svg"
-                                alt="twitter"
-                                width={20}
-                                height={20}
-                              />
-                            </a>
-                          </li>
-                          <li>
-                            <a
-                              href="#!"
-                              className="btn bg-white p-2 round-45 rounded-circle hstack justify-content-center"
-                            >
-                              <Image
-                                src="/assets/images/svgs/icon-be.svg"
-                                alt="be"
-                                width={20}
-                                height={20}
-                              />
-                            </a>
-                          </li>
-                          <li>
-                            <a
-                              href="#!"
-                              className="btn bg-white p-2 round-45 rounded-circle hstack justify-content-center"
-                            >
-                              <Image
-                                src="/assets/images/svgs/icon-linkedin.svg"
-                                alt="linkedin"
-                                width={20}
-                                height={20}
-                              />
-                            </a>
-                          </li>
-                        </ul>
-                      </div>
-                    </div>
-                    <div className="meet-team-details">
-                      <h4 className="mb-0">Albert Flores</h4>
-                      <p className="mb-0">UX/UI Developer</p>
-                    </div>
-                  </div>
-                </div>
+                ))}
               </div>
             </div>
           </div>
