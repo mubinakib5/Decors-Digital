@@ -25,7 +25,7 @@ async function verifyAuth(request) {
   }
 }
 
-// PUT - Update expense
+// PUT - Update income
 export async function PUT(request, { params }) {
   const auth = await verifyAuth(request);
   if (auth.error) {
@@ -54,16 +54,16 @@ export async function PUT(request, { params }) {
     // Validate ObjectId
     if (!ObjectId.isValid(id)) {
       return NextResponse.json(
-        { message: "Invalid expense ID" },
+        { message: "Invalid income ID" },
         { status: 400 }
       );
     }
 
     const client = await clientPromise;
     const db = client.db();
-    const collection = db.collection("expenses");
+    const collection = db.collection("income");
 
-    const updatedExpense = {
+    const updatedIncome = {
       date: new Date(date),
       category,
       description,
@@ -73,22 +73,22 @@ export async function PUT(request, { params }) {
 
     const result = await collection.updateOne(
       { _id: new ObjectId(id) },
-      { $set: updatedExpense }
+      { $set: updatedIncome }
     );
 
     if (result.matchedCount === 0) {
       return NextResponse.json(
-        { message: "Expense not found" },
+        { message: "Income not found" },
         { status: 404 }
       );
     }
 
     return NextResponse.json(
-      { message: "Expense updated successfully" },
+      { message: "Income updated successfully" },
       { status: 200 }
     );
   } catch (error) {
-    console.error("Error updating expense:", error);
+    console.error("Error updating income:", error);
 
     // If MongoDB is not available, return a helpful message
     if (
@@ -105,13 +105,13 @@ export async function PUT(request, { params }) {
     }
 
     return NextResponse.json(
-      { message: "Failed to update expense" },
+      { message: "Failed to update income" },
       { status: 500 }
     );
   }
 }
 
-// DELETE - Delete expense
+// DELETE - Delete income
 export async function DELETE(request, { params }) {
   const auth = await verifyAuth(request);
   if (auth.error) {
@@ -124,30 +124,30 @@ export async function DELETE(request, { params }) {
     // Validate ObjectId
     if (!ObjectId.isValid(id)) {
       return NextResponse.json(
-        { message: "Invalid expense ID" },
+        { message: "Invalid income ID" },
         { status: 400 }
       );
     }
 
     const client = await clientPromise;
     const db = client.db();
-    const collection = db.collection("expenses");
+    const collection = db.collection("income");
 
     const result = await collection.deleteOne({ _id: new ObjectId(id) });
 
     if (result.deletedCount === 0) {
       return NextResponse.json(
-        { message: "Expense not found" },
+        { message: "Income not found" },
         { status: 404 }
       );
     }
 
     return NextResponse.json(
-      { message: "Expense deleted successfully" },
+      { message: "Income deleted successfully" },
       { status: 200 }
     );
   } catch (error) {
-    console.error("Error deleting expense:", error);
+    console.error("Error deleting income:", error);
 
     // If MongoDB is not available, return a helpful message
     if (
@@ -164,7 +164,7 @@ export async function DELETE(request, { params }) {
     }
 
     return NextResponse.json(
-      { message: "Failed to delete expense" },
+      { message: "Failed to delete income" },
       { status: 500 }
     );
   }

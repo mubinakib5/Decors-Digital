@@ -2,9 +2,9 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import AosInit from '../components/AosInit';
-import Footer from '../components/Footer';
-import { teamData } from '../data';
+import AosInit from '../../components/AosInit';
+import Footer from '../../components/Footer';
+import { teamData } from '../../data';
 
 export default function AboutUs() {
   return (

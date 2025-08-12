@@ -1,19 +1,23 @@
-'use client';
+"use client";
 
-import Link from 'next/link';
-import Image from 'next/image';
-import { useEffect, useState } from 'react';
-import { navigationData, contactData } from '../data';
-import { CALENDLY_URL } from '../constants';
+import Image from "next/image";
+import Link from "next/link";
+import { useEffect, useState } from "react";
+import { CALENDLY_URL } from "../constants";
+import { contactData, navigationData } from "../data";
 
 export default function Header() {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
   useEffect(() => {
     // Initialize Bootstrap dropdowns
-    if (typeof window !== 'undefined' && window.bootstrap) {
-      const dropdownElementList = document.querySelectorAll('[data-bs-toggle="dropdown"]');
-      const dropdownList = [...dropdownElementList].map(dropdownToggleEl => new window.bootstrap.Dropdown(dropdownToggleEl));
+    if (typeof window !== "undefined" && window.bootstrap) {
+      const dropdownElementList = document.querySelectorAll(
+        '[data-bs-toggle="dropdown"]'
+      );
+      const dropdownList = [...dropdownElementList].map(
+        (dropdownToggleEl) => new window.bootstrap.Dropdown(dropdownToggleEl)
+      );
     }
   }, []);
 
@@ -23,7 +27,7 @@ export default function Header() {
 
   const handleBookCall = () => {
     // Open Calendly in a new window/tab
-    window.open(CALENDLY_URL, '_blank');
+    window.open(CALENDLY_URL, "_blank");
   };
 
   return (
@@ -65,20 +69,22 @@ export default function Header() {
                   className="menu-icon fs-8 text-dark"
                 ></iconify-icon>
               </button>
-              <ul 
-                className={`dropdown-menu dropdown-menu-end p-4 ${isDropdownOpen ? 'show' : ''}`}
+              <ul
+                className={`dropdown-menu dropdown-menu-end p-4 ${
+                  isDropdownOpen ? "show" : ""
+                }`}
                 style={{
-                  position: 'absolute',
-                  top: '100%',
-                  right: '0',
-                  maxHeight: 'calc(100vh - 120px)',
-                  overflowY: 'auto',
-                  width: '320px',
+                  position: "absolute",
+                  top: "100%",
+                  right: "0",
+                  maxHeight: "calc(100vh - 120px)",
+                  overflowY: "auto",
+                  width: "320px",
                   zIndex: 1050,
-                  boxShadow: '0 10px 30px rgba(0,0,0,0.1)',
-                  border: '1px solid rgba(0,0,0,0.1)',
-                  borderRadius: '12px',
-                  marginTop: '10px'
+                  boxShadow: "0 10px 30px rgba(0,0,0,0.1)",
+                  border: "1px solid rgba(0,0,0,0.1)",
+                  borderRadius: "12px",
+                  marginTop: "10px",
                 }}
               >
                 <div className="d-flex flex-column gap-6">
@@ -95,9 +101,9 @@ export default function Header() {
                     <ul className="header-menu list-unstyled mb-0 d-flex flex-column gap-2">
                       {navigationData.mainMenu.map((item, index) => (
                         <li key={index} className="header-item">
-                          <Link 
-                            href={item.href} 
-                            className="header-link hstack gap-2 fs-7 fw-bold text-dark" 
+                          <Link
+                            href={item.href}
+                            className="header-link hstack gap-2 fs-7 fw-bold text-dark"
                             onClick={() => setIsDropdownOpen(false)}
                           >
                             <Image
@@ -113,23 +119,32 @@ export default function Header() {
                       ))}
                     </ul>
                     <div className="hstack gap-3">
-                      <button 
-                        className="btn btn-primary fs-6 px-3 py-2 w-100 hstack justify-content-center" 
+                      <button
+                        className="btn btn-primary fs-6 px-3 py-2 w-100 hstack justify-content-center"
                         onClick={() => {
                           handleBookCall();
                           setIsDropdownOpen(false);
                         }}
                       >
-                        <iconify-icon icon="lucide:calendar" className="fs-6 me-2"></iconify-icon>
+                        <iconify-icon
+                          icon="lucide:calendar"
+                          className="fs-6 me-2"
+                        ></iconify-icon>
                         Book a Call
                       </button>
                     </div>
                   </div>
                   <div className="d-flex flex-column gap-1">
-                    <a className="text-dark text-opacity-70" href={`tel:${contactData.phone}`}>
+                    <a
+                      className="text-dark text-opacity-70"
+                      href={`tel:${contactData.phone}`}
+                    >
                       {contactData.phone}
                     </a>
-                    <a className="text-dark fw-bold" href={`mailto:${contactData.email}`}>
+                    <a
+                      className="text-dark fw-bold"
+                      href={`mailto:${contactData.email}`}
+                    >
                       {contactData.email}
                     </a>
                   </div>

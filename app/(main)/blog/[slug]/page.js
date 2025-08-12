@@ -1,8 +1,8 @@
 import Image from 'next/image';
 import Link from 'next/link';
-import AosInit from '../../components/AosInit';
-import Footer from '../../components/Footer';
-import { COMPANY_INFO } from '../../constants';
+import AosInit from '../../../components/AosInit';
+import Footer from '../../../components/Footer';
+import { COMPANY_INFO } from '../../../constants';
 
 // This would typically come from a database or CMS
 const blogPosts = {

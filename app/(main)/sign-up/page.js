@@ -1,13 +1,10 @@
-import Header from '../components/Header';
-import Image from 'next/image';
-import Link from 'next/link';
-import Footer from '../components/Footer';
+import Image from "next/image";
+import Link from "next/link";
+import Footer from "../../components/Footer";
 
 export default function SignUp() {
   return (
     <>
-      <Header />
-      
       {/* Page Wrapper */}
       <div className="page-wrapper overflow-hidden">
         {/* Sign Up Section */}
@@ -36,7 +33,7 @@ export default function SignUp() {
                       Join us and start your journey today
                     </p>
                   </div>
-                  
+
                   <form className="d-flex flex-column gap-4">
                     <div className="row">
                       <div className="col-md-6">
@@ -96,12 +93,18 @@ export default function SignUp() {
                         id="terms"
                       />
                       <label className="form-check-label" htmlFor="terms">
-                        I agree to the{' '}
-                        <Link href="/terms" className="text-primary text-decoration-none">
+                        I agree to the{" "}
+                        <Link
+                          href="/terms"
+                          className="text-primary text-decoration-none"
+                        >
                           Terms of Service
-                        </Link>{' '}
-                        and{' '}
-                        <Link href="/privacy" className="text-primary text-decoration-none">
+                        </Link>{" "}
+                        and{" "}
+                        <Link
+                          href="/privacy"
+                          className="text-primary text-decoration-none"
+                        >
                           Privacy Policy
                         </Link>
                       </label>
@@ -110,16 +113,19 @@ export default function SignUp() {
                       Create Account
                     </button>
                   </form>
-                  
+
                   <div className="text-center mt-4">
                     <p className="mb-0">
-                      Already have an account?{' '}
-                      <Link href="/sign-in" className="text-primary text-decoration-none">
+                      Already have an account?{" "}
+                      <Link
+                        href="/sign-in"
+                        className="text-primary text-decoration-none"
+                      >
                         Sign in
                       </Link>
                     </p>
                   </div>
-                  
+
                   <div className="mt-4">
                     <div className="d-flex align-items-center mb-3">
                       <hr className="flex-grow-1" />
@@ -128,11 +134,17 @@ export default function SignUp() {
                     </div>
                     <div className="d-flex gap-3">
                       <button className="btn btn-outline-secondary flex-grow-1">
-                        <iconify-icon icon="lucide:github" className="me-2"></iconify-icon>
+                        <iconify-icon
+                          icon="lucide:github"
+                          className="me-2"
+                        ></iconify-icon>
                         GitHub
                       </button>
                       <button className="btn btn-outline-secondary flex-grow-1">
-                        <iconify-icon icon="lucide:mail" className="me-2"></iconify-icon>
+                        <iconify-icon
+                          icon="lucide:mail"
+                          className="me-2"
+                        ></iconify-icon>
                         Google
                       </button>
                     </div>
@@ -147,11 +159,14 @@ export default function SignUp() {
       </div>
 
       {/* Scroll to Top Button */}
-      <div className="get-template hstack gap-2 position-fixed bottom-0 end-0 m-4" style={{ zIndex: 1000 }}>
+      <div
+        className="get-template hstack gap-2 position-fixed bottom-0 end-0 m-4"
+        style={{ zIndex: 1000 }}
+      >
         <button
           className="btn bg-primary p-2 round-52 rounded-circle hstack justify-content-center flex-shrink-0"
           id="scrollToTopBtn"
-          style={{ display: 'none' }}
+          style={{ display: "none" }}
         >
           <iconify-icon
             icon="lucide:arrow-up"

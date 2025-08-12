@@ -1,15 +1,15 @@
-import { blogData, pageConfig, bannerImages } from '../data';
-import PageBanner from '../components/ui/PageBanner';
-import BlogCard from '../components/ui/BlogCard';
-import AosInit from '../components/AosInit';
-import Footer from '../components/Footer';
-import ScrollToTop from '../components/ui/ScrollToTop';
+import AosInit from "../../components/AosInit";
+import Footer from "../../components/Footer";
+import BlogCard from "../../components/ui/BlogCard";
+import PageBanner from "../../components/ui/PageBanner";
+import ScrollToTop from "../../components/ui/ScrollToTop";
+import { bannerImages, blogData, pageConfig } from "../../data";
 
 export default function Blog() {
   return (
     <>
       <AosInit />
-      
+
       {/* Page Wrapper */}
       <div className="page-wrapper overflow-hidden">
         <PageBanner

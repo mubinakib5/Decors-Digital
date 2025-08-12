@@ -1,13 +1,10 @@
-import Header from '../components/Header';
-import Image from 'next/image';
-import Link from 'next/link';
-import Footer from '../components/Footer';
+import Image from "next/image";
+import Link from "next/link";
+import Footer from "../../components/Footer";
 
 export default function SignIn() {
   return (
     <>
-      <Header />
-      
       {/* Page Wrapper */}
       <div className="page-wrapper overflow-hidden">
         {/* Sign In Section */}
@@ -36,7 +33,7 @@ export default function SignIn() {
                       Sign in to your account to continue
                     </p>
                   </div>
-                  
+
                   <form className="d-flex flex-column gap-4">
                     <div className="form-floating">
                       <input
@@ -67,7 +64,10 @@ export default function SignIn() {
                           Remember me
                         </label>
                       </div>
-                      <Link href="/forgot-password" className="text-primary text-decoration-none">
+                      <Link
+                        href="/forgot-password"
+                        className="text-primary text-decoration-none"
+                      >
                         Forgot password?
                       </Link>
                     </div>
@@ -75,16 +75,19 @@ export default function SignIn() {
                       Sign In
                     </button>
                   </form>
-                  
+
                   <div className="text-center mt-4">
                     <p className="mb-0">
-                      Don't have an account?{' '}
-                      <Link href="/sign-up" className="text-primary text-decoration-none">
+                      Don't have an account?{" "}
+                      <Link
+                        href="/sign-up"
+                        className="text-primary text-decoration-none"
+                      >
                         Sign up
                       </Link>
                     </p>
                   </div>
-                  
+
                   <div className="mt-4">
                     <div className="d-flex align-items-center mb-3">
                       <hr className="flex-grow-1" />
@@ -93,11 +96,17 @@ export default function SignIn() {
                     </div>
                     <div className="d-flex gap-3">
                       <button className="btn btn-outline-secondary flex-grow-1">
-                        <iconify-icon icon="lucide:github" className="me-2"></iconify-icon>
+                        <iconify-icon
+                          icon="lucide:github"
+                          className="me-2"
+                        ></iconify-icon>
                         GitHub
                       </button>
                       <button className="btn btn-outline-secondary flex-grow-1">
-                        <iconify-icon icon="lucide:mail" className="me-2"></iconify-icon>
+                        <iconify-icon
+                          icon="lucide:mail"
+                          className="me-2"
+                        ></iconify-icon>
                         Google
                       </button>
                     </div>
@@ -112,11 +121,14 @@ export default function SignIn() {
       </div>
 
       {/* Scroll to Top Button */}
-      <div className="get-template hstack gap-2 position-fixed bottom-0 end-0 m-4" style={{ zIndex: 1000 }}>
+      <div
+        className="get-template hstack gap-2 position-fixed bottom-0 end-0 m-4"
+        style={{ zIndex: 1000 }}
+      >
         <button
           className="btn bg-primary p-2 round-52 rounded-circle hstack justify-content-center flex-shrink-0"
           id="scrollToTopBtn"
-          style={{ display: 'none' }}
+          style={{ display: "none" }}
         >
           <iconify-icon
             icon="lucide:arrow-up"

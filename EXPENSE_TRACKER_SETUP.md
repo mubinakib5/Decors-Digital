@@ -1,13 +1,17 @@
-# Daily Expense Tracker Setup Guide
+# Financial Management System Setup Guide
 
-This guide will help you set up the Daily Expense Tracker feature for your agency.
+This guide will help you set up the Financial Management System (Income & Expense Tracker) feature for your agency.
 
 ## Features
 
 - **Admin Authentication**: Secure login with hardcoded credentials
-- **Daily Expense Tracking**: Add, edit, and delete expenses
-- **Expense Categories**: Predefined categories for better organization
-- **Summary Dashboard**: View total expenses, entry count, and monthly totals
+- **Comprehensive Financial Management**: Track both income and expenses
+- **Income Tracking**: Add, edit, and delete income entries
+- **Expense Tracking**: Add, edit, and delete expenses
+- **Financial Overview**: Dashboard with income, expenses, and net amount
+- **Category Management**: Predefined categories for both income and expenses
+- **Advanced Filtering**: Filter by date, category, and search terms
+- **Data Visualization**: Pie charts for expense and income breakdown
 - **Responsive Design**: Works on desktop and mobile devices
 
 ## Prerequisites
@@ -64,11 +68,12 @@ This guide will help you set up the Daily Expense Tracker feature for your agenc
    - Username: `admin`
    - Password: `admin123456`
 
-3. **Manage Expenses**
-   - Add new expenses with date, category, description, and amount
-   - Edit existing expenses
-   - Delete expenses with confirmation
-   - View expense summary and statistics
+3. **Financial Management**
+   - **Overview Tab**: View total income, expenses, and net amount with charts
+   - **Income Tab**: Add, edit, and delete income entries
+   - **Expenses Tab**: Add, edit, and delete expenses
+   - Filter and search functionality for both income and expenses
+   - Data visualization with pie charts for category breakdown
 
 ## API Endpoints
 
@@ -84,6 +89,13 @@ This guide will help you set up the Daily Expense Tracker feature for your agenc
 - `PUT /api/admin/expenses/[id]` - Update expense
 - `DELETE /api/admin/expenses/[id]` - Delete expense
 
+### Income
+
+- `GET /api/admin/income` - Get all income
+- `POST /api/admin/income` - Create new income
+- `PUT /api/admin/income/[id]` - Update income
+- `DELETE /api/admin/income/[id]` - Delete income
+
 ## Security Features
 
 - **JWT Authentication**: Secure token-based authentication
@@ -94,11 +106,27 @@ This guide will help you set up the Daily Expense Tracker feature for your agenc
 
 ## Database Schema
 
+### Expenses Collection
+
 ```javascript
 {
   _id: ObjectId,
   date: Date,
-  category: String,  // e.g., "Operational Cost", "Employee Salary", "Marketing"
+  category: String,  // e.g., "Operational Cost", "Employee Salary", "Travel"
+  description: String,
+  amount: Number,
+  createdAt: Date,
+  updatedAt: Date
+}
+```
+
+### Income Collection
+
+```javascript
+{
+  _id: ObjectId,
+  date: Date,
+  category: String,  // e.g., "AV", "Web Development", "Social Media Services"
   description: String,
   amount: Number,
   createdAt: Date,
@@ -110,13 +138,24 @@ This guide will help you set up the Daily Expense Tracker feature for your agenc
 
 - Operational Cost
 - Employee Salary
-- Marketing
-- Office Supplies
-- Software Licenses
 - Travel
+- Office Supplies
+- Premium Licenses
+- Travel Allowance
 - Utilities
 - Rent
 - Insurance
+- Intern TA
+- Other
+
+## Income Categories
+
+- AV
+- Web Development
+- Social Media Services
+- Photography
+- Strategy
+- Consultation
 - Other
 
 ## Production Deployment

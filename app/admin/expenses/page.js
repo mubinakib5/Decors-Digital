@@ -2,26 +2,73 @@
 
 import { ArcElement, Chart as ChartJS, Legend, Tooltip } from "chart.js";
 import { useRouter } from "next/navigation";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Pie } from "react-chartjs-2";
 
 // Register Chart.js components
 ChartJS.register(ArcElement, Tooltip, Legend);
 
-export default function ExpensesPage() {
+export default function FinancialManagementPage() {
   const [expenses, setExpenses] = useState([]);
+  const [income, setIncome] = useState([]);
   const [filteredExpenses, setFilteredExpenses] = useState([]);
+  const [filteredIncome, setFilteredIncome] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [showAddForm, setShowAddForm] = useState(false);
+  const [activeTab, setActiveTab] = useState("overview"); // overview, expenses, income
+  const [showExpenseForm, setShowExpenseForm] = useState(false);
+  const [showIncomeForm, setShowIncomeForm] = useState(false);
   const [editingExpense, setEditingExpense] = useState(null);
-  const [formData, setFormData] = useState({
+  const [editingIncome, setEditingIncome] = useState(null);
+  const [expenseFormData, setExpenseFormData] = useState({
+    date: new Date().toISOString().split("T")[0],
+    category: "",
+    description: "",
+    amount: "",
+  });
+  const [incomeFormData, setIncomeFormData] = useState({
     date: new Date().toISOString().split("T")[0],
     category: "",
     description: "",
     amount: "",
   });
   const [error, setError] = useState("");
+  const [toast, setToast] = useState({
+    show: false,
+    message: "",
+    type: "success",
+  });
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleteItem, setDeleteItem] = useState({ type: "", id: "" });
   const router = useRouter();
+
+  // Toast notification helper
+  const showToast = (message, type = "success") => {
+    setToast({ show: true, message, type });
+    setTimeout(
+      () => setToast({ show: false, message: "", type: "success" }),
+      3000
+    );
+  };
+
+  // Confirmation dialog helper
+  const showDeleteConfirmation = (type, id) => {
+    setDeleteItem({ type, id });
+    setShowDeleteConfirm(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    try {
+      if (deleteItem.type === "expense") {
+        await handleDeleteExpense(deleteItem.id);
+      } else if (deleteItem.type === "income") {
+        await handleDeleteIncome(deleteItem.id);
+      }
+      setShowDeleteConfirm(false);
+      setDeleteItem({ type: "", id: "" });
+    } catch (error) {
+      console.error("Error in handleConfirmDelete:", error);
+    }
+  };
 
   // Filter and search states
   const [searchTerm, setSearchTerm] = useState("");
@@ -32,16 +79,27 @@ export default function ExpensesPage() {
   const [sortOrder, setSortOrder] = useState("desc");
   const [isFilterExpanded, setIsFilterExpanded] = useState(true);
 
-  const categories = [
+  const expenseCategories = [
     "Operational Cost",
     "Employee Salary",
-    "Marketing",
-    "Office Supplies",
-    "Software Licenses",
     "Travel",
+    "Office Supplies",
+    "Premium Licenses",
+    "Travel Allowance",
     "Utilities",
     "Rent",
     "Insurance",
+    "Intern TA",
+    "Other",
+  ];
+
+  const incomeCategories = [
+    "AV",
+    "Web Development",
+    "Social Media Services",
+    "Photography",
+    "Strategy",
+    "Consultation",
     "Other",
   ];
 
@@ -72,13 +130,14 @@ export default function ExpensesPage() {
   ];
 
   useEffect(() => {
-    fetchExpenses();
+    fetchData();
   }, []);
 
   useEffect(() => {
     applyFilters();
   }, [
     expenses,
+    income,
     searchTerm,
     selectedMonth,
     selectedYear,
@@ -87,59 +146,86 @@ export default function ExpensesPage() {
     sortOrder,
   ]);
 
-  const fetchExpenses = async () => {
+  const fetchData = async () => {
     try {
-      const response = await fetch("/api/admin/expenses");
-      if (response.ok) {
-        const data = await response.json();
-        setExpenses(data.expenses);
-      } else if (response.status === 401) {
+      const [expensesResponse, incomeResponse] = await Promise.all([
+        fetch("/api/admin/expenses"),
+        fetch("/api/admin/income"),
+      ]);
+
+      if (expensesResponse.ok) {
+        const expensesData = await expensesResponse.json();
+        setExpenses(expensesData.expenses);
+      } else if (expensesResponse.status === 401) {
         router.push("/admin/login");
+        return;
+      }
+
+      if (incomeResponse.ok) {
+        const incomeData = await incomeResponse.json();
+        setIncome(incomeData.income);
+      } else if (incomeResponse.status === 401) {
+        router.push("/admin/login");
+        return;
       }
     } catch (error) {
-      setError("Failed to fetch expenses");
+      setError("Failed to fetch data");
     } finally {
       setLoading(false);
     }
   };
 
   const applyFilters = () => {
-    let filtered = [...expenses];
+    let filteredExp = [...expenses];
+    let filteredInc = [...income];
 
     // Search filter
     if (searchTerm) {
-      filtered = filtered.filter((expense) =>
+      filteredExp = filteredExp.filter((expense) =>
         expense.description.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+      filteredInc = filteredInc.filter((income) =>
+        income.description.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
 
     // Month filter
     if (selectedMonth !== "") {
-      filtered = filtered.filter((expense) => {
+      filteredExp = filteredExp.filter((expense) => {
         const expenseDate = new Date(expense.date);
         return expenseDate.getMonth() === parseInt(selectedMonth);
+      });
+      filteredInc = filteredInc.filter((income) => {
+        const incomeDate = new Date(income.date);
+        return incomeDate.getMonth() === parseInt(selectedMonth);
       });
     }
 
     // Year filter
     if (selectedYear !== "") {
-      filtered = filtered.filter((expense) => {
+      filteredExp = filteredExp.filter((expense) => {
         const expenseDate = new Date(expense.date);
         return expenseDate.getFullYear() === parseInt(selectedYear);
+      });
+      filteredInc = filteredInc.filter((income) => {
+        const incomeDate = new Date(income.date);
+        return incomeDate.getFullYear() === parseInt(selectedYear);
       });
     }
 
     // Category filter
     if (selectedCategory !== "") {
-      filtered = filtered.filter(
+      filteredExp = filteredExp.filter(
         (expense) => expense.category === selectedCategory
+      );
+      filteredInc = filteredInc.filter(
+        (income) => income.category === selectedCategory
       );
     }
 
-    // Sorting
-    filtered.sort((a, b) => {
+    // Sort
+    const sortFunction = (a, b) => {
       let aValue, bValue;
-
       switch (sortBy) {
         case "date":
           aValue = new Date(a.date);
@@ -150,12 +236,8 @@ export default function ExpensesPage() {
           bValue = b.amount;
           break;
         case "category":
-          aValue = a.category.toLowerCase();
-          bValue = b.category.toLowerCase();
-          break;
-        case "description":
-          aValue = a.description.toLowerCase();
-          bValue = b.description.toLowerCase();
+          aValue = a.category;
+          bValue = b.category;
           break;
         default:
           aValue = new Date(a.date);
@@ -167,153 +249,16 @@ export default function ExpensesPage() {
       } else {
         return aValue < bValue ? 1 : -1;
       }
-    });
+    };
 
-    setFilteredExpenses(filtered);
+    filteredExp.sort(sortFunction);
+    filteredInc.sort(sortFunction);
+
+    setFilteredExpenses(filteredExp);
+    setFilteredIncome(filteredInc);
   };
 
-  const clearFilters = () => {
-    setSearchTerm("");
-    setSelectedMonth("");
-    setSelectedYear("");
-    setSelectedCategory("");
-    setSortBy("date");
-    setSortOrder("desc");
-  };
-
-  const exportToPDF = async () => {
-    try {
-      // Dynamic import to avoid SSR issues
-      const jsPDFModule = await import("jspdf");
-      const jsPDF = jsPDFModule.default;
-      const doc = new jsPDF();
-
-      // Add title
-      doc.setFontSize(20);
-      doc.setFont("helvetica", "bold");
-      doc.text("Expense Report", 14, 22);
-
-      // Add subtitle with date
-      doc.setFontSize(12);
-      doc.setFont("helvetica", "normal");
-      doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 14, 32);
-
-      // Add summary information
-      doc.setFontSize(14);
-      doc.setFont("helvetica", "bold");
-      doc.text("Summary", 14, 45);
-
-      doc.setFontSize(10);
-      doc.setFont("helvetica", "normal");
-      doc.text(`Total Expenses: ৳${Number(totalAmount).toFixed(2)}`, 14, 55);
-      doc.text(`Total Entries: ${filteredExpenses.length}`, 14, 62);
-
-      // Add filter information if any filters are applied
-      const activeFilters = [];
-      if (searchTerm) activeFilters.push(`Search: "${searchTerm}"`);
-      if (selectedMonth !== "") {
-        const monthName =
-          months.find((m) => m.value === selectedMonth)?.label || selectedMonth;
-        activeFilters.push(`Month: ${monthName}`);
-      }
-      if (selectedYear !== "") activeFilters.push(`Year: ${selectedYear}`);
-      if (selectedCategory !== "")
-        activeFilters.push(`Category: ${selectedCategory}`);
-
-      if (activeFilters.length > 0) {
-        doc.setFontSize(12);
-        doc.setFont("helvetica", "bold");
-        doc.text("Applied Filters:", 14, 75);
-        doc.setFontSize(10);
-        doc.setFont("helvetica", "normal");
-        activeFilters.forEach((filter, index) => {
-          doc.text(filter, 14, 82 + index * 7);
-        });
-      }
-
-      // Prepare table data
-      const tableData = filteredExpenses.map((expense) => [
-        new Date(expense.date).toLocaleDateString(),
-        expense.category,
-        expense.description,
-        `৳${Number(expense.amount).toFixed(2)}`,
-      ]);
-
-      // Add table manually since autoTable might not be available
-      const startY =
-        activeFilters.length > 0 ? 95 + activeFilters.length * 7 : 85;
-
-      let currentY = startY;
-
-      // Add table header
-      doc.setFillColor(220, 53, 69); // Red background
-      doc.setTextColor(255, 255, 255); // White text
-      doc.setFontSize(10);
-      doc.setFont("helvetica", "bold");
-      doc.rect(14, currentY, 165, 8, "F");
-      doc.text("Date", 16, currentY + 6);
-      doc.text("Category", 45, currentY + 6);
-      doc.text("Description", 85, currentY + 6);
-      doc.text("Amount", 150, currentY + 6);
-
-      currentY += 10;
-
-      // Add table rows
-      doc.setFillColor(255, 255, 255);
-      doc.setTextColor(0, 0, 0);
-      doc.setFontSize(9);
-      doc.setFont("helvetica", "normal");
-
-      tableData.forEach((row, index) => {
-        // Alternate row colors
-        if (index % 2 === 1) {
-          doc.setFillColor(248, 249, 250);
-          doc.rect(14, currentY - 2, 165, 8, "F");
-        } else {
-          doc.setFillColor(255, 255, 255);
-          doc.rect(14, currentY - 2, 165, 8, "F");
-        }
-
-        doc.text(row[0], 16, currentY + 6); // Date
-        doc.text(row[1], 45, currentY + 6); // Category
-        doc.text(row[2], 85, currentY + 6); // Description
-        doc.text(row[3], 150, currentY + 6, { align: "right" }); // Amount
-
-        currentY += 10;
-
-        // Add new page if needed
-        if (currentY > 250) {
-          doc.addPage();
-          currentY = 20;
-        }
-      });
-
-      // Add footer
-      const pageCount = doc.internal.getNumberOfPages();
-      for (let i = 1; i <= pageCount; i++) {
-        doc.setPage(i);
-        doc.setFontSize(8);
-        doc.setFont("helvetica", "italic");
-        doc.text(
-          `Page ${i} of ${pageCount} - Expense Tracker Report`,
-          doc.internal.pageSize.width / 2,
-          doc.internal.pageSize.height - 10,
-          { align: "center" }
-        );
-      }
-
-      // Save the PDF
-      const fileName = `expense-report-${
-        new Date().toISOString().split("T")[0]
-      }.pdf`;
-      doc.save(fileName);
-    } catch (error) {
-      console.error("Error generating PDF:", error);
-      alert("Failed to generate PDF. Please try again.");
-    }
-  };
-
-  const handleSubmit = async (e) => {
+  const handleExpenseSubmit = async (e) => {
     e.preventDefault();
     setError("");
 
@@ -321,1055 +266,1057 @@ export default function ExpensesPage() {
       const url = editingExpense
         ? `/api/admin/expenses/${editingExpense._id}`
         : "/api/admin/expenses";
-
       const method = editingExpense ? "PUT" : "POST";
 
       const response = await fetch(url, {
         method,
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(formData),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(expenseFormData),
       });
 
       if (response.ok) {
-        setShowAddForm(false);
+        setShowExpenseForm(false);
         setEditingExpense(null);
-        setFormData({
+        setExpenseFormData({
           date: new Date().toISOString().split("T")[0],
           category: "",
           description: "",
           amount: "",
         });
-        fetchExpenses();
+        fetchData();
+        showToast(
+          editingExpense
+            ? "Expense updated successfully!"
+            : "Expense added successfully!"
+        );
       } else {
         const data = await response.json();
         setError(data.message || "Failed to save expense");
+        showToast(data.message || "Failed to save expense", "error");
       }
     } catch (error) {
-      setError("An error occurred");
+      setError("Failed to save expense");
+      showToast("Failed to save expense", "error");
     }
   };
 
-  const handleEdit = (expense) => {
+  const handleIncomeSubmit = async (e) => {
+    e.preventDefault();
+    setError("");
+
+    try {
+      const url = editingIncome
+        ? `/api/admin/income/${editingIncome._id}`
+        : "/api/admin/income";
+      const method = editingIncome ? "PUT" : "POST";
+
+      const response = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(incomeFormData),
+      });
+
+      if (response.ok) {
+        setShowIncomeForm(false);
+        setEditingIncome(null);
+        setIncomeFormData({
+          date: new Date().toISOString().split("T")[0],
+          category: "",
+          description: "",
+          amount: "",
+        });
+        fetchData();
+        showToast(
+          editingIncome
+            ? "Income updated successfully!"
+            : "Income added successfully!"
+        );
+      } else {
+        const data = await response.json();
+        setError(data.message || "Failed to save income");
+        showToast(data.message || "Failed to save income", "error");
+      }
+    } catch (error) {
+      setError("Failed to save income");
+      showToast("Failed to save income", "error");
+    }
+  };
+
+  const handleEditExpense = (expense) => {
     setEditingExpense(expense);
-    setFormData({
-      date: expense.date.split("T")[0],
+    setExpenseFormData({
+      date: new Date(expense.date).toISOString().split("T")[0],
       category: expense.category,
       description: expense.description,
       amount: expense.amount.toString(),
     });
-    setShowAddForm(true);
+    setShowExpenseForm(true);
   };
 
-  const handleDelete = async (id) => {
-    if (!confirm("Are you sure you want to delete this expense?")) {
-      return;
-    }
+  const handleEditIncome = (income) => {
+    setEditingIncome(income);
+    setIncomeFormData({
+      date: new Date(income.date).toISOString().split("T")[0],
+      category: income.category,
+      description: income.description,
+      amount: income.amount.toString(),
+    });
+    setShowIncomeForm(true);
+  };
 
+  const handleDeleteExpense = async (id) => {
     try {
       const response = await fetch(`/api/admin/expenses/${id}`, {
         method: "DELETE",
       });
 
       if (response.ok) {
-        fetchExpenses();
+        fetchData();
+        showToast("Expense deleted successfully!");
       } else {
-        setError("Failed to delete expense");
+        const data = await response.json();
+        setError(data.message || "Failed to delete expense");
+        showToast(data.message || "Failed to delete expense", "error");
       }
     } catch (error) {
-      setError("An error occurred");
+      setError("Failed to delete expense");
+      showToast("Failed to delete expense", "error");
     }
   };
 
-  const handleLogout = async () => {
+  const handleDeleteIncome = async (id) => {
     try {
-      await fetch("/api/admin/logout", { method: "POST" });
+      const response = await fetch(`/api/admin/income/${id}`, {
+        method: "DELETE",
+      });
+
+      if (response.ok) {
+        fetchData();
+        showToast("Income deleted successfully!");
+      } else {
+        const data = await response.json();
+        setError(data.message || "Failed to delete income");
+        showToast(data.message || "Failed to delete income", "error");
+      }
     } catch (error) {
-      console.error("Logout API error:", error);
+      setError("Failed to delete income");
+      showToast("Failed to delete income", "error");
     }
-    router.push("/admin/login");
   };
 
-  const totalAmount = filteredExpenses.reduce(
-    (sum, expense) => sum + Number(expense.amount),
+  // Calculate totals
+  const totalExpenses = filteredExpenses.reduce(
+    (sum, expense) => sum + expense.amount,
     0
   );
+  const totalIncome = filteredIncome.reduce(
+    (sum, income) => sum + income.amount,
+    0
+  );
+  const netAmount = totalIncome - totalExpenses;
 
-  // Calculate pie chart data
-  const pieChartData = React.useMemo(() => {
-    const categoryTotals = {};
+  // Prepare chart data
+  const expenseChartData = {
+    labels: expenseCategories,
+    datasets: [
+      {
+        data: expenseCategories.map((category) =>
+          filteredExpenses
+            .filter((expense) => expense.category === category)
+            .reduce((sum, expense) => sum + expense.amount, 0)
+        ),
+        backgroundColor: [
+          "#FF6384",
+          "#36A2EB",
+          "#FFCE56",
+          "#4BC0C0",
+          "#9966FF",
+          "#FF9F40",
+          "#FF6384",
+          "#C9CBCF",
+          "#4BC0C0",
+          "#FF6384",
+          "#36A2EB",
+        ],
+      },
+    ],
+  };
 
-    filteredExpenses.forEach((expense) => {
-      const category = expense.category;
-      const amount = Number(expense.amount);
-
-      if (categoryTotals[category]) {
-        categoryTotals[category] += amount;
-      } else {
-        categoryTotals[category] = amount;
-      }
-    });
-
-    const categories = Object.keys(categoryTotals);
-    const amounts = Object.values(categoryTotals);
-
-    // Generate colors for each category
-    const colors = [
-      "#DC2626", // Red
-      "#2563EB", // Blue
-      "#059669", // Green
-      "#D97706", // Orange
-      "#7C3AED", // Purple
-      "#DB2777", // Pink
-      "#0891B2", // Cyan
-      "#65A30D", // Lime
-      "#EA580C", // Amber
-      "#9333EA", // Violet
-    ];
-
-    return {
-      labels: categories,
-      datasets: [
-        {
-          data: amounts,
-          backgroundColor: categories.map(
-            (_, index) => colors[index % colors.length]
-          ),
-          borderColor: categories.map(
-            (_, index) => colors[index % colors.length]
-          ),
-          borderWidth: 2,
-          hoverBorderWidth: 3,
-        },
-      ],
-    };
-  }, [filteredExpenses]);
+  const incomeChartData = {
+    labels: incomeCategories,
+    datasets: [
+      {
+        data: incomeCategories.map((category) =>
+          filteredIncome
+            .filter((income) => income.category === category)
+            .reduce((sum, income) => sum + income.amount, 0)
+        ),
+        backgroundColor: [
+          "#4BC0C0",
+          "#FF6384",
+          "#36A2EB",
+          "#FFCE56",
+          "#9966FF",
+          "#FF9F40",
+          "#C9CBCF",
+        ],
+      },
+    ],
+  };
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100">
-        <div className="text-xl font-semibold text-gray-600">Loading...</div>
+      <div className="container mx-auto px-4 py-8">
+        <div className="text-center">
+          <div className="spinner-border" role="status">
+            <span className="visually-hidden">Loading...</span>
+          </div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
-      {/* Modern Header */}
-      <div className="bg-white shadow-lg border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-6 py-4">
-          <div className="flex justify-between items-center">
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-gradient-to-r from-red-600 to-red-700 rounded-lg flex items-center justify-center">
-                <svg
-                  className="w-6 h-6 text-white"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"
-                  />
-                </svg>
-              </div>
-              <h1 className="text-2xl font-bold text-gray-900">
-                Expense Tracker
-              </h1>
-            </div>
-            <button
-              onClick={handleLogout}
-              className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-medium transition-colors duration-200 flex items-center space-x-2"
-            >
-              <svg
-                className="w-4 h-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
-                />
-              </svg>
-              <span>Logout</span>
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <div className="max-w-7xl mx-auto px-6 py-8">
-        {/* Enhanced Summary Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100 hover:shadow-xl transition-shadow duration-300">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600 mb-1">
-                  Total Expenses
-                </p>
-                <p className="text-3xl font-bold text-red-600">
-                  ৳{Number(totalAmount).toFixed(2)}
-                </p>
-              </div>
-              <div className="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
-                <svg
-                  className="w-6 h-6 text-red-600"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"
-                  />
-                </svg>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100 hover:shadow-xl transition-shadow duration-300">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600 mb-1">
-                  Total Entries
-                </p>
-                <p className="text-3xl font-bold text-green-600">
-                  {filteredExpenses.length}
-                </p>
-              </div>
-              <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-                <svg
-                  className="w-6 h-6 text-green-600"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                  />
-                </svg>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100 hover:shadow-xl transition-shadow duration-300">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600 mb-1">
-                  This Month
-                </p>
-                <p className="text-3xl font-bold text-blue-600">
-                  ৳
-                  {expenses
-                    .filter((expense) => {
-                      const expenseDate = new Date(expense.date);
-                      const now = new Date();
-                      return (
-                        expenseDate.getMonth() === now.getMonth() &&
-                        expenseDate.getFullYear() === now.getFullYear()
-                      );
-                    })
-                    .reduce((sum, expense) => sum + expense.amount, 0)
-                    .toFixed(2)}
-                </p>
-              </div>
-              <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                <svg
-                  className="w-6 h-6 text-blue-600"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                  />
-                </svg>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Pie Chart Section */}
-        {filteredExpenses.length > 0 && (
-          <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100 mb-8">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-bold text-gray-900 flex items-center space-x-2">
-                <svg
-                  className="w-6 h-6 text-red-600"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z"
-                  />
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z"
-                  />
-                </svg>
-                <span>Expense Distribution by Category</span>
-              </h2>
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              {/* Chart */}
-              <div className="flex justify-center">
-                <div className="w-full max-w-md">
-                  <Pie
-                    data={pieChartData}
-                    options={{
-                      responsive: true,
-                      maintainAspectRatio: true,
-                      plugins: {
-                        legend: {
-                          position: "bottom",
-                          labels: {
-                            padding: 20,
-                            usePointStyle: true,
-                            font: {
-                              size: 12,
-                              weight: "500",
-                            },
-                          },
-                        },
-                        tooltip: {
-                          callbacks: {
-                            label: function (context) {
-                              const label = context.label || "";
-                              const value = context.parsed;
-                              const total = context.dataset.data.reduce(
-                                (a, b) => a + b,
-                                0
-                              );
-                              const percentage = (
-                                (value / total) *
-                                100
-                              ).toFixed(1);
-                              return `${label}: ৳${value.toFixed(
-                                2
-                              )} (${percentage}%)`;
-                            },
-                          },
-                        },
-                      },
-                    }}
-                  />
-                </div>
-              </div>
-
-              {/* Category Breakdown */}
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold text-gray-800 mb-4">
-                  Category Breakdown
-                </h3>
-                <div className="space-y-3">
-                  {pieChartData.labels.map((category, index) => {
-                    const amount = pieChartData.datasets[0].data[index];
-                    const percentage = ((amount / totalAmount) * 100).toFixed(
-                      1
-                    );
-                    const color =
-                      pieChartData.datasets[0].backgroundColor[index];
-
-                    return (
-                      <div
-                        key={category}
-                        className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
-                      >
-                        <div className="flex items-center space-x-3">
-                          <div
-                            className="w-4 h-4 rounded-full"
-                            style={{ backgroundColor: color }}
-                          ></div>
-                          <span className="font-medium text-gray-900">
-                            {category}
-                          </span>
-                        </div>
-                        <div className="text-right">
-                          <div className="font-semibold text-gray-900">
-                            ৳{amount.toFixed(2)}
-                          </div>
-                          <div className="text-sm text-gray-600">
-                            {percentage}%
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Enhanced Add Expense Button and Export */}
-        <div className="mb-8 flex flex-wrap gap-4">
+    <div className="container mx-auto px-4 py-8">
+      <div className="d-flex justify-content-between align-items-center mb-4 pb-3">
+        <h1 className="h2 mb-0">Financial Management</h1>
+        <div className="d-flex gap-2">
           <button
+            className="btn btn-success"
             onClick={() => {
-              setShowAddForm(true);
-              setEditingExpense(null);
-              setFormData({
+              setShowIncomeForm(true);
+              setEditingIncome(null);
+              setIncomeFormData({
                 date: new Date().toISOString().split("T")[0],
                 category: "",
                 description: "",
                 amount: "",
               });
             }}
-            className="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white px-6 py-3 rounded-lg font-medium transition-all duration-200 flex items-center space-x-2 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
           >
-            <svg
-              className="w-5 h-5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-              />
-            </svg>
-            <span>Add New Expense</span>
+            <i className="bi bi-plus-circle me-2"></i>
+            Add Income
           </button>
-
           <button
-            onClick={exportToPDF}
-            disabled={filteredExpenses.length === 0}
-            className="bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white px-6 py-3 rounded-lg font-medium transition-all duration-200 flex items-center space-x-2 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+            className="btn btn-danger"
+            onClick={() => {
+              setShowExpenseForm(true);
+              setEditingExpense(null);
+              setExpenseFormData({
+                date: new Date().toISOString().split("T")[0],
+                category: "",
+                description: "",
+                amount: "",
+              });
+            }}
           >
-            <svg
-              className="w-5 h-5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-              />
-            </svg>
-            <span>Export to PDF</span>
+            <i className="bi bi-plus-circle me-2"></i>
+            Add Expense
           </button>
         </div>
+      </div>
 
-        {/* Filter and Search Section */}
-        <div className="bg-white rounded-xl shadow-lg border border-gray-100 mb-8">
-          {/* Header - Always Visible */}
-          <div className="p-6 border-b border-gray-100">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 bg-gradient-to-r from-red-500 to-red-600 rounded-lg flex items-center justify-center">
-                  <svg
-                    className="w-5 h-5 text-white"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.207A1 1 0 013 6.5V4z"
-                    />
-                  </svg>
-                </div>
-                <div>
-                  <h3 className="text-xl font-bold text-gray-900">
-                    Filter & Search
+      {/* Navigation Tabs */}
+      <ul
+        className="nav nav-tabs mb-4 mt-5"
+        id="financialTabs"
+        role="tablist"
+        style={{ borderBottomColor: "#ff0000" }}
+      >
+        <li className="nav-item" role="presentation">
+          <button
+            className={`nav-link ${activeTab === "overview" ? "active" : ""}`}
+            onClick={() => setActiveTab("overview")}
+            style={{
+              color: activeTab === "overview" ? "#ffffff" : "#ff0000",
+              backgroundColor:
+                activeTab === "overview" ? "#ff0000" : "transparent",
+              borderColor: "#ff0000",
+              borderBottomColor:
+                activeTab === "overview" ? "#ff0000" : "transparent",
+            }}
+          >
+            Overview
+          </button>
+        </li>
+        <li className="nav-item" role="presentation">
+          <button
+            className={`nav-link ${activeTab === "expenses" ? "active" : ""}`}
+            onClick={() => setActiveTab("expenses")}
+            style={{
+              color: activeTab === "expenses" ? "#ffffff" : "#ff0000",
+              backgroundColor:
+                activeTab === "expenses" ? "#ff0000" : "transparent",
+              borderColor: "#ff0000",
+              borderBottomColor:
+                activeTab === "expenses" ? "#ff0000" : "transparent",
+            }}
+          >
+            Expenses
+          </button>
+        </li>
+        <li className="nav-item" role="presentation">
+          <button
+            className={`nav-link ${activeTab === "income" ? "active" : ""}`}
+            onClick={() => setActiveTab("income")}
+            style={{
+              color: activeTab === "income" ? "#ffffff" : "#ff0000",
+              backgroundColor:
+                activeTab === "income" ? "#ff0000" : "transparent",
+              borderColor: "#ff0000",
+              borderBottomColor:
+                activeTab === "income" ? "#ff0000" : "transparent",
+            }}
+          >
+            Income
+          </button>
+        </li>
+      </ul>
+
+      {/* Overview Tab */}
+      {activeTab === "overview" && (
+        <div className="tab-content">
+          {/* Summary Cards */}
+          <div className="row mb-4">
+            <div className="col-md-4">
+              <div className="card bg-success text-white">
+                <div className="card-body">
+                  <h5 className="card-title">Total Income</h5>
+                  <h3 className="card-text">
+                    Tk {totalIncome.toLocaleString()}
                   </h3>
-                  <p className="text-sm text-gray-600 mt-1">
-                    Find and organize your expenses
-                  </p>
                 </div>
               </div>
-              <div className="flex items-center space-x-3">
-                <button
-                  onClick={clearFilters}
-                  className="inline-flex items-center space-x-2 px-4 py-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg font-medium transition-all duration-200 border border-red-200 hover:border-red-300"
-                >
-                  <svg
-                    className="w-4 h-4"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M6 18L18 6M6 6l12 12"
-                    />
-                  </svg>
-                  <span>Clear All</span>
-                </button>
-                <button
-                  onClick={() => setIsFilterExpanded(!isFilterExpanded)}
-                  className="inline-flex items-center space-x-2 px-4 py-2 text-gray-600 hover:text-gray-700 hover:bg-gray-50 rounded-lg font-medium transition-all duration-200 border border-gray-200 hover:border-gray-300"
-                >
-                  <svg
-                    className={`w-4 h-4 transition-transform duration-200 ${
-                      isFilterExpanded ? "rotate-180" : ""
-                    }`}
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M19 9l-7 7-7-7"
-                    />
-                  </svg>
-                  <span>{isFilterExpanded ? "Hide" : "Show"} Filters</span>
-                </button>
+            </div>
+            <div className="col-md-4">
+              <div className="card bg-danger text-white">
+                <div className="card-body">
+                  <h5 className="card-title">Total Expenses</h5>
+                  <h3 className="card-text">
+                    Tk {totalExpenses.toLocaleString()}
+                  </h3>
+                </div>
+              </div>
+            </div>
+            <div className="col-md-4">
+              <div
+                className={`card ${
+                  netAmount >= 0 ? "bg-primary" : "bg-warning"
+                } text-white`}
+              >
+                <div className="card-body">
+                  <h5 className="card-title">Net Amount</h5>
+                  <h3 className="card-text">Tk {netAmount.toLocaleString()}</h3>
+                </div>
               </div>
             </div>
           </div>
 
-          {/* Collapsible Content */}
-          <div
-            className={`transition-all duration-300 ease-in-out overflow-hidden ${
-              isFilterExpanded
-                ? "max-h-screen opacity-100"
-                : "max-h-0 opacity-0"
-            }`}
-          >
-            <div className="p-6 space-y-6">
-              {/* Search Row */}
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-3">
-                  Search Expenses
-                </label>
-                <div className="relative">
-                  <input
-                    type="text"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    placeholder="Search by description, category, or amount..."
-                    className="w-full pl-16 pr-12 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all duration-200 text-gray-900 placeholder-gray-500"
-                  />
-                  <svg
-                    className="w-5 h-5 text-gray-400 absolute left-5 top-1/2 transform -translate-y-1/2"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+          {/* Charts */}
+          <div className="row">
+            <div className="col-md-6">
+              <div className="card">
+                <div className="card-header">
+                  <h5 className="card-title mb-0">Expense Breakdown</h5>
+                </div>
+                <div className="card-body">
+                  <div style={{ height: "300px" }}>
+                    <Pie
+                      data={expenseChartData}
+                      options={{ maintainAspectRatio: false }}
                     />
-                  </svg>
-                  {searchTerm && (
-                    <button
-                      onClick={() => setSearchTerm("")}
-                      className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors duration-200"
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div className="col-md-6">
+              <div className="card">
+                <div className="card-header">
+                  <h5 className="card-title mb-0">Income Breakdown</h5>
+                </div>
+                <div className="card-body">
+                  <div style={{ height: "300px" }}>
+                    <Pie
+                      data={incomeChartData}
+                      options={{ maintainAspectRatio: false }}
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Expenses Tab */}
+      {activeTab === "expenses" && (
+        <div className="tab-content">
+          {/* Filters */}
+          <div className="card mb-4">
+            <div className="card-header">
+              <button
+                className="btn btn-link"
+                onClick={() => setIsFilterExpanded(!isFilterExpanded)}
+              >
+                <i
+                  className={`bi bi-chevron-${
+                    isFilterExpanded ? "up" : "down"
+                  }`}
+                ></i>
+                Filters
+              </button>
+            </div>
+            {isFilterExpanded && (
+              <div className="card-body">
+                <div className="row">
+                  <div className="col-md-3">
+                    <label className="form-label">Search</label>
+                    <input
+                      type="text"
+                      className="form-control border"
+                      placeholder="Search descriptions..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                    />
+                  </div>
+                  <div className="col-md-2">
+                    <label className="form-label">Month</label>
+                    <select
+                      className="form-select border"
+                      value={selectedMonth}
+                      onChange={(e) => setSelectedMonth(e.target.value)}
                     >
-                      <svg
-                        className="w-4 h-4"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M6 18L18 6M6 6l12 12"
-                        />
-                      </svg>
-                    </button>
-                  )}
-                </div>
-              </div>
-
-              {/* Filter Row */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {/* Month Filter */}
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-3">
-                    <div className="flex items-center space-x-2">
-                      <svg
-                        className="w-4 h-4 text-gray-500"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                        />
-                      </svg>
-                      <span>Month</span>
-                    </div>
-                  </label>
-                  <select
-                    value={selectedMonth}
-                    onChange={(e) => setSelectedMonth(e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all duration-200 text-gray-900 bg-white"
-                  >
-                    {months.map((month) => (
-                      <option key={month.value} value={month.value}>
-                        {month.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* Year Filter */}
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-3">
-                    <div className="flex items-center space-x-2">
-                      <svg
-                        className="w-4 h-4 text-gray-500"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                        />
-                      </svg>
-                      <span>Year</span>
-                    </div>
-                  </label>
-                  <select
-                    value={selectedYear}
-                    onChange={(e) => setSelectedYear(e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all duration-200 text-gray-900 bg-white"
-                  >
-                    {years.map((year) => (
-                      <option key={year.value} value={year.value}>
-                        {year.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* Category Filter */}
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-3">
-                    <div className="flex items-center space-x-2">
-                      <svg
-                        className="w-4 h-4 text-gray-500"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"
-                        />
-                      </svg>
-                      <span>Category</span>
-                    </div>
-                  </label>
-                  <select
-                    value={selectedCategory}
-                    onChange={(e) => setSelectedCategory(e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all duration-200 text-gray-900 bg-white"
-                  >
-                    <option value="">All Categories</option>
-                    {categories.map((category) => (
-                      <option key={category} value={category}>
-                        {category}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              {/* Sort Row */}
-              <div className="bg-gray-50 rounded-xl p-6">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-6">
-                    <div className="flex items-center space-x-3">
-                      <svg
-                        className="w-5 h-5 text-gray-600"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12"
-                        />
-                      </svg>
-                      <label className="text-sm font-semibold text-gray-700">
-                        Sort by:
-                      </label>
+                      {months.map((month) => (
+                        <option key={month.value} value={month.value}>
+                          {month.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="col-md-2">
+                    <label className="form-label">Year</label>
+                    <select
+                      className="form-select border"
+                      value={selectedYear}
+                      onChange={(e) => setSelectedYear(e.target.value)}
+                    >
+                      {years.map((year) => (
+                        <option key={year.value} value={year.value}>
+                          {year.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="col-md-2">
+                    <label className="form-label">Category</label>
+                    <select
+                      className="form-select border"
+                      value={selectedCategory}
+                      onChange={(e) => setSelectedCategory(e.target.value)}
+                    >
+                      <option value="">All Categories</option>
+                      {expenseCategories.map((category) => (
+                        <option key={category} value={category}>
+                          {category}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="col-md-3">
+                    <label className="form-label">Sort By</label>
+                    <div className="d-flex gap-2">
                       <select
+                        className="form-select border"
                         value={sortBy}
                         onChange={(e) => setSortBy(e.target.value)}
-                        className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all duration-200 text-gray-900 bg-white font-medium"
                       >
                         <option value="date">Date</option>
                         <option value="amount">Amount</option>
                         <option value="category">Category</option>
-                        <option value="description">Description</option>
+                      </select>
+                      <select
+                        className="form-select border"
+                        value={sortOrder}
+                        onChange={(e) => setSortOrder(e.target.value)}
+                      >
+                        <option value="desc">Desc</option>
+                        <option value="asc">Asc</option>
                       </select>
                     </div>
-                    <div className="flex items-center space-x-3">
-                      <label className="text-sm font-semibold text-gray-700">
-                        Order:
-                      </label>
-                      <button
-                        onClick={() =>
-                          setSortOrder(sortOrder === "asc" ? "desc" : "asc")
-                        }
-                        className="inline-flex items-center space-x-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-white hover:border-red-300 transition-all duration-200 bg-white"
-                      >
-                        <svg
-                          className={`w-4 h-4 ${
-                            sortOrder === "asc"
-                              ? "text-red-600"
-                              : "text-gray-400"
-                          }`}
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M5 15l7-7 7 7"
-                          />
-                        </svg>
-                        <span className="text-sm font-medium text-gray-700">
-                          {sortOrder === "asc" ? "Ascending" : "Descending"}
-                        </span>
-                      </button>
-                    </div>
-                  </div>
-                  <div className="text-sm text-gray-600 bg-white px-3 py-1 rounded-full border border-gray-200">
-                    {filteredExpenses.length} results
                   </div>
                 </div>
               </div>
+            )}
+          </div>
+
+          {/* Expenses Table */}
+          <div className="card">
+            <div className="card-header">
+              <h5 className="card-title mb-0">
+                Expenses ({filteredExpenses.length})
+              </h5>
+            </div>
+            <div className="card-body">
+              {filteredExpenses.length === 0 ? (
+                <p className="text-muted">No expenses found.</p>
+              ) : (
+                <div className="table-responsive">
+                  <table className="table table-striped">
+                    <thead>
+                      <tr>
+                        <th>Date</th>
+                        <th>Category</th>
+                        <th>Description</th>
+                        <th>Amount</th>
+                        <th>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filteredExpenses.map((expense) => (
+                        <tr key={expense._id}>
+                          <td>{new Date(expense.date).toLocaleDateString()}</td>
+                          <td>
+                            <span className="badge bg-secondary">
+                              {expense.category}
+                            </span>
+                          </td>
+                          <td>{expense.description}</td>
+                          <td className="text-danger">
+                            -Tk {expense.amount.toLocaleString()}
+                          </td>
+                          <td>
+                            <i
+                              className="bi bi-pencil me-2"
+                              style={{
+                                color: "black",
+                                cursor: "pointer",
+                                fontSize: "16px",
+                              }}
+                              onClick={() => handleEditExpense(expense)}
+                            ></i>
+                            <i
+                              className="bi bi-trash"
+                              style={{
+                                color: "black",
+                                cursor: "pointer",
+                                fontSize: "16px",
+                              }}
+                              onClick={() =>
+                                showDeleteConfirmation("expense", expense._id)
+                              }
+                            ></i>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
           </div>
         </div>
+      )}
 
-        {/* Enhanced Add/Edit Form */}
-        {showAddForm && (
-          <div className="bg-white rounded-xl shadow-lg p-8 mb-8 border border-gray-100">
-            <h2 className="text-xl font-semibold mb-6 text-gray-900 flex items-center space-x-2">
-              <svg
-                className="w-5 h-5 text-red-600"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
+      {/* Income Tab */}
+      {activeTab === "income" && (
+        <div className="tab-content">
+          {/* Filters */}
+          <div className="card mb-4">
+            <div className="card-header">
+              <button
+                className="btn btn-link"
+                onClick={() => setIsFilterExpanded(!isFilterExpanded)}
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                />
-              </svg>
-              <span>{editingExpense ? "Edit Expense" : "Add New Expense"}</span>
-            </h2>
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Date
-                  </label>
-                  <input
-                    type="date"
-                    required
-                    value={formData.date}
-                    onChange={(e) =>
-                      setFormData({ ...formData, date: e.target.value })
-                    }
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-colors duration-200"
-                  />
+                <i
+                  className={`bi bi-chevron-${
+                    isFilterExpanded ? "up" : "down"
+                  }`}
+                ></i>
+                Filters
+              </button>
+            </div>
+            {isFilterExpanded && (
+              <div className="card-body">
+                <div className="row">
+                  <div className="col-md-3">
+                    <label className="form-label">Search</label>
+                    <input
+                      type="text"
+                      className="form-control border"
+                      placeholder="Search descriptions..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                    />
+                  </div>
+                  <div className="col-md-2">
+                    <label className="form-label">Month</label>
+                    <select
+                      className="form-select border"
+                      value={selectedMonth}
+                      onChange={(e) => setSelectedMonth(e.target.value)}
+                    >
+                      {months.map((month) => (
+                        <option key={month.value} value={month.value}>
+                          {month.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="col-md-2">
+                    <label className="form-label">Year</label>
+                    <select
+                      className="form-select border"
+                      value={selectedYear}
+                      onChange={(e) => setSelectedYear(e.target.value)}
+                    >
+                      {years.map((year) => (
+                        <option key={year.value} value={year.value}>
+                          {year.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="col-md-2">
+                    <label className="form-label">Category</label>
+                    <select
+                      className="form-select border"
+                      value={selectedCategory}
+                      onChange={(e) => setSelectedCategory(e.target.value)}
+                    >
+                      <option value="">All Categories</option>
+                      {incomeCategories.map((category) => (
+                        <option key={category} value={category}>
+                          {category}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="col-md-3">
+                    <label className="form-label">Sort By</label>
+                    <div className="d-flex gap-2">
+                      <select
+                        className="form-select border"
+                        value={sortBy}
+                        onChange={(e) => setSortBy(e.target.value)}
+                      >
+                        <option value="date">Date</option>
+                        <option value="amount">Amount</option>
+                        <option value="category">Category</option>
+                      </select>
+                      <select
+                        className="form-select border"
+                        value={sortOrder}
+                        onChange={(e) => setSortOrder(e.target.value)}
+                      >
+                        <option value="desc">Desc</option>
+                        <option value="asc">Asc</option>
+                      </select>
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Category
-                  </label>
-                  <select
-                    required
-                    value={formData.category}
-                    onChange={(e) =>
-                      setFormData({ ...formData, category: e.target.value })
-                    }
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-colors duration-200"
-                  >
-                    <option value="">Select Category</option>
-                    {categories.map((category) => (
-                      <option key={category} value={category}>
-                        {category}
-                      </option>
-                    ))}
-                  </select>
-                </div>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Description
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={formData.description}
-                  onChange={(e) =>
-                    setFormData({ ...formData, description: e.target.value })
-                  }
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-colors duration-200"
-                  placeholder="Enter expense description"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Amount (BDT)
-                </label>
-                <input
-                  type="number"
-                  step="0.01"
-                  required
-                  value={formData.amount}
-                  onChange={(e) =>
-                    setFormData({ ...formData, amount: e.target.value })
-                  }
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-colors duration-200"
-                  placeholder="0.00"
-                />
-              </div>
-              {error && (
-                <div className="text-red-600 text-sm bg-red-50 p-3 rounded-lg border border-red-200">
-                  {error}
+            )}
+          </div>
+
+          {/* Income Table */}
+          <div className="card">
+            <div className="card-header">
+              <h5 className="card-title mb-0">
+                Income ({filteredIncome.length})
+              </h5>
+            </div>
+            <div className="card-body">
+              {filteredIncome.length === 0 ? (
+                <p className="text-muted">No income found.</p>
+              ) : (
+                <div className="table-responsive">
+                  <table className="table table-striped">
+                    <thead>
+                      <tr>
+                        <th>Date</th>
+                        <th>Category</th>
+                        <th>Description</th>
+                        <th>Amount</th>
+                        <th>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filteredIncome.map((income) => (
+                        <tr key={income._id}>
+                          <td>{new Date(income.date).toLocaleDateString()}</td>
+                          <td>
+                            <span className="badge bg-secondary">
+                              {income.category}
+                            </span>
+                          </td>
+                          <td>{income.description}</td>
+                          <td className="text-success">
+                            +Tk {income.amount.toLocaleString()}
+                          </td>
+                          <td>
+                            <i
+                              className="bi bi-pencil me-2"
+                              style={{
+                                color: "black",
+                                cursor: "pointer",
+                                fontSize: "16px",
+                              }}
+                              onClick={() => handleEditIncome(income)}
+                            ></i>
+                            <i
+                              className="bi bi-trash"
+                              style={{
+                                color: "black",
+                                cursor: "pointer",
+                                fontSize: "16px",
+                              }}
+                              onClick={() =>
+                                showDeleteConfirmation("income", income._id)
+                              }
+                            ></i>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
               )}
-              <div className="flex gap-4">
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Expense Form Modal */}
+      {showExpenseForm && (
+        <div
+          className="modal show d-block"
+          style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
+        >
+          <div className="modal-dialog">
+            <div className="modal-content">
+              <div className="modal-header">
+                <h5 className="modal-title">
+                  {editingExpense ? "Edit Expense" : "Add New Expense"}
+                </h5>
                 <button
-                  type="submit"
-                  className="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white px-6 py-3 rounded-lg font-medium transition-all duration-200 flex items-center space-x-2"
-                >
-                  <svg
-                    className="w-4 h-4"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M5 13l4 4L19 7"
+                  type="button"
+                  className="btn-close"
+                  onClick={() => {
+                    setShowExpenseForm(false);
+                    setEditingExpense(null);
+                  }}
+                ></button>
+              </div>
+              <form onSubmit={handleExpenseSubmit}>
+                <div className="modal-body">
+                  {error && <div className="alert alert-danger">{error}</div>}
+                  <div className="mb-3">
+                    <label className="form-label">Date</label>
+                    <input
+                      type="date"
+                      className="form-control border"
+                      value={expenseFormData.date}
+                      onChange={(e) =>
+                        setExpenseFormData({
+                          ...expenseFormData,
+                          date: e.target.value,
+                        })
+                      }
+                      required
                     />
-                  </svg>
-                  <span>
-                    {editingExpense ? "Update Expense" : "Add Expense"}
-                  </span>
+                  </div>
+                  <div className="mb-3">
+                    <label className="form-label">Category</label>
+                    <select
+                      className="form-select border"
+                      value={expenseFormData.category}
+                      onChange={(e) =>
+                        setExpenseFormData({
+                          ...expenseFormData,
+                          category: e.target.value,
+                        })
+                      }
+                      required
+                    >
+                      <option value="">Select Category</option>
+                      {expenseCategories.map((category) => (
+                        <option key={category} value={category}>
+                          {category}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="mb-3">
+                    <label className="form-label">Description</label>
+                    <input
+                      type="text"
+                      className="form-control border"
+                      value={expenseFormData.description}
+                      onChange={(e) =>
+                        setExpenseFormData({
+                          ...expenseFormData,
+                          description: e.target.value,
+                        })
+                      }
+                      required
+                    />
+                  </div>
+                  <div className="mb-3">
+                    <label className="form-label">Amount</label>
+                    <input
+                      type="number"
+                      className="form-control border"
+                      value={expenseFormData.amount}
+                      onChange={(e) =>
+                        setExpenseFormData({
+                          ...expenseFormData,
+                          amount: e.target.value,
+                        })
+                      }
+                      step="0.01"
+                      min="0"
+                      required
+                    />
+                  </div>
+                </div>
+                <div className="modal-footer">
+                  <button
+                    type="button"
+                    className="btn btn-secondary"
+                    onClick={() => {
+                      setShowExpenseForm(false);
+                      setEditingExpense(null);
+                    }}
+                  >
+                    Cancel
+                  </button>
+                  <button type="submit" className="btn btn-danger">
+                    {editingExpense ? "Update" : "Add"} Expense
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Income Form Modal */}
+      {showIncomeForm && (
+        <div
+          className="modal show d-block"
+          style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
+        >
+          <div className="modal-dialog">
+            <div className="modal-content">
+              <div className="modal-header">
+                <h5 className="modal-title">
+                  {editingIncome ? "Edit Income" : "Add New Income"}
+                </h5>
+                <button
+                  type="button"
+                  className="btn-close"
+                  onClick={() => {
+                    setShowIncomeForm(false);
+                    setEditingIncome(null);
+                  }}
+                ></button>
+              </div>
+              <form onSubmit={handleIncomeSubmit}>
+                <div className="modal-body">
+                  {error && <div className="alert alert-danger">{error}</div>}
+                  <div className="mb-3">
+                    <label className="form-label">Date</label>
+                    <input
+                      type="date"
+                      className="form-control border"
+                      value={incomeFormData.date}
+                      onChange={(e) =>
+                        setIncomeFormData({
+                          ...incomeFormData,
+                          date: e.target.value,
+                        })
+                      }
+                      required
+                    />
+                  </div>
+                  <div className="mb-3">
+                    <label className="form-label">Category</label>
+                    <select
+                      className="form-select border"
+                      value={incomeFormData.category}
+                      onChange={(e) =>
+                        setIncomeFormData({
+                          ...incomeFormData,
+                          category: e.target.value,
+                        })
+                      }
+                      required
+                    >
+                      <option value="">Select Category</option>
+                      {incomeCategories.map((category) => (
+                        <option key={category} value={category}>
+                          {category}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="mb-3">
+                    <label className="form-label">Description</label>
+                    <input
+                      type="text"
+                      className="form-control border"
+                      value={incomeFormData.description}
+                      onChange={(e) =>
+                        setIncomeFormData({
+                          ...incomeFormData,
+                          description: e.target.value,
+                        })
+                      }
+                      required
+                    />
+                  </div>
+                  <div className="mb-3">
+                    <label className="form-label">Amount</label>
+                    <input
+                      type="number"
+                      className="form-control border"
+                      value={incomeFormData.amount}
+                      onChange={(e) =>
+                        setIncomeFormData({
+                          ...incomeFormData,
+                          amount: e.target.value,
+                        })
+                      }
+                      step="0.01"
+                      min="0"
+                      required
+                    />
+                  </div>
+                </div>
+                <div className="modal-footer">
+                  <button
+                    type="button"
+                    className="btn btn-secondary"
+                    onClick={() => {
+                      setShowIncomeForm(false);
+                      setEditingIncome(null);
+                    }}
+                  >
+                    Cancel
+                  </button>
+                  <button type="submit" className="btn btn-success">
+                    {editingIncome ? "Update" : "Add"} Income
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Toast Notification */}
+      {toast.show && (
+        <div
+          className={`position-fixed top-0 end-0 m-3 p-3 rounded shadow-sm ${
+            toast.type === "success"
+              ? "bg-success text-white"
+              : "bg-danger text-white"
+          }`}
+          style={{ zIndex: 9999, minWidth: "300px" }}
+        >
+          <div className="d-flex align-items-center">
+            <i
+              className={`bi me-2 ${
+                toast.type === "success"
+                  ? "bi-check-circle"
+                  : "bi-exclamation-circle"
+              }`}
+            ></i>
+            <span>{toast.message}</span>
+            <button
+              type="button"
+              className="btn-close btn-close-white ms-auto"
+              onClick={() =>
+                setToast({ show: false, message: "", type: "success" })
+              }
+            ></button>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteConfirm && (
+        <div
+          className="modal fade show"
+          style={{
+            display: "block",
+            zIndex: 9999,
+            position: "fixed",
+            top: 0,
+            left: 0,
+            width: "100%",
+            height: "100%",
+          }}
+        >
+          <div
+            className="modal-dialog modal-dialog-centered"
+            style={{ zIndex: 10000 }}
+          >
+            <div className="modal-content">
+              <div className="modal-header">
+                <h5 className="modal-title">Confirm Delete</h5>
+                <button
+                  type="button"
+                  className="btn-close"
+                  onClick={() => setShowDeleteConfirm(false)}
+                ></button>
+              </div>
+              <div className="modal-body">
+                <p>
+                  Are you sure you want to delete this{" "}
+                  {deleteItem.type === "expense" ? "expense" : "income"}? This
+                  action cannot be undone.
+                </p>
+              </div>
+              <div className="modal-footer">
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => setShowDeleteConfirm(false)}
+                >
+                  Cancel
                 </button>
                 <button
                   type="button"
-                  onClick={() => {
-                    setShowAddForm(false);
-                    setEditingExpense(null);
-                    setError("");
+                  className="btn btn-danger"
+                  style={{
+                    position: "relative",
+                    zIndex: 10001,
+                    cursor: "pointer",
+                    pointerEvents: "auto",
                   }}
-                  className="bg-gray-300 hover:bg-gray-400 text-gray-700 px-6 py-3 rounded-lg font-medium transition-colors duration-200 flex items-center space-x-2"
+                  onClick={handleConfirmDelete}
                 >
-                  <svg
-                    className="w-4 h-4"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M6 18L18 6M6 6l12 12"
-                    />
-                  </svg>
-                  <span>Cancel</span>
+                  Delete
                 </button>
               </div>
-            </form>
-          </div>
-        )}
-
-        {/* Enhanced Expenses List */}
-        <div className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-100">
-          <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
-            <div className="flex items-center justify-between">
-              <h2 className="text-xl font-semibold text-gray-900 flex items-center space-x-2">
-                <svg
-                  className="w-5 h-5 text-red-600"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                  />
-                </svg>
-                <span>Expenses</span>
-              </h2>
-              <div className="text-sm text-gray-600">
-                Showing {filteredExpenses.length} of {expenses.length} expenses
-              </div>
             </div>
           </div>
-          {filteredExpenses.length === 0 ? (
-            <div className="p-12 text-center text-gray-500">
-              <svg
-                className="w-16 h-16 mx-auto mb-4 text-gray-300"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={1}
-                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                />
-              </svg>
-              <p className="text-lg font-medium">
-                {expenses.length === 0
-                  ? "No expenses found"
-                  : "No expenses match your filters"}
-              </p>
-              <p className="text-sm">
-                {expenses.length === 0
-                  ? "Add your first expense to get started"
-                  : "Try adjusting your search criteria"}
-              </p>
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                      Date
-                    </th>
-                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                      Category
-                    </th>
-                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                      Description
-                    </th>
-                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                      Amount
-                    </th>
-                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {filteredExpenses.map((expense) => (
-                    <tr
-                      key={expense._id}
-                      className="hover:bg-gray-50 transition-colors duration-150"
-                    >
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {new Date(expense.date).toLocaleDateString()}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                          {expense.category}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-900">
-                        {expense.description}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">
-                        ৳{Number(expense.amount).toFixed(2)}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        <div className="flex items-center space-x-3">
-                          <button
-                            onClick={() => handleEdit(expense)}
-                            className="text-blue-600 hover:text-blue-900 transition-colors duration-200 p-2 rounded-lg hover:bg-blue-50"
-                            title="Edit"
-                          >
-                            <svg
-                              className="w-4 h-4"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                              />
-                            </svg>
-                          </button>
-                          <button
-                            onClick={() => handleDelete(expense._id)}
-                            className="text-red-600 hover:text-red-900 transition-colors duration-200 p-2 rounded-lg hover:bg-red-50"
-                            title="Delete"
-                          >
-                            <svg
-                              className="w-4 h-4"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M6 18L18 6M6 6l12 12"
-                              />
-                            </svg>
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
+          <div
+            className="modal-backdrop fade show"
+            style={{
+              zIndex: 9998,
+              position: "fixed",
+              top: 0,
+              left: 0,
+              width: "100%",
+              height: "100%",
+              backgroundColor: "rgba(0, 0, 0, 0.5)",
+            }}
+            onClick={() => setShowDeleteConfirm(false)}
+          ></div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

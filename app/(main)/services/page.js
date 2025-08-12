@@ -1,8 +1,8 @@
-import { serviceCardsData, pageConfig, bannerImages } from '../data';
-import PageBanner from '../components/ui/PageBanner';
-import ServiceCard from '../components/ui/ServiceCard';
-import Footer from '../components/Footer';
-import ScrollToTop from '../components/ui/ScrollToTop';
+import Footer from "../../components/Footer";
+import PageBanner from "../../components/ui/PageBanner";
+import ScrollToTop from "../../components/ui/ScrollToTop";
+import ServiceCard from "../../components/ui/ServiceCard";
+import { bannerImages, pageConfig, serviceCardsData } from "../../data";
 
 export default function Services() {
   return (

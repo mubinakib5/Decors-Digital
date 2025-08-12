@@ -1,23 +1,23 @@
-import Image from 'next/image';
-import Link from 'next/link';
-import AosInit from '../components/AosInit';
-import Footer from '../components/Footer';
+import Image from "next/image";
+import AosInit from "../../components/AosInit";
+import Footer from "../../components/Footer";
 
 export default function PrivacyPolicy() {
   return (
     <>
       <AosInit />
-      
+
       {/* Page Wrapper */}
       <div className="page-wrapper overflow-hidden">
         {/* Banner Section */}
         <section
           className="banner-section banner-inner-section position-relative overflow-hidden d-flex align-items-end"
           style={{
-            backgroundImage: "url('/assets/images/backgrounds/privacy-banner.jpg')",
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-            minHeight: '60vh'
+            backgroundImage:
+              "url('/assets/images/backgrounds/privacy-banner.jpg')",
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+            minHeight: "60vh",
           }}
         >
           <div className="container">
@@ -77,37 +77,38 @@ export default function PrivacyPolicy() {
               collected, used, and disclosed by <strong>Decor's Digital</strong>
               ("us", "we", "our"). This Privacy Statement describes our privacy
               practices in relation to the use of our websites, including any
-              customer portals or interactive websites, our software, services, 
-              solutions, tools, and related applications, services, and programs, 
-              including research and marketing activities, offered by us (the "Services").
+              customer portals or interactive websites, our software, services,
+              solutions, tools, and related applications, services, and
+              programs, including research and marketing activities, offered by
+              us (the "Services").
             </p>
             <p className="fs-5 text-dark fw-medium">
-              By signing up for our Services and agreeing to our General Terms and
-              Conditions, you consent to the collection, usage, storage, and
+              By signing up for our Services and agreeing to our General Terms
+              and Conditions, you consent to the collection, usage, storage, and
               disclosure of your information as described in this Privacy
               Statement.
             </p>
             <p className="fs-5 text-dark fw-medium">
-              Our Services may contain links to external websites or services. The
-              privacy practices and content of such sites or services will be
-              governed by their respective privacy policies. We may update this
-              Privacy Statement periodically. If changes occur, we will notify you
-              by updating the date at the top of the statement and providing
-              additional notifications (such as a statement on our homepage or an
-              email notification). We encourage you to review this Privacy
-              Statement whenever you use our Services to stay informed about how
-              we handle your information.
+              Our Services may contain links to external websites or services.
+              The privacy practices and content of such sites or services will
+              be governed by their respective privacy policies. We may update
+              this Privacy Statement periodically. If changes occur, we will
+              notify you by updating the date at the top of the statement and
+              providing additional notifications (such as a statement on our
+              homepage or an email notification). We encourage you to review
+              this Privacy Statement whenever you use our Services to stay
+              informed about how we handle your information.
             </p>
             <h4 className="my-4">Personal Information Collection</h4>
             <p className="fs-5 text-dark fw-medium">
               While using our Services, we may ask you to provide certain
               personally identifiable information that can be used to contact or
               identify you. This may include basic user details (such as your
-              name, email address, telephone number, and profile picture), company
-              information, and any other data you choose to share with us. We do
-              not collect financial information (such as credit card details or
-              security codes). All payments are handled through a third-party
-              provider.
+              name, email address, telephone number, and profile picture),
+              company information, and any other data you choose to share with
+              us. We do not collect financial information (such as credit card
+              details or security codes). All payments are handled through a
+              third-party provider.
             </p>
             <h4 className="my-4">Personal Information You Provide to Us</h4>
             <p className="fs-5 text-dark fw-medium">
@@ -116,9 +117,9 @@ export default function PrivacyPolicy() {
               support, or interacting with our platform.
             </p>
             <p className="fs-5 text-dark fw-medium mb-0">
-              As noted, we do not collect financial details directly. Payments are
-              processed via third-party providers. Please review their privacy
-              policy for details.
+              As noted, we do not collect financial details directly. Payments
+              are processed via third-party providers. Please review their
+              privacy policy for details.
             </p>
           </div>
         </section>
@@ -127,11 +128,14 @@ export default function PrivacyPolicy() {
       </div>
 
       {/* Scroll to Top Button */}
-      <div className="get-template hstack gap-2 position-fixed bottom-0 end-0 m-4" style={{ zIndex: 1000 }}>
+      <div
+        className="get-template hstack gap-2 position-fixed bottom-0 end-0 m-4"
+        style={{ zIndex: 1000 }}
+      >
         <button
           className="btn bg-primary p-2 round-52 rounded-circle hstack justify-content-center flex-shrink-0"
           id="scrollToTopBtn"
-          style={{ display: 'none' }}
+          style={{ display: "none" }}
         >
           <iconify-icon
             icon="lucide:arrow-up"
