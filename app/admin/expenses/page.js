@@ -1,6 +1,7 @@
 "use client";
 
 import { ArcElement, Chart as ChartJS, Legend, Tooltip } from "chart.js";
+import jsPDF from "jspdf";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Pie } from "react-chartjs-2";
@@ -39,6 +40,19 @@ export default function FinancialManagementPage() {
   });
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleteItem, setDeleteItem] = useState({ type: "", id: "" });
+
+  // Category management states
+  const [categories, setCategories] = useState([]);
+  const [showCategoryModal, setShowCategoryModal] = useState(false);
+  const [showCategoryListModal, setShowCategoryListModal] = useState(false);
+  const [editingCategory, setEditingCategory] = useState(null);
+  const [categoryFormData, setCategoryFormData] = useState({
+    type: "expense",
+    name: "",
+    subcategories: [],
+  });
+  const [newSubcategory, setNewSubcategory] = useState("");
+
   const router = useRouter();
 
   // Toast notification helper
@@ -79,29 +93,13 @@ export default function FinancialManagementPage() {
   const [sortOrder, setSortOrder] = useState("desc");
   const [isFilterExpanded, setIsFilterExpanded] = useState(true);
 
-  const expenseCategories = [
-    "Operational Cost",
-    "Employee Salary",
-    "Travel",
-    "Office Supplies",
-    "Premium Licenses",
-    "Travel Allowance",
-    "Utilities",
-    "Rent",
-    "Insurance",
-    "Intern TA",
-    "Other",
-  ];
+  // Get categories by type
+  const getCategoriesByType = (type) => {
+    return categories.filter((cat) => cat.type === type).map((cat) => cat.name);
+  };
 
-  const incomeCategories = [
-    "AV",
-    "Web Development",
-    "Social Media Services",
-    "Photography",
-    "Strategy",
-    "Consultation",
-    "Other",
-  ];
+  const expenseCategories = getCategoriesByType("expense");
+  const incomeCategories = getCategoriesByType("income");
 
   // Generate month and year options
   const months = [
@@ -148,10 +146,12 @@ export default function FinancialManagementPage() {
 
   const fetchData = async () => {
     try {
-      const [expensesResponse, incomeResponse] = await Promise.all([
-        fetch("/api/admin/expenses"),
-        fetch("/api/admin/income"),
-      ]);
+      const [expensesResponse, incomeResponse, categoriesResponse] =
+        await Promise.all([
+          fetch("/api/admin/expenses"),
+          fetch("/api/admin/income"),
+          fetch("/api/admin/categories"),
+        ]);
 
       if (expensesResponse.ok) {
         const expensesData = await expensesResponse.json();
@@ -165,6 +165,14 @@ export default function FinancialManagementPage() {
         const incomeData = await incomeResponse.json();
         setIncome(incomeData.income);
       } else if (incomeResponse.status === 401) {
+        router.push("/admin/login");
+        return;
+      }
+
+      if (categoriesResponse.ok) {
+        const categoriesData = await categoriesResponse.json();
+        setCategories(categoriesData.categories);
+      } else if (categoriesResponse.status === 401) {
         router.push("/admin/login");
         return;
       }
@@ -404,6 +412,400 @@ export default function FinancialManagementPage() {
     }
   };
 
+  const handleLogout = async () => {
+    try {
+      const response = await fetch("/api/admin/logout", {
+        method: "POST",
+      });
+
+      if (response.ok) {
+        showToast("Logged out successfully!");
+        // Redirect to login page after a short delay
+        setTimeout(() => {
+          router.push("/admin/login");
+        }, 1000);
+      } else {
+        showToast("Failed to logout", "error");
+      }
+    } catch (error) {
+      showToast("Failed to logout", "error");
+    }
+  };
+
+  // Category management functions
+  const handleCategorySubmit = async (e) => {
+    e.preventDefault();
+    setError("");
+
+    try {
+      const url = editingCategory
+        ? `/api/admin/categories/${editingCategory._id}`
+        : "/api/admin/categories";
+      const method = editingCategory ? "PUT" : "POST";
+
+      const response = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(categoryFormData),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setShowCategoryModal(false);
+
+        // If we're editing, go back to category list
+        if (editingCategory) {
+          setShowCategoryListModal(true);
+        } else {
+          // If we're creating a new category, check if we should return to a form
+          if (categoryFormData.type === "expense") {
+            setShowExpenseForm(true);
+            setExpenseFormData({
+              ...expenseFormData,
+              category: categoryFormData.name,
+            });
+          } else if (categoryFormData.type === "income") {
+            setShowIncomeForm(true);
+            setIncomeFormData({
+              ...incomeFormData,
+              category: categoryFormData.name,
+            });
+          } else {
+            setShowCategoryListModal(true);
+          }
+        }
+
+        setEditingCategory(null);
+        setCategoryFormData({
+          type: "expense",
+          name: "",
+          subcategories: [],
+        });
+        fetchData();
+        showToast(
+          editingCategory
+            ? "Category updated successfully!"
+            : "Category added successfully!"
+        );
+      } else {
+        const data = await response.json();
+        setError(data.message || "Failed to save category");
+        showToast(data.message || "Failed to save category", "error");
+      }
+    } catch (error) {
+      setError("Failed to save category");
+      showToast("Failed to save category", "error");
+    }
+  };
+
+  const handleEditCategory = (category) => {
+    setEditingCategory(category);
+    setCategoryFormData({
+      type: category.type,
+      name: category.name,
+      subcategories: category.subcategories || [],
+    });
+    setShowCategoryListModal(false);
+    setShowCategoryModal(true);
+  };
+
+  const handleDeleteCategory = async (id) => {
+    try {
+      const response = await fetch(`/api/admin/categories/${id}`, {
+        method: "DELETE",
+      });
+
+      if (response.ok) {
+        fetchData();
+        showToast("Category deleted successfully!");
+      } else {
+        const data = await response.json();
+        setError(data.message || "Failed to delete category");
+        showToast(data.message || "Failed to delete category", "error");
+      }
+    } catch (error) {
+      setError("Failed to delete category");
+      showToast("Failed to delete category", "error");
+    }
+  };
+
+  const addSubcategory = () => {
+    if (
+      newSubcategory.trim() &&
+      !categoryFormData.subcategories.includes(newSubcategory.trim())
+    ) {
+      setCategoryFormData({
+        ...categoryFormData,
+        subcategories: [
+          ...categoryFormData.subcategories,
+          newSubcategory.trim(),
+        ],
+      });
+      setNewSubcategory("");
+    }
+  };
+
+  const removeSubcategory = (index) => {
+    setCategoryFormData({
+      ...categoryFormData,
+      subcategories: categoryFormData.subcategories.filter(
+        (_, i) => i !== index
+      ),
+    });
+  };
+
+  // PDF Export functions
+  const exportToPDF = async (type) => {
+    try {
+      // Dynamically import jspdf-autotable
+      const autoTable = (await import("jspdf-autotable")).default;
+
+      const doc = new jsPDF();
+      const pageWidth = doc.internal.pageSize.width;
+
+      // Add title
+      doc.setFontSize(18);
+      doc.setFont("helvetica", "bold");
+      doc.text("Financial Management Report", pageWidth / 2, 20, {
+        align: "center",
+      });
+
+      // Add subtitle with type and date
+      doc.setFontSize(12);
+      doc.setFont("helvetica", "normal");
+      const currentDate = new Date().toLocaleDateString();
+      doc.text(
+        `${
+          type.charAt(0).toUpperCase() + type.slice(1)
+        } Report - ${currentDate}`,
+        pageWidth / 2,
+        30,
+        { align: "center" }
+      );
+
+      // Add filter information if any filters are applied
+      let filterInfo = [];
+      if (searchTerm) filterInfo.push(`Search: "${searchTerm}"`);
+      if (selectedMonth !== "") {
+        const monthName =
+          months.find((m) => m.value === selectedMonth)?.label || selectedMonth;
+        filterInfo.push(`Month: ${monthName}`);
+      }
+      if (selectedYear !== "") filterInfo.push(`Year: ${selectedYear}`);
+      if (selectedCategory !== "")
+        filterInfo.push(`Category: ${selectedCategory}`);
+
+      if (filterInfo.length > 0) {
+        doc.setFontSize(10);
+        doc.text(`Filters Applied: ${filterInfo.join(", ")}`, 14, 40);
+      }
+
+      if (type === "expenses") {
+        await exportExpensesToPDF(doc, autoTable);
+      } else if (type === "income") {
+        await exportIncomeToPDF(doc, autoTable);
+      } else if (type === "overview") {
+        await exportOverviewToPDF(doc, autoTable);
+      }
+    } catch (error) {
+      console.error("Error exporting PDF:", error);
+      showToast("Failed to export PDF", "error");
+    }
+  };
+
+  const exportExpensesToPDF = (doc, autoTable) => {
+    const tableData = filteredExpenses.map((expense) => [
+      new Date(expense.date).toLocaleDateString(),
+      expense.category,
+      expense.description,
+      `Tk ${expense.amount.toLocaleString()}`,
+    ]);
+
+    autoTable(doc, {
+      startY: 50,
+      head: [["Date", "Category", "Description", "Amount"]],
+      body: tableData,
+      theme: "grid",
+      headStyles: {
+        fillColor: [255, 0, 0],
+        textColor: [255, 255, 255],
+        fontStyle: "bold",
+      },
+      styles: {
+        fontSize: 10,
+        cellPadding: 5,
+      },
+      columnStyles: {
+        0: { cellWidth: 25 },
+        1: { cellWidth: 35 },
+        2: { cellWidth: 70 },
+        3: { cellWidth: 30, halign: "right" },
+      },
+    });
+
+    // Add summary
+    const finalY = doc.lastAutoTable.finalY + 10;
+    doc.setFontSize(12);
+    doc.setFont("helvetica", "bold");
+    doc.text(
+      `Total Expenses: Tk ${filteredExpenses
+        .reduce((sum, expense) => sum + expense.amount, 0)
+        .toLocaleString()}`,
+      14,
+      finalY
+    );
+
+    doc.save(`expenses-report-${new Date().toISOString().split("T")[0]}.pdf`);
+  };
+
+  const exportIncomeToPDF = (doc, autoTable) => {
+    const tableData = filteredIncome.map((income) => [
+      new Date(income.date).toLocaleDateString(),
+      income.category,
+      income.description,
+      `Tk ${income.amount.toLocaleString()}`,
+    ]);
+
+    autoTable(doc, {
+      startY: 50,
+      head: [["Date", "Category", "Description", "Amount"]],
+      body: tableData,
+      theme: "grid",
+      headStyles: {
+        fillColor: [255, 0, 0],
+        textColor: [255, 255, 255],
+        fontStyle: "bold",
+      },
+      styles: {
+        fontSize: 10,
+        cellPadding: 5,
+      },
+      columnStyles: {
+        0: { cellWidth: 25 },
+        1: { cellWidth: 35 },
+        2: { cellWidth: 70 },
+        3: { cellWidth: 30, halign: "right" },
+      },
+    });
+
+    // Add summary
+    const finalY = doc.lastAutoTable.finalY + 10;
+    doc.setFontSize(12);
+    doc.setFont("helvetica", "bold");
+    doc.text(
+      `Total Income: Tk ${filteredIncome
+        .reduce((sum, income) => sum + income.amount, 0)
+        .toLocaleString()}`,
+      14,
+      finalY
+    );
+
+    doc.save(`income-report-${new Date().toISOString().split("T")[0]}.pdf`);
+  };
+
+  const exportOverviewToPDF = (doc, autoTable) => {
+    // Summary section
+    doc.setFontSize(14);
+    doc.setFont("helvetica", "bold");
+    doc.text("Financial Summary", 14, 50);
+
+    doc.setFontSize(12);
+    doc.setFont("helvetica", "normal");
+    doc.text(`Total Income: Tk ${totalIncome.toLocaleString()}`, 14, 65);
+    doc.text(`Total Expenses: Tk ${totalExpenses.toLocaleString()}`, 14, 75);
+    doc.text(`Net Amount: Tk ${netAmount.toLocaleString()}`, 14, 85);
+
+    // Top expenses by category
+    const expenseByCategory = {};
+    filteredExpenses.forEach((expense) => {
+      expenseByCategory[expense.category] =
+        (expenseByCategory[expense.category] || 0) + expense.amount;
+    });
+
+    const topExpenses = Object.entries(expenseByCategory)
+      .sort(([, a], [, b]) => b - a)
+      .slice(0, 5);
+
+    if (topExpenses.length > 0) {
+      doc.setFontSize(14);
+      doc.setFont("helvetica", "bold");
+      doc.text("Top Expense Categories", 14, 110);
+
+      const expenseData = topExpenses.map(([category, amount]) => [
+        category,
+        `Tk ${amount.toLocaleString()}`,
+      ]);
+
+      autoTable(doc, {
+        startY: 120,
+        head: [["Category", "Amount"]],
+        body: expenseData,
+        theme: "grid",
+        headStyles: {
+          fillColor: [255, 0, 0],
+          textColor: [255, 255, 255],
+          fontStyle: "bold",
+        },
+        styles: {
+          fontSize: 10,
+          cellPadding: 5,
+        },
+        columnStyles: {
+          0: { cellWidth: 100 },
+          1: { cellWidth: 50, halign: "right" },
+        },
+      });
+    }
+
+    // Top income by category
+    const incomeByCategory = {};
+    filteredIncome.forEach((income) => {
+      incomeByCategory[income.category] =
+        (incomeByCategory[income.category] || 0) + income.amount;
+    });
+
+    const topIncome = Object.entries(incomeByCategory)
+      .sort(([, a], [, b]) => b - a)
+      .slice(0, 5);
+
+    if (topIncome.length > 0) {
+      const finalY = doc.lastAutoTable ? doc.lastAutoTable.finalY + 20 : 180;
+
+      doc.setFontSize(14);
+      doc.setFont("helvetica", "bold");
+      doc.text("Top Income Categories", 14, finalY);
+
+      const incomeData = topIncome.map(([category, amount]) => [
+        category,
+        `Tk ${amount.toLocaleString()}`,
+      ]);
+
+      autoTable(doc, {
+        startY: finalY + 10,
+        head: [["Category", "Amount"]],
+        body: incomeData,
+        theme: "grid",
+        headStyles: {
+          fillColor: [255, 0, 0],
+          textColor: [255, 255, 255],
+          fontStyle: "bold",
+        },
+        styles: {
+          fontSize: 10,
+          cellPadding: 5,
+        },
+        columnStyles: {
+          0: { cellWidth: 100 },
+          1: { cellWidth: 50, halign: "right" },
+        },
+      });
+    }
+
+    doc.save(
+      `financial-overview-${new Date().toISOString().split("T")[0]}.pdf`
+    );
+  };
+
   // Calculate totals
   const totalExpenses = filteredExpenses.reduce(
     (sum, expense) => sum + expense.amount,
@@ -478,11 +880,92 @@ export default function FinancialManagementPage() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <div className="d-flex justify-content-between align-items-center mb-4 pb-3">
-        <h1 className="h2 mb-0">Financial Management</h1>
+      <div className="d-flex justify-content-between align-items-center mb-2">
+        <h1 className="h3 mb-0">Financial Management</h1>
+        <button
+          className="btn btn-outline-secondary btn-sm"
+          onClick={handleLogout}
+        >
+          <i className="bi bi-box-arrow-right me-1"></i>
+          Logout
+        </button>
+      </div>
+
+      {/* Navigation Tabs */}
+      <div className="d-flex justify-content-between align-items-center mb-4">
+        <ul
+          className="nav nav-tabs"
+          id="financialTabs"
+          role="tablist"
+          style={{ borderBottomColor: "#ff0000", marginBottom: "0" }}
+        >
+          <li className="nav-item" role="presentation">
+            <button
+              className={`nav-link ${activeTab === "overview" ? "active" : ""}`}
+              onClick={() => setActiveTab("overview")}
+              style={{
+                color: activeTab === "overview" ? "#ffffff" : "#ff0000",
+                backgroundColor:
+                  activeTab === "overview" ? "#ff0000" : "transparent",
+                borderColor: "#ff0000",
+                borderBottomColor:
+                  activeTab === "overview" ? "#ff0000" : "transparent",
+              }}
+            >
+              Overview
+            </button>
+          </li>
+          <li className="nav-item" role="presentation">
+            <button
+              className={`nav-link ${activeTab === "expenses" ? "active" : ""}`}
+              onClick={() => setActiveTab("expenses")}
+              style={{
+                color: activeTab === "expenses" ? "#ffffff" : "#ff0000",
+                backgroundColor:
+                  activeTab === "expenses" ? "#ff0000" : "transparent",
+                borderColor: "#ff0000",
+                borderBottomColor:
+                  activeTab === "expenses" ? "#ff0000" : "transparent",
+              }}
+            >
+              Expenses
+            </button>
+          </li>
+          <li className="nav-item" role="presentation">
+            <button
+              className={`nav-link ${activeTab === "income" ? "active" : ""}`}
+              onClick={() => setActiveTab("income")}
+              style={{
+                color: activeTab === "income" ? "#ffffff" : "#ff0000",
+                backgroundColor:
+                  activeTab === "income" ? "#ff0000" : "transparent",
+                borderColor: "#ff0000",
+                borderBottomColor:
+                  activeTab === "income" ? "#ff0000" : "transparent",
+              }}
+            >
+              Income
+            </button>
+          </li>
+        </ul>
         <div className="d-flex gap-2">
           <button
-            className="btn btn-success"
+            className="btn btn-sm"
+            style={{
+              color: "#ffffff",
+              backgroundColor: "#ff0000",
+              borderColor: "#ff0000",
+              padding: "6px 12px",
+              fontSize: "14px",
+            }}
+            onMouseOver={(e) => {
+              e.target.style.backgroundColor = "#cc0000";
+              e.target.style.borderColor = "#cc0000";
+            }}
+            onMouseOut={(e) => {
+              e.target.style.backgroundColor = "#ff0000";
+              e.target.style.borderColor = "#ff0000";
+            }}
             onClick={() => {
               setShowIncomeForm(true);
               setEditingIncome(null);
@@ -494,11 +977,26 @@ export default function FinancialManagementPage() {
               });
             }}
           >
-            <i className="bi bi-plus-circle me-2"></i>
+            <i className="bi bi-plus-circle me-1"></i>
             Add Income
           </button>
           <button
-            className="btn btn-danger"
+            className="btn btn-sm"
+            style={{
+              color: "#ffffff",
+              backgroundColor: "#ff0000",
+              borderColor: "#ff0000",
+              padding: "6px 12px",
+              fontSize: "14px",
+            }}
+            onMouseOver={(e) => {
+              e.target.style.backgroundColor = "#cc0000";
+              e.target.style.borderColor = "#cc0000";
+            }}
+            onMouseOut={(e) => {
+              e.target.style.backgroundColor = "#ff0000";
+              e.target.style.borderColor = "#ff0000";
+            }}
             onClick={() => {
               setShowExpenseForm(true);
               setEditingExpense(null);
@@ -510,68 +1008,57 @@ export default function FinancialManagementPage() {
               });
             }}
           >
-            <i className="bi bi-plus-circle me-2"></i>
+            <i className="bi bi-plus-circle me-1"></i>
             Add Expense
+          </button>
+          <button
+            className="btn btn-sm"
+            style={{
+              color: "#ffffff",
+              backgroundColor: "#ff0000",
+              borderColor: "#ff0000",
+              padding: "6px 12px",
+              fontSize: "14px",
+            }}
+            onMouseOver={(e) => {
+              e.target.style.backgroundColor = "#cc0000";
+              e.target.style.borderColor = "#cc0000";
+            }}
+            onMouseOut={(e) => {
+              e.target.style.backgroundColor = "#ff0000";
+              e.target.style.borderColor = "#ff0000";
+            }}
+            onClick={() => {
+              setShowCategoryListModal(true);
+            }}
+          >
+            <i className="bi bi-gear me-1"></i>
+            Manage Categories
+          </button>
+          <button
+            className="btn btn-sm"
+            style={{
+              color: "#ffffff",
+              backgroundColor: "#ff0000",
+              borderColor: "#ff0000",
+              padding: "6px 12px",
+              fontSize: "14px",
+            }}
+            onMouseOver={(e) => {
+              e.target.style.backgroundColor = "#cc0000";
+              e.target.style.borderColor = "#cc0000";
+            }}
+            onMouseOut={(e) => {
+              e.target.style.backgroundColor = "#ff0000";
+              e.target.style.borderColor = "#ff0000";
+            }}
+            onClick={() => exportToPDF(activeTab)}
+          >
+            <i className="bi bi-file-earmark-pdf me-1"></i>
+            Export PDF
           </button>
         </div>
       </div>
-
-      {/* Navigation Tabs */}
-      <ul
-        className="nav nav-tabs mb-4 mt-5"
-        id="financialTabs"
-        role="tablist"
-        style={{ borderBottomColor: "#ff0000" }}
-      >
-        <li className="nav-item" role="presentation">
-          <button
-            className={`nav-link ${activeTab === "overview" ? "active" : ""}`}
-            onClick={() => setActiveTab("overview")}
-            style={{
-              color: activeTab === "overview" ? "#ffffff" : "#ff0000",
-              backgroundColor:
-                activeTab === "overview" ? "#ff0000" : "transparent",
-              borderColor: "#ff0000",
-              borderBottomColor:
-                activeTab === "overview" ? "#ff0000" : "transparent",
-            }}
-          >
-            Overview
-          </button>
-        </li>
-        <li className="nav-item" role="presentation">
-          <button
-            className={`nav-link ${activeTab === "expenses" ? "active" : ""}`}
-            onClick={() => setActiveTab("expenses")}
-            style={{
-              color: activeTab === "expenses" ? "#ffffff" : "#ff0000",
-              backgroundColor:
-                activeTab === "expenses" ? "#ff0000" : "transparent",
-              borderColor: "#ff0000",
-              borderBottomColor:
-                activeTab === "expenses" ? "#ff0000" : "transparent",
-            }}
-          >
-            Expenses
-          </button>
-        </li>
-        <li className="nav-item" role="presentation">
-          <button
-            className={`nav-link ${activeTab === "income" ? "active" : ""}`}
-            onClick={() => setActiveTab("income")}
-            style={{
-              color: activeTab === "income" ? "#ffffff" : "#ff0000",
-              backgroundColor:
-                activeTab === "income" ? "#ff0000" : "transparent",
-              borderColor: "#ff0000",
-              borderBottomColor:
-                activeTab === "income" ? "#ff0000" : "transparent",
-            }}
-          >
-            Income
-          </button>
-        </li>
-      </ul>
 
       {/* Overview Tab */}
       {activeTab === "overview" && (
@@ -673,18 +1160,20 @@ export default function FinancialManagementPage() {
                     <label className="form-label">Search</label>
                     <input
                       type="text"
-                      className="form-control border"
+                      className="form-control border rounded"
                       placeholder="Search descriptions..."
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
+                      style={{ padding: "8px 12px" }}
                     />
                   </div>
                   <div className="col-md-2">
                     <label className="form-label">Month</label>
                     <select
-                      className="form-select border"
+                      className="form-select border rounded"
                       value={selectedMonth}
                       onChange={(e) => setSelectedMonth(e.target.value)}
+                      style={{ padding: "8px 12px" }}
                     >
                       {months.map((month) => (
                         <option key={month.value} value={month.value}>
@@ -696,9 +1185,10 @@ export default function FinancialManagementPage() {
                   <div className="col-md-2">
                     <label className="form-label">Year</label>
                     <select
-                      className="form-select border"
+                      className="form-select border rounded"
                       value={selectedYear}
                       onChange={(e) => setSelectedYear(e.target.value)}
+                      style={{ padding: "8px 12px" }}
                     >
                       {years.map((year) => (
                         <option key={year.value} value={year.value}>
@@ -710,9 +1200,10 @@ export default function FinancialManagementPage() {
                   <div className="col-md-2">
                     <label className="form-label">Category</label>
                     <select
-                      className="form-select border"
+                      className="form-select border rounded"
                       value={selectedCategory}
                       onChange={(e) => setSelectedCategory(e.target.value)}
+                      style={{ padding: "8px 12px" }}
                     >
                       <option value="">All Categories</option>
                       {expenseCategories.map((category) => (
@@ -726,18 +1217,20 @@ export default function FinancialManagementPage() {
                     <label className="form-label">Sort By</label>
                     <div className="d-flex gap-2">
                       <select
-                        className="form-select border"
+                        className="form-select border rounded"
                         value={sortBy}
                         onChange={(e) => setSortBy(e.target.value)}
+                        style={{ padding: "8px 12px" }}
                       >
                         <option value="date">Date</option>
                         <option value="amount">Amount</option>
                         <option value="category">Category</option>
                       </select>
                       <select
-                        className="form-select border"
+                        className="form-select border rounded"
                         value={sortOrder}
                         onChange={(e) => setSortOrder(e.target.value)}
+                        style={{ padding: "8px 12px" }}
                       >
                         <option value="desc">Desc</option>
                         <option value="asc">Asc</option>
@@ -782,7 +1275,7 @@ export default function FinancialManagementPage() {
                           </td>
                           <td>{expense.description}</td>
                           <td className="text-danger">
-                            -Tk {expense.amount.toLocaleString()}
+                            Tk {expense.amount.toLocaleString()}
                           </td>
                           <td>
                             <i
@@ -842,18 +1335,20 @@ export default function FinancialManagementPage() {
                     <label className="form-label">Search</label>
                     <input
                       type="text"
-                      className="form-control border"
+                      className="form-control border rounded"
                       placeholder="Search descriptions..."
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
+                      style={{ padding: "8px 12px" }}
                     />
                   </div>
                   <div className="col-md-2">
                     <label className="form-label">Month</label>
                     <select
-                      className="form-select border"
+                      className="form-select border rounded"
                       value={selectedMonth}
                       onChange={(e) => setSelectedMonth(e.target.value)}
+                      style={{ padding: "8px 12px" }}
                     >
                       {months.map((month) => (
                         <option key={month.value} value={month.value}>
@@ -865,9 +1360,10 @@ export default function FinancialManagementPage() {
                   <div className="col-md-2">
                     <label className="form-label">Year</label>
                     <select
-                      className="form-select border"
+                      className="form-select border rounded"
                       value={selectedYear}
                       onChange={(e) => setSelectedYear(e.target.value)}
+                      style={{ padding: "8px 12px" }}
                     >
                       {years.map((year) => (
                         <option key={year.value} value={year.value}>
@@ -879,9 +1375,10 @@ export default function FinancialManagementPage() {
                   <div className="col-md-2">
                     <label className="form-label">Category</label>
                     <select
-                      className="form-select border"
+                      className="form-select border rounded"
                       value={selectedCategory}
                       onChange={(e) => setSelectedCategory(e.target.value)}
+                      style={{ padding: "8px 12px" }}
                     >
                       <option value="">All Categories</option>
                       {incomeCategories.map((category) => (
@@ -895,18 +1392,20 @@ export default function FinancialManagementPage() {
                     <label className="form-label">Sort By</label>
                     <div className="d-flex gap-2">
                       <select
-                        className="form-select border"
+                        className="form-select border rounded"
                         value={sortBy}
                         onChange={(e) => setSortBy(e.target.value)}
+                        style={{ padding: "8px 12px" }}
                       >
                         <option value="date">Date</option>
                         <option value="amount">Amount</option>
                         <option value="category">Category</option>
                       </select>
                       <select
-                        className="form-select border"
+                        className="form-select border rounded"
                         value={sortOrder}
                         onChange={(e) => setSortOrder(e.target.value)}
+                        style={{ padding: "8px 12px" }}
                       >
                         <option value="desc">Desc</option>
                         <option value="asc">Asc</option>
@@ -1014,7 +1513,7 @@ export default function FinancialManagementPage() {
                     <label className="form-label">Date</label>
                     <input
                       type="date"
-                      className="form-control border"
+                      className="form-control border rounded"
                       value={expenseFormData.date}
                       onChange={(e) =>
                         setExpenseFormData({
@@ -1023,20 +1522,32 @@ export default function FinancialManagementPage() {
                         })
                       }
                       required
+                      style={{ padding: "8px 12px" }}
                     />
                   </div>
                   <div className="mb-3">
                     <label className="form-label">Category</label>
                     <select
-                      className="form-select border"
+                      className="form-select border rounded"
                       value={expenseFormData.category}
-                      onChange={(e) =>
-                        setExpenseFormData({
-                          ...expenseFormData,
-                          category: e.target.value,
-                        })
-                      }
+                      onChange={(e) => {
+                        if (e.target.value === "create_custom") {
+                          setShowExpenseForm(false);
+                          setShowCategoryModal(true);
+                          setCategoryFormData({
+                            type: "expense",
+                            name: "",
+                            subcategories: [],
+                          });
+                        } else {
+                          setExpenseFormData({
+                            ...expenseFormData,
+                            category: e.target.value,
+                          });
+                        }
+                      }}
                       required
+                      style={{ padding: "8px 12px" }}
                     >
                       <option value="">Select Category</option>
                       {expenseCategories.map((category) => (
@@ -1044,13 +1555,19 @@ export default function FinancialManagementPage() {
                           {category}
                         </option>
                       ))}
+                      <option
+                        value="create_custom"
+                        style={{ fontStyle: "italic" }}
+                      >
+                        + Create Custom Category
+                      </option>
                     </select>
                   </div>
                   <div className="mb-3">
                     <label className="form-label">Description</label>
                     <input
                       type="text"
-                      className="form-control border"
+                      className="form-control border rounded"
                       value={expenseFormData.description}
                       onChange={(e) =>
                         setExpenseFormData({
@@ -1059,13 +1576,14 @@ export default function FinancialManagementPage() {
                         })
                       }
                       required
+                      style={{ padding: "8px 12px" }}
                     />
                   </div>
                   <div className="mb-3">
                     <label className="form-label">Amount</label>
                     <input
                       type="number"
-                      className="form-control border"
+                      className="form-control border rounded"
                       value={expenseFormData.amount}
                       onChange={(e) =>
                         setExpenseFormData({
@@ -1076,6 +1594,7 @@ export default function FinancialManagementPage() {
                       step="0.01"
                       min="0"
                       required
+                      style={{ padding: "8px 12px" }}
                     />
                   </div>
                 </div>
@@ -1128,7 +1647,7 @@ export default function FinancialManagementPage() {
                     <label className="form-label">Date</label>
                     <input
                       type="date"
-                      className="form-control border"
+                      className="form-control border rounded"
                       value={incomeFormData.date}
                       onChange={(e) =>
                         setIncomeFormData({
@@ -1137,20 +1656,32 @@ export default function FinancialManagementPage() {
                         })
                       }
                       required
+                      style={{ padding: "8px 12px" }}
                     />
                   </div>
                   <div className="mb-3">
                     <label className="form-label">Category</label>
                     <select
-                      className="form-select border"
+                      className="form-select border rounded"
                       value={incomeFormData.category}
-                      onChange={(e) =>
-                        setIncomeFormData({
-                          ...incomeFormData,
-                          category: e.target.value,
-                        })
-                      }
+                      onChange={(e) => {
+                        if (e.target.value === "create_custom") {
+                          setShowIncomeForm(false);
+                          setShowCategoryModal(true);
+                          setCategoryFormData({
+                            type: "income",
+                            name: "",
+                            subcategories: [],
+                          });
+                        } else {
+                          setIncomeFormData({
+                            ...incomeFormData,
+                            category: e.target.value,
+                          });
+                        }
+                      }}
                       required
+                      style={{ padding: "8px 12px" }}
                     >
                       <option value="">Select Category</option>
                       {incomeCategories.map((category) => (
@@ -1158,13 +1689,19 @@ export default function FinancialManagementPage() {
                           {category}
                         </option>
                       ))}
+                      <option
+                        value="create_custom"
+                        style={{ fontStyle: "italic" }}
+                      >
+                        + Create Custom Category
+                      </option>
                     </select>
                   </div>
                   <div className="mb-3">
                     <label className="form-label">Description</label>
                     <input
                       type="text"
-                      className="form-control border"
+                      className="form-control border rounded"
                       value={incomeFormData.description}
                       onChange={(e) =>
                         setIncomeFormData({
@@ -1173,13 +1710,14 @@ export default function FinancialManagementPage() {
                         })
                       }
                       required
+                      style={{ padding: "8px 12px" }}
                     />
                   </div>
                   <div className="mb-3">
                     <label className="form-label">Amount</label>
                     <input
                       type="number"
-                      className="form-control border"
+                      className="form-control border rounded"
                       value={incomeFormData.amount}
                       onChange={(e) =>
                         setIncomeFormData({
@@ -1190,6 +1728,7 @@ export default function FinancialManagementPage() {
                       step="0.01"
                       min="0"
                       required
+                      style={{ padding: "8px 12px" }}
                     />
                   </div>
                 </div>
@@ -1315,6 +1854,326 @@ export default function FinancialManagementPage() {
             }}
             onClick={() => setShowDeleteConfirm(false)}
           ></div>
+        </div>
+      )}
+
+      {/* Category Management Modal */}
+      {showCategoryModal && (
+        <div
+          className="modal show d-block"
+          style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
+        >
+          <div className="modal-dialog modal-lg">
+            <div className="modal-content">
+              <div className="modal-header">
+                <h5 className="modal-title">
+                  {editingCategory ? "Edit Category" : "Add New Category"}
+                </h5>
+                <button
+                  type="button"
+                  className="btn-close"
+                  onClick={() => {
+                    setShowCategoryModal(false);
+                    setEditingCategory(null);
+                  }}
+                ></button>
+              </div>
+              <form onSubmit={handleCategorySubmit}>
+                <div className="modal-body">
+                  {error && <div className="alert alert-danger">{error}</div>}
+
+                  <div className="row">
+                    <div className="col-md-6">
+                      <div className="mb-3">
+                        <label className="form-label">Category Type</label>
+                        <select
+                          className="form-select border rounded"
+                          value={categoryFormData.type}
+                          onChange={(e) =>
+                            setCategoryFormData({
+                              ...categoryFormData,
+                              type: e.target.value,
+                            })
+                          }
+                          required
+                          style={{ padding: "8px 12px" }}
+                        >
+                          <option value="expense">Expense</option>
+                          <option value="income">Income</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div className="col-md-6">
+                      <div className="mb-3">
+                        <label className="form-label">Category Name</label>
+                        <input
+                          type="text"
+                          className="form-control border rounded"
+                          value={categoryFormData.name}
+                          onChange={(e) =>
+                            setCategoryFormData({
+                              ...categoryFormData,
+                              name: e.target.value,
+                            })
+                          }
+                          required
+                          style={{ padding: "8px 12px" }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="mb-3">
+                    <label className="form-label">Subcategories</label>
+                    <div className="d-flex gap-2 mb-2">
+                      <input
+                        type="text"
+                        className="form-control border rounded"
+                        placeholder="Add subcategory..."
+                        value={newSubcategory}
+                        onChange={(e) => setNewSubcategory(e.target.value)}
+                        onKeyPress={(e) => {
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            addSubcategory();
+                          }
+                        }}
+                        style={{ padding: "8px 12px" }}
+                      />
+                      <button
+                        type="button"
+                        className="btn"
+                        style={{
+                          color: "#000000",
+                          backgroundColor: "#ffffff",
+                          borderColor: "#000000",
+                        }}
+                        onMouseOver={(e) => {
+                          e.target.style.backgroundColor = "#f8f9fa";
+                          e.target.style.borderColor = "#000000";
+                        }}
+                        onMouseOut={(e) => {
+                          e.target.style.backgroundColor = "#ffffff";
+                          e.target.style.borderColor = "#000000";
+                        }}
+                        onClick={addSubcategory}
+                      >
+                        Add
+                      </button>
+                    </div>
+                    {categoryFormData.subcategories.length > 0 && (
+                      <div className="list-group">
+                        {categoryFormData.subcategories.map((subcat, index) => (
+                          <div
+                            key={index}
+                            className="list-group-item d-flex justify-content-between align-items-center"
+                          >
+                            {subcat}
+                            <button
+                              type="button"
+                              className="btn btn-sm btn-outline-danger"
+                              onClick={() => removeSubcategory(index)}
+                            >
+                              <i className="bi bi-trash"></i>
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <div className="modal-footer">
+                  <button
+                    type="button"
+                    className="btn btn-secondary"
+                    onClick={() => {
+                      setShowCategoryModal(false);
+                      setShowCategoryListModal(true);
+                      setEditingCategory(null);
+                    }}
+                  >
+                    Cancel
+                  </button>
+                  <button type="submit" className="btn btn-primary">
+                    {editingCategory ? "Update" : "Add"} Category
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Category List Modal */}
+      {showCategoryListModal && (
+        <div
+          className="modal show d-block"
+          style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
+        >
+          <div className="modal-dialog modal-lg">
+            <div className="modal-content">
+              <div className="modal-header">
+                <h5 className="modal-title" id="categoryListModalLabel">
+                  Manage Categories
+                </h5>
+                <button
+                  type="button"
+                  className="btn-close"
+                  onClick={() => setShowCategoryListModal(false)}
+                ></button>
+              </div>
+              <div className="modal-body">
+                <div className="row">
+                  <div className="col-md-6">
+                    <h6>Expense Categories</h6>
+                    <div className="list-group">
+                      {categories
+                        .filter((cat) => cat.type === "expense")
+                        .map((category) => (
+                          <div
+                            key={category._id}
+                            className="list-group-item d-flex justify-content-between align-items-center"
+                          >
+                            <div>
+                              <strong>{category.name}</strong>
+                              {category.subcategories &&
+                                category.subcategories.length > 0 && (
+                                  <div className="small text-muted">
+                                    {category.subcategories.join(", ")}
+                                  </div>
+                                )}
+                            </div>
+                            <div className="btn-group">
+                              <button
+                                type="button"
+                                className="btn btn-sm"
+                                style={{
+                                  color: "#000000",
+                                  backgroundColor: "#ffffff",
+                                  borderColor: "#000000",
+                                }}
+                                onMouseOver={(e) => {
+                                  e.target.style.backgroundColor = "#f8f9fa";
+                                  e.target.style.borderColor = "#000000";
+                                }}
+                                onMouseOut={(e) => {
+                                  e.target.style.backgroundColor = "#ffffff";
+                                  e.target.style.borderColor = "#000000";
+                                }}
+                                onClick={() => handleEditCategory(category)}
+                              >
+                                <i className="bi bi-pencil"></i>
+                              </button>
+                              <button
+                                type="button"
+                                className="btn btn-sm btn-outline-danger"
+                                onClick={() =>
+                                  handleDeleteCategory(category._id)
+                                }
+                              >
+                                <i className="bi bi-trash"></i>
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                    </div>
+                  </div>
+                  <div className="col-md-6">
+                    <h6>Income Categories</h6>
+                    <div className="list-group">
+                      {categories
+                        .filter((cat) => cat.type === "income")
+                        .map((category) => (
+                          <div
+                            key={category._id}
+                            className="list-group-item d-flex justify-content-between align-items-center"
+                          >
+                            <div>
+                              <strong>{category.name}</strong>
+                              {category.subcategories &&
+                                category.subcategories.length > 0 && (
+                                  <div className="small text-muted">
+                                    {category.subcategories.join(", ")}
+                                  </div>
+                                )}
+                            </div>
+                            <div className="btn-group">
+                              <button
+                                type="button"
+                                className="btn btn-sm"
+                                style={{
+                                  color: "#000000",
+                                  backgroundColor: "#ffffff",
+                                  borderColor: "#000000",
+                                }}
+                                onMouseOver={(e) => {
+                                  e.target.style.backgroundColor = "#f8f9fa";
+                                  e.target.style.borderColor = "#000000";
+                                }}
+                                onMouseOut={(e) => {
+                                  e.target.style.backgroundColor = "#ffffff";
+                                  e.target.style.borderColor = "#000000";
+                                }}
+                                onClick={() => handleEditCategory(category)}
+                              >
+                                <i className="bi bi-pencil"></i>
+                              </button>
+                              <button
+                                type="button"
+                                className="btn btn-sm btn-outline-danger"
+                                onClick={() =>
+                                  handleDeleteCategory(category._id)
+                                }
+                              >
+                                <i className="bi bi-trash"></i>
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div className="modal-footer">
+                <button
+                  type="button"
+                  className="btn"
+                  style={{
+                    color: "#ffffff",
+                    backgroundColor: "#000000",
+                    borderColor: "#000000",
+                  }}
+                  onMouseOver={(e) => {
+                    e.target.style.backgroundColor = "#333333";
+                    e.target.style.borderColor = "#333333";
+                  }}
+                  onMouseOut={(e) => {
+                    e.target.style.backgroundColor = "#000000";
+                    e.target.style.borderColor = "#000000";
+                  }}
+                  onClick={() => {
+                    setShowCategoryListModal(false);
+                    setShowCategoryModal(true);
+                    setEditingCategory(null);
+                    setCategoryFormData({
+                      type: "expense",
+                      name: "",
+                      subcategories: [],
+                    });
+                  }}
+                >
+                  Add New Category
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => setShowCategoryListModal(false)}
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>
