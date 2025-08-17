@@ -66,7 +66,8 @@ export async function POST(request) {
   }
 
   try {
-    const { date, category, description, amount } = await request.json();
+    const { date, category, subcategory, description, amount } =
+      await request.json();
 
     // Validate input
     if (!date || !category || !description || amount === undefined) {
@@ -90,6 +91,7 @@ export async function POST(request) {
     const newIncome = {
       date: new Date(date),
       category,
+      subcategory: subcategory || "",
       description,
       amount: parseFloat(amount),
       createdAt: new Date(),

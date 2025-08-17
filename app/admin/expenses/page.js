@@ -23,12 +23,14 @@ export default function FinancialManagementPage() {
   const [expenseFormData, setExpenseFormData] = useState({
     date: new Date().toISOString().split("T")[0],
     category: "",
+    subcategory: "",
     description: "",
     amount: "",
   });
   const [incomeFormData, setIncomeFormData] = useState({
     date: new Date().toISOString().split("T")[0],
     category: "",
+    subcategory: "",
     description: "",
     amount: "",
   });
@@ -93,13 +95,31 @@ export default function FinancialManagementPage() {
   const [sortOrder, setSortOrder] = useState("desc");
   const [isFilterExpanded, setIsFilterExpanded] = useState(true);
 
+  // Clear all filters function
+  const clearAllFilters = () => {
+    setSearchTerm("");
+    setSelectedMonth("");
+    setSelectedYear("");
+    setSelectedCategory("");
+    setSortBy("date");
+    setSortOrder("desc");
+  };
+
   // Get categories by type
   const getCategoriesByType = (type) => {
-    return categories.filter((cat) => cat.type === type).map((cat) => cat.name);
+    return categories.filter((cat) => cat.type === type);
   };
 
   const expenseCategories = getCategoriesByType("expense");
   const incomeCategories = getCategoriesByType("income");
+
+  // Get subcategories for a specific category
+  const getSubcategoriesForCategory = (categoryName, type) => {
+    const category = categories.find(
+      (cat) => cat.type === type && cat.name === categoryName
+    );
+    return category ? category.subcategories || [] : [];
+  };
 
   // Generate month and year options
   const months = [
@@ -288,6 +308,7 @@ export default function FinancialManagementPage() {
         setExpenseFormData({
           date: new Date().toISOString().split("T")[0],
           category: "",
+          subcategory: "",
           description: "",
           amount: "",
         });
@@ -330,6 +351,7 @@ export default function FinancialManagementPage() {
         setIncomeFormData({
           date: new Date().toISOString().split("T")[0],
           category: "",
+          subcategory: "",
           description: "",
           amount: "",
         });
@@ -355,6 +377,7 @@ export default function FinancialManagementPage() {
     setExpenseFormData({
       date: new Date(expense.date).toISOString().split("T")[0],
       category: expense.category,
+      subcategory: expense.subcategory || "",
       description: expense.description,
       amount: expense.amount.toString(),
     });
@@ -366,6 +389,7 @@ export default function FinancialManagementPage() {
     setIncomeFormData({
       date: new Date(income.date).toISOString().split("T")[0],
       category: income.category,
+      subcategory: income.subcategory || "",
       description: income.description,
       amount: income.amount.toString(),
     });
@@ -463,12 +487,14 @@ export default function FinancialManagementPage() {
             setExpenseFormData({
               ...expenseFormData,
               category: categoryFormData.name,
+              subcategory: "",
             });
           } else if (categoryFormData.type === "income") {
             setShowIncomeForm(true);
             setIncomeFormData({
               ...incomeFormData,
               category: categoryFormData.name,
+              subcategory: "",
             });
           } else {
             setShowCategoryListModal(true);
@@ -617,13 +643,14 @@ export default function FinancialManagementPage() {
     const tableData = filteredExpenses.map((expense) => [
       new Date(expense.date).toLocaleDateString(),
       expense.category,
+      expense.subcategory || "",
       expense.description,
       `Tk ${expense.amount.toLocaleString()}`,
     ]);
 
     autoTable(doc, {
       startY: 50,
-      head: [["Date", "Category", "Description", "Amount"]],
+      head: [["Date", "Category", "Subcategory", "Description", "Amount"]],
       body: tableData,
       theme: "grid",
       headStyles: {
@@ -637,9 +664,10 @@ export default function FinancialManagementPage() {
       },
       columnStyles: {
         0: { cellWidth: 25 },
-        1: { cellWidth: 35 },
-        2: { cellWidth: 70 },
-        3: { cellWidth: 30, halign: "right" },
+        1: { cellWidth: 30 },
+        2: { cellWidth: 30 },
+        3: { cellWidth: 60 },
+        4: { cellWidth: 30, halign: "right" },
       },
     });
 
@@ -662,13 +690,14 @@ export default function FinancialManagementPage() {
     const tableData = filteredIncome.map((income) => [
       new Date(income.date).toLocaleDateString(),
       income.category,
+      income.subcategory || "",
       income.description,
       `Tk ${income.amount.toLocaleString()}`,
     ]);
 
     autoTable(doc, {
       startY: 50,
-      head: [["Date", "Category", "Description", "Amount"]],
+      head: [["Date", "Category", "Subcategory", "Description", "Amount"]],
       body: tableData,
       theme: "grid",
       headStyles: {
@@ -682,9 +711,10 @@ export default function FinancialManagementPage() {
       },
       columnStyles: {
         0: { cellWidth: 25 },
-        1: { cellWidth: 35 },
-        2: { cellWidth: 70 },
-        3: { cellWidth: 30, halign: "right" },
+        1: { cellWidth: 30 },
+        2: { cellWidth: 30 },
+        3: { cellWidth: 60 },
+        4: { cellWidth: 30, halign: "right" },
       },
     });
 
@@ -819,12 +849,12 @@ export default function FinancialManagementPage() {
 
   // Prepare chart data
   const expenseChartData = {
-    labels: expenseCategories,
+    labels: expenseCategories.map((cat) => cat.name),
     datasets: [
       {
         data: expenseCategories.map((category) =>
           filteredExpenses
-            .filter((expense) => expense.category === category)
+            .filter((expense) => expense.category === category.name)
             .reduce((sum, expense) => sum + expense.amount, 0)
         ),
         backgroundColor: [
@@ -845,12 +875,12 @@ export default function FinancialManagementPage() {
   };
 
   const incomeChartData = {
-    labels: incomeCategories,
+    labels: incomeCategories.map((cat) => cat.name),
     datasets: [
       {
         data: incomeCategories.map((category) =>
           filteredIncome
-            .filter((income) => income.category === category)
+            .filter((income) => income.category === category.name)
             .reduce((sum, income) => sum + income.amount, 0)
         ),
         backgroundColor: [
@@ -972,6 +1002,7 @@ export default function FinancialManagementPage() {
               setIncomeFormData({
                 date: new Date().toISOString().split("T")[0],
                 category: "",
+                subcategory: "",
                 description: "",
                 amount: "",
               });
@@ -1003,6 +1034,7 @@ export default function FinancialManagementPage() {
               setExpenseFormData({
                 date: new Date().toISOString().split("T")[0],
                 category: "",
+                subcategory: "",
                 description: "",
                 amount: "",
               });
@@ -1207,8 +1239,8 @@ export default function FinancialManagementPage() {
                     >
                       <option value="">All Categories</option>
                       {expenseCategories.map((category) => (
-                        <option key={category} value={category}>
-                          {category}
+                        <option key={category.name} value={category.name}>
+                          {category.name}
                         </option>
                       ))}
                     </select>
@@ -1238,6 +1270,19 @@ export default function FinancialManagementPage() {
                     </div>
                   </div>
                 </div>
+                <div className="row mt-3">
+                  <div className="col-12">
+                    <button
+                      type="button"
+                      className="btn btn-outline-secondary"
+                      onClick={clearAllFilters}
+                      style={{ padding: "8px 16px" }}
+                    >
+                      <i className="bi bi-x-circle me-1"></i>
+                      Clear All Filters
+                    </button>
+                  </div>
+                </div>
               </div>
             )}
           </div>
@@ -1259,6 +1304,7 @@ export default function FinancialManagementPage() {
                       <tr>
                         <th>Date</th>
                         <th>Category</th>
+                        <th>Subcategory</th>
                         <th>Description</th>
                         <th>Amount</th>
                         <th>Actions</th>
@@ -1272,6 +1318,13 @@ export default function FinancialManagementPage() {
                             <span className="badge bg-secondary">
                               {expense.category}
                             </span>
+                          </td>
+                          <td>
+                            {expense.subcategory && (
+                              <span className="badge bg-info text-white">
+                                {expense.subcategory}
+                              </span>
+                            )}
                           </td>
                           <td>{expense.description}</td>
                           <td className="text-danger">
@@ -1382,8 +1435,8 @@ export default function FinancialManagementPage() {
                     >
                       <option value="">All Categories</option>
                       {incomeCategories.map((category) => (
-                        <option key={category} value={category}>
-                          {category}
+                        <option key={category.name} value={category.name}>
+                          {category.name}
                         </option>
                       ))}
                     </select>
@@ -1413,6 +1466,19 @@ export default function FinancialManagementPage() {
                     </div>
                   </div>
                 </div>
+                <div className="row mt-3">
+                  <div className="col-12">
+                    <button
+                      type="button"
+                      className="btn btn-outline-secondary"
+                      onClick={clearAllFilters}
+                      style={{ padding: "8px 16px" }}
+                    >
+                      <i className="bi bi-x-circle me-1"></i>
+                      Clear All Filters
+                    </button>
+                  </div>
+                </div>
               </div>
             )}
           </div>
@@ -1434,6 +1500,7 @@ export default function FinancialManagementPage() {
                       <tr>
                         <th>Date</th>
                         <th>Category</th>
+                        <th>Subcategory</th>
                         <th>Description</th>
                         <th>Amount</th>
                         <th>Actions</th>
@@ -1448,9 +1515,16 @@ export default function FinancialManagementPage() {
                               {income.category}
                             </span>
                           </td>
+                          <td>
+                            {income.subcategory && (
+                              <span className="badge bg-light text-white">
+                                {income.subcategory}
+                              </span>
+                            )}
+                          </td>
                           <td>{income.description}</td>
                           <td className="text-success">
-                            +Tk {income.amount.toLocaleString()}
+                            Tk {income.amount.toLocaleString()}
                           </td>
                           <td>
                             <i
@@ -1543,6 +1617,7 @@ export default function FinancialManagementPage() {
                           setExpenseFormData({
                             ...expenseFormData,
                             category: e.target.value,
+                            subcategory: "", // Reset subcategory when category changes
                           });
                         }
                       }}
@@ -1551,8 +1626,8 @@ export default function FinancialManagementPage() {
                     >
                       <option value="">Select Category</option>
                       {expenseCategories.map((category) => (
-                        <option key={category} value={category}>
-                          {category}
+                        <option key={category.name} value={category.name}>
+                          {category.name}
                         </option>
                       ))}
                       <option
@@ -1563,6 +1638,38 @@ export default function FinancialManagementPage() {
                       </option>
                     </select>
                   </div>
+                  {expenseFormData.category &&
+                    getSubcategoriesForCategory(
+                      expenseFormData.category,
+                      "expense"
+                    ).length > 0 && (
+                      <div className="mb-3">
+                        <label className="form-label">Subcategory</label>
+                        <select
+                          className="form-select border rounded"
+                          value={expenseFormData.subcategory}
+                          onChange={(e) =>
+                            setExpenseFormData({
+                              ...expenseFormData,
+                              subcategory: e.target.value,
+                            })
+                          }
+                          style={{ padding: "8px 12px" }}
+                        >
+                          <option value="">
+                            Select Subcategory (Optional)
+                          </option>
+                          {getSubcategoriesForCategory(
+                            expenseFormData.category,
+                            "expense"
+                          ).map((subcat) => (
+                            <option key={subcat} value={subcat}>
+                              {subcat}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
                   <div className="mb-3">
                     <label className="form-label">Description</label>
                     <input
@@ -1677,6 +1784,7 @@ export default function FinancialManagementPage() {
                           setIncomeFormData({
                             ...incomeFormData,
                             category: e.target.value,
+                            subcategory: "", // Reset subcategory when category changes
                           });
                         }
                       }}
@@ -1685,8 +1793,8 @@ export default function FinancialManagementPage() {
                     >
                       <option value="">Select Category</option>
                       {incomeCategories.map((category) => (
-                        <option key={category} value={category}>
-                          {category}
+                        <option key={category.name} value={category.name}>
+                          {category.name}
                         </option>
                       ))}
                       <option
@@ -1697,6 +1805,38 @@ export default function FinancialManagementPage() {
                       </option>
                     </select>
                   </div>
+                  {incomeFormData.category &&
+                    getSubcategoriesForCategory(
+                      incomeFormData.category,
+                      "income"
+                    ).length > 0 && (
+                      <div className="mb-3">
+                        <label className="form-label">Subcategory</label>
+                        <select
+                          className="form-select border rounded"
+                          value={incomeFormData.subcategory}
+                          onChange={(e) =>
+                            setIncomeFormData({
+                              ...incomeFormData,
+                              subcategory: e.target.value,
+                            })
+                          }
+                          style={{ padding: "8px 12px" }}
+                        >
+                          <option value="">
+                            Select Subcategory (Optional)
+                          </option>
+                          {getSubcategoriesForCategory(
+                            incomeFormData.category,
+                            "income"
+                          ).map((subcat) => (
+                            <option key={subcat} value={subcat}>
+                              {subcat}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
                   <div className="mb-3">
                     <label className="form-label">Description</label>
                     <input
