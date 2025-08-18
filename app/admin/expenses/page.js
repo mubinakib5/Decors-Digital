@@ -24,6 +24,7 @@ export default function FinancialManagementPage() {
     date: new Date().toISOString().split("T")[0],
     category: "",
     subcategory: "",
+    company: "",
     description: "",
     amount: "",
   });
@@ -31,6 +32,7 @@ export default function FinancialManagementPage() {
     date: new Date().toISOString().split("T")[0],
     category: "",
     subcategory: "",
+    company: "",
     description: "",
     amount: "",
   });
@@ -309,6 +311,7 @@ export default function FinancialManagementPage() {
           date: new Date().toISOString().split("T")[0],
           category: "",
           subcategory: "",
+          company: "",
           description: "",
           amount: "",
         });
@@ -352,6 +355,7 @@ export default function FinancialManagementPage() {
           date: new Date().toISOString().split("T")[0],
           category: "",
           subcategory: "",
+          company: "",
           description: "",
           amount: "",
         });
@@ -378,6 +382,7 @@ export default function FinancialManagementPage() {
       date: new Date(expense.date).toISOString().split("T")[0],
       category: expense.category,
       subcategory: expense.subcategory || "",
+      company: expense.company || "",
       description: expense.description,
       amount: expense.amount.toString(),
     });
@@ -390,6 +395,7 @@ export default function FinancialManagementPage() {
       date: new Date(income.date).toISOString().split("T")[0],
       category: income.category,
       subcategory: income.subcategory || "",
+      company: income.company || "",
       description: income.description,
       amount: income.amount.toString(),
     });
@@ -1164,6 +1170,119 @@ export default function FinancialManagementPage() {
               </div>
             </div>
           </div>
+
+          {/* Company-based Analysis */}
+          <div className="row mt-4">
+            <div className="col-12">
+              <div className="card">
+                <div className="card-header">
+                  <h5 className="card-title mb-0">Company-based Analysis</h5>
+                </div>
+                <div className="card-body">
+                  {(() => {
+                    // Calculate company-based data
+                    const companyData = {};
+                    
+                    // Process expenses
+                    filteredExpenses.forEach((expense) => {
+                      if (expense.company && expense.company.trim()) {
+                        const company = expense.company.trim();
+                        if (!companyData[company]) {
+                          companyData[company] = { expenses: 0, income: 0, net: 0 };
+                        }
+                        companyData[company].expenses += expense.amount;
+                      }
+                    });
+                    
+                    // Process income
+                    filteredIncome.forEach((income) => {
+                      if (income.company && income.company.trim()) {
+                        const company = income.company.trim();
+                        if (!companyData[company]) {
+                          companyData[company] = { expenses: 0, income: 0, net: 0 };
+                        }
+                        companyData[company].income += income.amount;
+                      }
+                    });
+                    
+                    // Calculate net amounts
+                    Object.keys(companyData).forEach((company) => {
+                      companyData[company].net = companyData[company].income - companyData[company].expenses;
+                    });
+                    
+                    const companies = Object.keys(companyData);
+                    
+                    if (companies.length === 0) {
+                      return (
+                        <p className="text-muted text-center">
+                          No company data available. Add company names to your expenses and income to see analysis.
+                        </p>
+                      );
+                    }
+                    
+                    return (
+                      <div className="table-responsive">
+                        <table className="table table-striped">
+                          <thead>
+                            <tr>
+                              <th>Company</th>
+                              <th>Total Income</th>
+                              <th>Total Expenses</th>
+                              <th>Net Profit/Loss</th>
+                              <th>Status</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {companies
+                              .sort((a, b) => companyData[b].net - companyData[a].net)
+                              .map((company) => {
+                                const data = companyData[company];
+                                const isProfit = data.net >= 0;
+                                return (
+                                  <tr key={company}>
+                                    <td>
+                                      <span className="badge bg-warning text-dark">
+                                        {company}
+                                      </span>
+                                    </td>
+                                    <td className="text-success">
+                                      Tk {data.income.toLocaleString()}
+                                    </td>
+                                    <td className="text-danger">
+                                      Tk {data.expenses.toLocaleString()}
+                                    </td>
+                                    <td className={isProfit ? "text-success" : "text-danger"}>
+                                      <strong>
+                                        {isProfit ? "+" : ""}Tk {data.net.toLocaleString()}
+                                      </strong>
+                                    </td>
+                                    <td>
+                                      <span 
+                                        className="badge"
+                                        style={{
+                                          backgroundColor: isProfit ? "#28a745" : "#dc3545",
+                                          color: "white",
+                                          padding: "0.375rem 0.75rem",
+                                          fontSize: "0.75rem",
+                                          fontWeight: "600",
+                                          borderRadius: "0.375rem"
+                                        }}
+                                      >
+                                        {isProfit ? "Profit" : "Loss"}
+                                      </span>
+                                    </td>
+                                  </tr>
+                                );
+                              })}
+                          </tbody>
+                        </table>
+                      </div>
+                    );
+                  })()}
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       )}
 
@@ -1194,7 +1313,7 @@ export default function FinancialManagementPage() {
                       type="text"
                       className="form-control border rounded"
                       placeholder="Search descriptions..."
-                      value={searchTerm}
+                      value={searchTerm || ""}
                       onChange={(e) => setSearchTerm(e.target.value)}
                       style={{ padding: "8px 12px" }}
                     />
@@ -1203,7 +1322,7 @@ export default function FinancialManagementPage() {
                     <label className="form-label">Month</label>
                     <select
                       className="form-select border rounded"
-                      value={selectedMonth}
+                      value={selectedMonth || ""}
                       onChange={(e) => setSelectedMonth(e.target.value)}
                       style={{ padding: "8px 12px" }}
                     >
@@ -1218,7 +1337,7 @@ export default function FinancialManagementPage() {
                     <label className="form-label">Year</label>
                     <select
                       className="form-select border rounded"
-                      value={selectedYear}
+                      value={selectedYear || ""}
                       onChange={(e) => setSelectedYear(e.target.value)}
                       style={{ padding: "8px 12px" }}
                     >
@@ -1233,7 +1352,7 @@ export default function FinancialManagementPage() {
                     <label className="form-label">Category</label>
                     <select
                       className="form-select border rounded"
-                      value={selectedCategory}
+                      value={selectedCategory || ""}
                       onChange={(e) => setSelectedCategory(e.target.value)}
                       style={{ padding: "8px 12px" }}
                     >
@@ -1250,7 +1369,7 @@ export default function FinancialManagementPage() {
                     <div className="d-flex gap-2">
                       <select
                         className="form-select border rounded"
-                        value={sortBy}
+                        value={sortBy || "date"}
                         onChange={(e) => setSortBy(e.target.value)}
                         style={{ padding: "8px 12px" }}
                       >
@@ -1260,7 +1379,7 @@ export default function FinancialManagementPage() {
                       </select>
                       <select
                         className="form-select border rounded"
-                        value={sortOrder}
+                        value={sortOrder || "desc"}
                         onChange={(e) => setSortOrder(e.target.value)}
                         style={{ padding: "8px 12px" }}
                       >
@@ -1305,6 +1424,7 @@ export default function FinancialManagementPage() {
                         <th>Date</th>
                         <th>Category</th>
                         <th>Subcategory</th>
+                        <th>Company</th>
                         <th>Description</th>
                         <th>Amount</th>
                         <th>Actions</th>
@@ -1321,8 +1441,15 @@ export default function FinancialManagementPage() {
                           </td>
                           <td>
                             {expense.subcategory && (
-                              <span className="badge bg-info text-white">
+                              <span className="badge bg-secondary text-white">
                                 {expense.subcategory}
+                              </span>
+                            )}
+                          </td>
+                          <td>
+                            {expense.company && (
+                              <span className="badge bg-warning text-dark">
+                                {expense.company}
                               </span>
                             )}
                           </td>
@@ -1390,7 +1517,7 @@ export default function FinancialManagementPage() {
                       type="text"
                       className="form-control border rounded"
                       placeholder="Search descriptions..."
-                      value={searchTerm}
+                      value={searchTerm || ""}
                       onChange={(e) => setSearchTerm(e.target.value)}
                       style={{ padding: "8px 12px" }}
                     />
@@ -1399,7 +1526,7 @@ export default function FinancialManagementPage() {
                     <label className="form-label">Month</label>
                     <select
                       className="form-select border rounded"
-                      value={selectedMonth}
+                      value={selectedMonth || ""}
                       onChange={(e) => setSelectedMonth(e.target.value)}
                       style={{ padding: "8px 12px" }}
                     >
@@ -1414,7 +1541,7 @@ export default function FinancialManagementPage() {
                     <label className="form-label">Year</label>
                     <select
                       className="form-select border rounded"
-                      value={selectedYear}
+                      value={selectedYear || ""}
                       onChange={(e) => setSelectedYear(e.target.value)}
                       style={{ padding: "8px 12px" }}
                     >
@@ -1429,7 +1556,7 @@ export default function FinancialManagementPage() {
                     <label className="form-label">Category</label>
                     <select
                       className="form-select border rounded"
-                      value={selectedCategory}
+                      value={selectedCategory || ""}
                       onChange={(e) => setSelectedCategory(e.target.value)}
                       style={{ padding: "8px 12px" }}
                     >
@@ -1446,7 +1573,7 @@ export default function FinancialManagementPage() {
                     <div className="d-flex gap-2">
                       <select
                         className="form-select border rounded"
-                        value={sortBy}
+                        value={sortBy || "date"}
                         onChange={(e) => setSortBy(e.target.value)}
                         style={{ padding: "8px 12px" }}
                       >
@@ -1456,7 +1583,7 @@ export default function FinancialManagementPage() {
                       </select>
                       <select
                         className="form-select border rounded"
-                        value={sortOrder}
+                        value={sortOrder || "desc"}
                         onChange={(e) => setSortOrder(e.target.value)}
                         style={{ padding: "8px 12px" }}
                       >
@@ -1501,6 +1628,7 @@ export default function FinancialManagementPage() {
                         <th>Date</th>
                         <th>Category</th>
                         <th>Subcategory</th>
+                        <th>Company</th>
                         <th>Description</th>
                         <th>Amount</th>
                         <th>Actions</th>
@@ -1517,8 +1645,15 @@ export default function FinancialManagementPage() {
                           </td>
                           <td>
                             {income.subcategory && (
-                              <span className="badge bg-light text-white">
+                              <span className="badge bg-secondary text-white">
                                 {income.subcategory}
+                              </span>
+                            )}
+                          </td>
+                          <td>
+                            {income.company && (
+                              <span className="badge bg-warning text-dark">
+                                {income.company}
                               </span>
                             )}
                           </td>
@@ -1588,7 +1723,7 @@ export default function FinancialManagementPage() {
                     <input
                       type="date"
                       className="form-control border rounded"
-                      value={expenseFormData.date}
+                      value={expenseFormData.date || ""}
                       onChange={(e) =>
                         setExpenseFormData({
                           ...expenseFormData,
@@ -1603,7 +1738,7 @@ export default function FinancialManagementPage() {
                     <label className="form-label">Category</label>
                     <select
                       className="form-select border rounded"
-                      value={expenseFormData.category}
+                      value={expenseFormData.category || ""}
                       onChange={(e) => {
                         if (e.target.value === "create_custom") {
                           setShowExpenseForm(false);
@@ -1647,7 +1782,7 @@ export default function FinancialManagementPage() {
                         <label className="form-label">Subcategory</label>
                         <select
                           className="form-select border rounded"
-                          value={expenseFormData.subcategory}
+                          value={expenseFormData.subcategory || ""}
                           onChange={(e) =>
                             setExpenseFormData({
                               ...expenseFormData,
@@ -1671,11 +1806,27 @@ export default function FinancialManagementPage() {
                       </div>
                     )}
                   <div className="mb-3">
+                    <label className="form-label">Company Name</label>
+                    <input
+                      type="text"
+                      className="form-control border rounded"
+                      value={expenseFormData.company || ""}
+                      onChange={(e) =>
+                        setExpenseFormData({
+                          ...expenseFormData,
+                          company: e.target.value,
+                        })
+                      }
+                      placeholder="e.g., ABC Company"
+                      style={{ padding: "8px 12px" }}
+                    />
+                  </div>
+                  <div className="mb-3">
                     <label className="form-label">Description</label>
                     <input
                       type="text"
                       className="form-control border rounded"
-                      value={expenseFormData.description}
+                      value={expenseFormData.description || ""}
                       onChange={(e) =>
                         setExpenseFormData({
                           ...expenseFormData,
@@ -1691,7 +1842,7 @@ export default function FinancialManagementPage() {
                     <input
                       type="number"
                       className="form-control border rounded"
-                      value={expenseFormData.amount}
+                      value={expenseFormData.amount || ""}
                       onChange={(e) =>
                         setExpenseFormData({
                           ...expenseFormData,
@@ -1755,7 +1906,7 @@ export default function FinancialManagementPage() {
                     <input
                       type="date"
                       className="form-control border rounded"
-                      value={incomeFormData.date}
+                      value={incomeFormData.date || ""}
                       onChange={(e) =>
                         setIncomeFormData({
                           ...incomeFormData,
@@ -1770,7 +1921,7 @@ export default function FinancialManagementPage() {
                     <label className="form-label">Category</label>
                     <select
                       className="form-select border rounded"
-                      value={incomeFormData.category}
+                      value={incomeFormData.category || ""}
                       onChange={(e) => {
                         if (e.target.value === "create_custom") {
                           setShowIncomeForm(false);
@@ -1814,7 +1965,7 @@ export default function FinancialManagementPage() {
                         <label className="form-label">Subcategory</label>
                         <select
                           className="form-select border rounded"
-                          value={incomeFormData.subcategory}
+                          value={incomeFormData.subcategory || ""}
                           onChange={(e) =>
                             setIncomeFormData({
                               ...incomeFormData,
@@ -1838,11 +1989,27 @@ export default function FinancialManagementPage() {
                       </div>
                     )}
                   <div className="mb-3">
+                    <label className="form-label">Company Name</label>
+                    <input
+                      type="text"
+                      className="form-control border rounded"
+                      value={incomeFormData.company || ""}
+                      onChange={(e) =>
+                        setIncomeFormData({
+                          ...incomeFormData,
+                          company: e.target.value,
+                        })
+                      }
+                      placeholder="e.g., ABC Company"
+                      style={{ padding: "8px 12px" }}
+                    />
+                  </div>
+                  <div className="mb-3">
                     <label className="form-label">Description</label>
                     <input
                       type="text"
                       className="form-control border rounded"
-                      value={incomeFormData.description}
+                      value={incomeFormData.description || ""}
                       onChange={(e) =>
                         setIncomeFormData({
                           ...incomeFormData,
@@ -1858,7 +2025,7 @@ export default function FinancialManagementPage() {
                     <input
                       type="number"
                       className="form-control border rounded"
-                      value={incomeFormData.amount}
+                      value={incomeFormData.amount || ""}
                       onChange={(e) =>
                         setIncomeFormData({
                           ...incomeFormData,
@@ -2028,7 +2195,7 @@ export default function FinancialManagementPage() {
                         <label className="form-label">Category Type</label>
                         <select
                           className="form-select border rounded"
-                          value={categoryFormData.type}
+                          value={categoryFormData.type || "expense"}
                           onChange={(e) =>
                             setCategoryFormData({
                               ...categoryFormData,
@@ -2049,7 +2216,7 @@ export default function FinancialManagementPage() {
                         <input
                           type="text"
                           className="form-control border rounded"
-                          value={categoryFormData.name}
+                          value={categoryFormData.name || ""}
                           onChange={(e) =>
                             setCategoryFormData({
                               ...categoryFormData,
@@ -2070,7 +2237,7 @@ export default function FinancialManagementPage() {
                         type="text"
                         className="form-control border rounded"
                         placeholder="Add subcategory..."
-                        value={newSubcategory}
+                        value={newSubcategory || ""}
                         onChange={(e) => setNewSubcategory(e.target.value)}
                         onKeyPress={(e) => {
                           if (e.key === "Enter") {

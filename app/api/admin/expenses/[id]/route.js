@@ -34,7 +34,7 @@ export async function PUT(request, { params }) {
 
   try {
     const { id } = await params;
-    const { date, category, subcategory, description, amount } =
+    const { date, category, subcategory, company, description, amount } =
       await request.json();
 
     // Validate input
@@ -68,6 +68,7 @@ export async function PUT(request, { params }) {
       date: new Date(date),
       category,
       subcategory: subcategory || "",
+      company: company || "",
       description,
       amount: parseFloat(amount),
       updatedAt: new Date(),

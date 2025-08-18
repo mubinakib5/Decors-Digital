@@ -66,7 +66,7 @@ export async function POST(request) {
   }
 
   try {
-    const { date, category, subcategory, description, amount } =
+    const { date, category, subcategory, company, description, amount } =
       await request.json();
 
     // Validate input
@@ -92,6 +92,7 @@ export async function POST(request) {
       date: new Date(date),
       category,
       subcategory: subcategory || "",
+      company: company || "",
       description,
       amount: parseFloat(amount),
       createdAt: new Date(),
