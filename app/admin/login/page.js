@@ -29,8 +29,10 @@ export default function AdminLogin() {
       const data = await response.json();
 
       if (response.ok) {
-        // Server sets the cookie, just redirect
-        router.push("/admin/expenses");
+        // Server sets the cookie, check for redirect parameter or default to expenses
+        const urlParams = new URLSearchParams(window.location.search);
+        const redirectTo = urlParams.get('redirect') || '/admin/expenses';
+        router.push(redirectTo);
       } else {
         setError(data.message || "Login failed");
       }
