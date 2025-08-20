@@ -9,11 +9,16 @@ export default function HumanResourcePage() {
   const [employees, setEmployees] = useState([]);
   const [attendance, setAttendance] = useState([]);
   const [leaves, setLeaves] = useState([]);
+  const [employeeStats, setEmployeeStats] = useState(null);
+  const [statsLoading, setStatsLoading] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState("dashboard"); // dashboard, employees, attendance, leaves, reports
+  const [activeTab, setActiveTab] = useState("dashboard"); // dashboard, employees, attendance, leaves, reports, overview
+  const [statsPeriod, setStatsPeriod] = useState("month"); // today, week, month, year
+  const [selectedDepartment, setSelectedDepartment] = useState("");
   const [showEmployeeForm, setShowEmployeeForm] = useState(false);
   const [showClockForm, setShowClockForm] = useState(false);
   const [showLeaveForm, setShowLeaveForm] = useState(false);
+  const [showManualTimeForm, setShowManualTimeForm] = useState(false);
   const [editingEmployee, setEditingEmployee] = useState(null);
   const [selectedEmployee, setSelectedEmployee] = useState("");
   const [clockAction, setClockAction] = useState("in"); // in or out
@@ -38,6 +43,7 @@ export default function HumanResourcePage() {
     address: "",
     workSchedule: "9:00-17:00",
     joinDate: new Date().toISOString().split("T")[0],
+    isIntern: false,
   });
 
   const [leaveFormData, setLeaveFormData] = useState({
@@ -46,6 +52,16 @@ export default function HumanResourcePage() {
     startDate: new Date().toISOString().split("T")[0],
     endDate: new Date().toISOString().split("T")[0],
     reason: "",
+  });
+
+  const [manualTimeFormData, setManualTimeFormData] = useState({
+    employeeId: "",
+    date: new Date().toISOString().split("T")[0],
+    clockIn: "09:00",
+    clockOut: "17:00",
+    breakDuration: 60, // minutes
+    reason: "",
+    notes: ""
   });
 
   const [toast, setToast] = useState({
@@ -103,6 +119,36 @@ export default function HumanResourcePage() {
       setLoading(false);
     }
   };
+
+  const loadEmployeeStats = async () => {
+    try {
+      setStatsLoading(true);
+      const params = new URLSearchParams({
+        period: statsPeriod,
+        ...(selectedDepartment && { department: selectedDepartment })
+      });
+      
+      const response = await fetch(`/api/admin/employee-stats?${params}`);
+      if (response.ok) {
+        const statsData = await response.json();
+        setEmployeeStats(statsData);
+      } else {
+        showToast("Error loading employee statistics", "error");
+      }
+    } catch (error) {
+      console.error("Error loading employee stats:", error);
+      showToast("Error loading employee statistics", "error");
+    } finally {
+      setStatsLoading(false);
+    }
+  };
+
+  // Load stats when tab changes to overview or filters change
+  useEffect(() => {
+    if (activeTab === "overview") {
+      loadEmployeeStats();
+    }
+  }, [activeTab, statsPeriod, selectedDepartment]);
 
   const showToast = (message, type = "success") => {
     setToast({ show: true, message, type });
@@ -173,6 +219,7 @@ export default function HumanResourcePage() {
       address: "",
       workSchedule: "9:00-17:00",
       joinDate: new Date().toISOString().split("T")[0],
+      isIntern: false,
     });
   };
 
@@ -297,6 +344,42 @@ export default function HumanResourcePage() {
     }
   };
 
+  // Manual Time Entry Functions
+  const handleManualTimeSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const response = await fetch("/api/admin/manual-time", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(manualTimeFormData),
+      });
+
+      if (response.ok) {
+        showToast("Manual time entry added successfully");
+        setShowManualTimeForm(false);
+        resetManualTimeForm();
+        loadData();
+      } else {
+        const error = await response.json();
+        showToast(error.message || "Error adding manual time entry", "error");
+      }
+    } catch (error) {
+      showToast("Error adding manual time entry", "error");
+    }
+  };
+
+  const resetManualTimeForm = () => {
+    setManualTimeFormData({
+      employeeId: "",
+      date: new Date().toISOString().split("T")[0],
+      clockIn: "09:00",
+      clockOut: "17:00",
+      breakDuration: 60,
+      reason: "",
+      notes: ""
+    });
+  };
+
   // Update attendance status from 'present' to 'on time'
   const updateAttendanceStatus = async () => {
     try {
@@ -318,6 +401,99 @@ export default function HumanResourcePage() {
     } catch (error) {
       console.error('Error updating attendance status:', error);
       showToast("Error updating attendance records", "error");
+    }
+  };
+
+  // Manual Clock In/Out Functions
+  const handleManualClockIn = async (employeeId) => {
+    try {
+      const response = await fetch('/api/admin/attendance', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          employeeId: employeeId,
+          action: 'in',
+          timestamp: new Date().toISOString()
+        })
+      });
+      
+      if (response.ok) {
+        showToast('Employee clocked in successfully!');
+        loadData(); // Reload data to reflect changes
+      } else {
+        const error = await response.json();
+        showToast(error.message || 'Error clocking in employee', 'error');
+      }
+    } catch (error) {
+      console.error('Error clocking in employee:', error);
+      showToast('Error clocking in employee', 'error');
+    }
+  };
+
+  const handleManualClockOut = async (employeeId) => {
+    try {
+      const response = await fetch('/api/admin/attendance', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          employeeId: employeeId,
+          action: 'out',
+          timestamp: new Date().toISOString()
+        })
+      });
+      
+      if (response.ok) {
+        showToast('Employee clocked out successfully!');
+        loadData(); // Reload data to reflect changes
+      } else {
+        const error = await response.json();
+        showToast(error.message || 'Error clocking out employee', 'error');
+      }
+    } catch (error) {
+      console.error('Error clocking out employee:', error);
+      showToast('Error clocking out employee', 'error');
+    }
+  };
+
+  // Undo Attendance Function
+  const handleUndoAttendance = async (employeeId, attendanceRecord) => {
+    console.log('Undo button clicked for:', { employeeId, attendanceRecord });
+    console.log('Attendance record date type:', typeof attendanceRecord.date, attendanceRecord.date);
+    
+    try {
+      const requestBody = {
+        employeeId: employeeId,
+        date: attendanceRecord.date
+      };
+      console.log('Sending DELETE request with:', requestBody);
+      
+      const response = await fetch('/api/admin/attendance', {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestBody)
+      });
+      
+      console.log('Response status:', response.status);
+      
+      if (response.ok) {
+        const result = await response.json();
+        console.log('Delete successful:', result);
+        showToast('Attendance record restored to previous state!');
+        loadData(); // Reload data to reflect changes
+      } else {
+        const error = await response.json();
+        console.log('Delete failed:', error);
+        showToast(error.message || 'Error restoring attendance record', 'error');
+      }
+    } catch (error) {
+      console.error('Error restoring attendance record:', error);
+      showToast('Error restoring attendance record', 'error');
     }
   };
 
@@ -472,7 +648,7 @@ export default function HumanResourcePage() {
 
       {/* Header */}
       <div className="d-flex justify-content-between align-items-center mb-2">
-        <h1 className="h3 mb-0">Human Resource Management</h1>
+        <h1 className="h3 mb-0 text-white">Human Resource Management</h1>
         <div className="d-flex gap-2">
           <button
             className="btn btn-outline-secondary btn-sm"
@@ -504,6 +680,7 @@ export default function HumanResourcePage() {
         >
           {[
             { id: "dashboard", name: "Dashboard" },
+            { id: "overview", name: "Employee Overview" },
             { id: "employees", name: "Employees" },
             { id: "attendance", name: "Attendance" },
             { id: "leaves", name: "Leave Management" },
@@ -629,7 +806,7 @@ export default function HumanResourcePage() {
               <div className="card-body">
                 <h5 className="card-title mb-4" style={{ color: "#dc3545" }}>Quick Actions</h5>
                 <div className="row g-3">
-                  <div className="col-md-4">
+                  <div className="col-md-3">
                     <button
                       onClick={() => {
                         setShowEmployeeForm(true);
@@ -643,7 +820,7 @@ export default function HumanResourcePage() {
                       Add New Employee
                     </button>
                   </div>
-                  <div className="col-md-4">
+                  <div className="col-md-3">
                     <button
                       onClick={() => setShowClockForm(true)}
                       className="btn btn-outline-danger w-100"
@@ -652,13 +829,25 @@ export default function HumanResourcePage() {
                       Clock In/Out
                     </button>
                   </div>
-                  <div className="col-md-4">
+                  <div className="col-md-3">
                     <button
                       onClick={() => setShowLeaveForm(true)}
                       className="btn btn-outline-danger w-100"
                     >
                       <i className="fas fa-calendar-alt me-2"></i>
                       Apply Leave
+                    </button>
+                  </div>
+                  <div className="col-md-3">
+                    <button
+                      onClick={() => {
+                        setShowManualTimeForm(true);
+                        resetManualTimeForm();
+                      }}
+                      className="btn btn-outline-danger w-100"
+                    >
+                      <i className="fas fa-history me-2"></i>
+                      Manual Time Entry
                     </button>
                   </div>
                 </div>
@@ -691,6 +880,528 @@ export default function HumanResourcePage() {
                 </div>
               </div>
             </div>
+          </div>
+        )}
+
+        {/* Employee Overview Tab */}
+        {activeTab === "overview" && (
+          <div className="tab-pane fade show active">
+            <div className="d-flex justify-content-between align-items-center mb-4">
+              <h2 className="h3 mb-0" style={{ color: "#dc3545" }}>Employee Overview & Statistics</h2>
+              <div className="d-flex gap-2">
+                <select
+                  value={statsPeriod}
+                  onChange={(e) => setStatsPeriod(e.target.value)}
+                  className="form-select"
+                  style={{ width: "auto" }}
+                >
+                  <option value="today">Today</option>
+                  <option value="week">This Week</option>
+                  <option value="month">This Month</option>
+                  <option value="year">This Year</option>
+                </select>
+                <select
+                  value={selectedDepartment}
+                  onChange={(e) => setSelectedDepartment(e.target.value)}
+                  className="form-select"
+                  style={{ width: "auto" }}
+                >
+                  <option value="">All Departments</option>
+                  {[...new Set(employees.map(emp => emp.department))].map(dept => (
+                    <option key={dept} value={dept}>{dept}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            {statsLoading ? (
+              <div className="text-center py-5">
+                <div className="spinner-border text-danger" role="status">
+                  <span className="visually-hidden">Loading...</span>
+                </div>
+                <p className="mt-2 text-muted">Loading employee statistics...</p>
+              </div>
+            ) : employeeStats ? (
+              <>
+                {/* Overall Statistics Cards */}
+                <div className="row g-4 mb-4">
+                  <div className="col-md-3">
+                    <div className="card border-0 shadow-sm h-100">
+                      <div className="card-body text-center">
+                        <div className="mb-2">
+                          <i className="fas fa-users fa-2x text-primary"></i>
+                        </div>
+                        <h3 className="text-primary mb-1">{employeeStats.overallStats.totalEmployees}</h3>
+                        <p className="text-muted mb-0">Total Employees</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="col-md-3">
+                    <div className="card border-0 shadow-sm h-100">
+                      <div className="card-body text-center">
+                        <div className="mb-2">
+                          <i className="fas fa-clock fa-2x text-success"></i>
+                        </div>
+                        <h3 className="text-success mb-1">{employeeStats.overallStats.attendance.totalHours.toFixed(1)}</h3>
+                        <p className="text-muted mb-0">Total Hours Worked</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="col-md-3">
+                    <div className="card border-0 shadow-sm h-100">
+                      <div className="card-body text-center">
+                        <div className="mb-2">
+                          <i className="fas fa-calendar-times fa-2x text-warning"></i>
+                        </div>
+                        <h3 className="text-warning mb-1">{employeeStats.overallStats.leaves.totalLeaveDays}</h3>
+                        <p className="text-muted mb-0">Total Leave Days</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="col-md-3">
+                    <div className="card border-0 shadow-sm h-100">
+                      <div className="card-body text-center">
+                        <div className="mb-2">
+                          <i className="fas fa-home fa-2x text-info"></i>
+                        </div>
+                        <h3 className="text-info mb-1">{employeeStats.overallStats.remoteWork.currentlyRemote}</h3>
+                        <p className="text-muted mb-0">Currently Remote</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Employee Type Breakdown */}
+                <div className="row g-4 mb-4">
+                  <div className="col-md-6">
+                    <div className="card border-0 shadow-sm">
+                      <div className="card-header bg-primary text-white">
+                        <h6 className="mb-0"><i className="fas fa-user-tie me-2"></i>Regular Employees ({employeeStats.overallStats.totalRegularEmployees})</h6>
+                      </div>
+                      <div className="card-body">
+                        <div className="row text-center">
+                          <div className="col-4">
+                            <div className="text-success">
+                              <i className="fas fa-clock fa-lg"></i>
+                              <div className="mt-1">
+                                <h5>{employeeStats.overallStats.attendance.regular.totalHours.toFixed(1)}</h5>
+                                <small>Hours Worked</small>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="col-4">
+                            <div className="text-warning">
+                              <i className="fas fa-calendar-times fa-lg"></i>
+                              <div className="mt-1">
+                                <h5>{employeeStats.overallStats.leaves.regular.totalLeaveDays}</h5>
+                                <small>Leave Days</small>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="col-4">
+                            <div className="text-info">
+                              <i className="fas fa-user-check fa-lg"></i>
+                              <div className="mt-1">
+                                <h5>{employeeStats.overallStats.attendance.regular.totalOnTime}</h5>
+                                <small>On Time</small>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="col-md-6">
+                    <div className="card border-0 shadow-sm">
+                      <div className="card-header bg-secondary text-white">
+                        <h6 className="mb-0" style={{color: "white"}}><i className="fas fa-graduation-cap me-2"></i><span style={{color: "white"}}>Interns</span> ({employeeStats.overallStats.totalInterns})</h6>
+                      </div>
+                      <div className="card-body">
+                        <div className="row text-center">
+                          <div className="col-4">
+                            <div className="text-success">
+                              <i className="fas fa-clock fa-lg"></i>
+                              <div className="mt-1">
+                                <h5>{employeeStats.overallStats.attendance.interns.totalHours.toFixed(1)}</h5>
+                                <small>Hours Worked</small>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="col-4">
+                            <div className="text-warning">
+                              <i className="fas fa-calendar-times fa-lg"></i>
+                              <div className="mt-1">
+                                <h5>{employeeStats.overallStats.leaves.interns.totalLeaveDays}</h5>
+                                <small>Leave Days</small>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="col-4">
+                            <div className="text-info">
+                              <i className="fas fa-user-check fa-lg"></i>
+                              <div className="mt-1">
+                                <h5>{employeeStats.overallStats.attendance.interns.totalOnTime}</h5>
+                                <small>On Time</small>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Regular Employees Table */}
+                <div className="card border-0 shadow-sm mb-4">
+                  <div className="card-header" style={{ backgroundColor: "#dc3545", color: "white" }}>
+                    <h5 className="mb-0">
+                      <i className="fas fa-user-tie me-2"></i>
+                      Regular Employees Statistics ({statsPeriod.charAt(0).toUpperCase() + statsPeriod.slice(1)})
+                    </h5>
+                  </div>
+                  <div className="card-body p-0">
+                    <div className="table-responsive">
+                      <table className="table table-hover mb-0">
+                        <thead className="table-light">
+                          <tr>
+                            <th>Employee</th>
+                            <th>Department</th>
+                            <th>Attendance</th>
+                            <th>Leave Usage</th>
+                            <th>Remote Work</th>
+                            <th>Performance</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {employeeStats.employeeStats.filter(emp => !emp.isIntern).map((emp, index) => (
+                            <tr key={emp.employeeId}>
+                              <td>
+                                <div>
+                                  <div className="fw-bold">{emp.name}</div>
+                                  <small className="text-muted">{emp.employeeCode} - {emp.designation}</small>
+                                </div>
+                              </td>
+                              <td>
+                                <span className="badge bg-secondary">{emp.department}</span>
+                              </td>
+                              <td>
+                                <div className="small">
+                                  <div className="d-flex justify-content-between">
+                                    <span>Present:</span>
+                                    <span className="text-success fw-bold">{emp.attendance.totalDays}</span>
+                                  </div>
+                                  <div className="d-flex justify-content-between">
+                                    <span>Late:</span>
+                                    <span className="text-warning fw-bold">{emp.attendance.lateDays}</span>
+                                  </div>
+                                  <div className="d-flex justify-content-between">
+                                    <span>Absent:</span>
+                                    <span className="text-danger fw-bold">{emp.attendance.absentDays}</span>
+                                  </div>
+                                  <div className="d-flex justify-content-between">
+                                    <span>Hours:</span>
+                                    <span className="fw-bold">{emp.attendance.totalHours}h</span>
+                                  </div>
+                                </div>
+                              </td>
+                              <td>
+                                <div className="small">
+                                  <div className="d-flex justify-content-between">
+                                    <span>Sick:</span>
+                                    <span className="text-info">{emp.leaves.sick.taken}/{emp.leaves.sick.available}</span>
+                                  </div>
+                                  <div className="d-flex justify-content-between">
+                                    <span>Casual:</span>
+                                    <span className="text-primary">{emp.leaves.casual.taken}/{emp.leaves.casual.available}</span>
+                                  </div>
+                                  <div className="d-flex justify-content-between">
+                                    <span>Annual:</span>
+                                    <span className="text-success">{emp.leaves.annual.taken}/{emp.leaves.annual.available}</span>
+                                  </div>
+                                  <div className="d-flex justify-content-between">
+                                    <span>Total:</span>
+                                    <span className="fw-bold">{emp.leaves.totalTaken} days</span>
+                                  </div>
+                                </div>
+                              </td>
+                              <td>
+                                <div className="small">
+                                  <div className="mb-1">
+                                    <span className={`badge ${
+                                      emp.remoteWork.currentStatus === 'remote' ? 'bg-info' :
+                                      emp.remoteWork.currentStatus === 'hybrid' ? 'bg-warning' : 'bg-success'
+                                    }`} style={{
+                                      color: emp.remoteWork.currentStatus === 'office' ? 'black' : 'white'
+                                    }}>
+                                      {emp.remoteWork.currentStatus.charAt(0).toUpperCase() + emp.remoteWork.currentStatus.slice(1)}
+                                    </span>
+                                  </div>
+                                  <div>Remote Days: {emp.remoteWork.daysInPeriod}</div>
+                                  <div>Enabled: {emp.remoteWork.isEnabled ? 'Yes' : 'No'}</div>
+                                </div>
+                              </td>
+                              <td>
+                                <div className="small">
+                                  <div className="d-flex justify-content-between">
+                                    <span>Avg Hours/Day:</span>
+                                    <span className="fw-bold">{emp.attendance.averageHoursPerDay}h</span>
+                                  </div>
+                                  <div className="d-flex justify-content-between">
+                                    <span>Overtime:</span>
+                                    <span className="text-warning">{emp.attendance.overtimeHours}h</span>
+                                  </div>
+                                  <div className="d-flex justify-content-between">
+                                    <span>Manual Entries:</span>
+                                    <span className="text-info">{emp.manualTimeEntries.totalEntries}</span>
+                                  </div>
+                                  <div className="mt-1">
+                                    <div className="progress" style={{ height: "4px" }}>
+                                      <div 
+                                        className="progress-bar bg-success" 
+                                        style={{ 
+                                          width: `${Math.min(100, (emp.attendance.onTimeDays / Math.max(1, emp.attendance.totalDays)) * 100)}%` 
+                                        }}
+                                      ></div>
+                                    </div>
+                                    <small className="text-muted">On-time Rate</small>
+                                  </div>
+                                </div>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                      {employeeStats.employeeStats.filter(emp => !emp.isIntern).length === 0 && (
+                        <div className="text-center py-4 text-muted">
+                          <i className="fas fa-users fa-2x mb-2"></i>
+                          <p>No regular employees found</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Interns Table */}
+                <div className="card border-0 shadow-sm">
+                  <div className="card-header" style={{ backgroundColor: "#6c757d", color: "white" }}>
+                    <h5 className="mb-0" style={{color: "white"}}>
+                      <i className="fas fa-graduation-cap me-2"></i>
+                      <span style={{color: "white"}}>Interns</span> Statistics ({statsPeriod.charAt(0).toUpperCase() + statsPeriod.slice(1)})
+                    </h5>
+                  </div>
+                  <div className="card-body p-0">
+                    <div className="table-responsive">
+                      <table className="table table-hover mb-0">
+                        <thead className="table-light">
+                          <tr>
+                            <th>Intern</th>
+                            <th>Department</th>
+                            <th>Attendance</th>
+                            <th>Leave Usage</th>
+                            <th>Remote Work</th>
+                            <th>Performance</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {employeeStats.employeeStats.filter(emp => emp.isIntern).map((emp, index) => (
+                            <tr key={emp.employeeId}>
+                              <td>
+                                <div>
+                                  <div className="fw-bold">
+                                    {emp.name}
+                                    <span className="badge bg-info ms-2" style={{fontSize: '0.7em'}}>
+                                      <i className="fas fa-graduation-cap me-1"></i>Intern
+                                    </span>
+                                  </div>
+                                  <small className="text-muted">{emp.employeeCode} - {emp.designation}</small>
+                                </div>
+                              </td>
+                              <td>
+                                <span className="badge bg-secondary">{emp.department}</span>
+                              </td>
+                              <td>
+                                <div className="small">
+                                  <div className="d-flex justify-content-between">
+                                    <span>Present:</span>
+                                    <span className="text-success fw-bold">{emp.attendance.totalDays}</span>
+                                  </div>
+                                  <div className="d-flex justify-content-between">
+                                    <span>Late:</span>
+                                    <span className="text-warning fw-bold">{emp.attendance.lateDays}</span>
+                                  </div>
+                                  <div className="d-flex justify-content-between">
+                                    <span>Absent:</span>
+                                    <span className="text-danger fw-bold">{emp.attendance.absentDays}</span>
+                                  </div>
+                                  <div className="d-flex justify-content-between">
+                                    <span>Hours:</span>
+                                    <span className="fw-bold">{emp.attendance.totalHours}h</span>
+                                  </div>
+                                </div>
+                              </td>
+                              <td>
+                                <div className="small">
+                                  <div className="d-flex justify-content-between">
+                                    <span>Sick:</span>
+                                    <span className="text-info">{emp.leaves.sick.taken}/{emp.leaves.sick.available}</span>
+                                  </div>
+                                  <div className="d-flex justify-content-between">
+                                    <span>Casual:</span>
+                                    <span className="text-primary">{emp.leaves.casual.taken}/{emp.leaves.casual.available}</span>
+                                  </div>
+                                  <div className="d-flex justify-content-between">
+                                    <span>Annual:</span>
+                                    <span className="text-success">{emp.leaves.annual.taken}/{emp.leaves.annual.available}</span>
+                                  </div>
+                                  <div className="d-flex justify-content-between">
+                                    <span>Total:</span>
+                                    <span className="fw-bold">{emp.leaves.totalTaken} days</span>
+                                  </div>
+                                </div>
+                              </td>
+                              <td>
+                                <div className="small">
+                                  <div className="mb-1">
+                                    <span className={`badge ${
+                                      emp.remoteWork.currentStatus === 'remote' ? 'bg-info' :
+                                      emp.remoteWork.currentStatus === 'hybrid' ? 'bg-warning' : 'bg-success'
+                                    }`} style={{
+                                      color: emp.remoteWork.currentStatus === 'office' ? 'black' : 'white'
+                                    }}>
+                                      {emp.remoteWork.currentStatus.charAt(0).toUpperCase() + emp.remoteWork.currentStatus.slice(1)}
+                                    </span>
+                                  </div>
+                                  <div>Remote Days: {emp.remoteWork.daysInPeriod}</div>
+                                  <div>Enabled: {emp.remoteWork.isEnabled ? 'Yes' : 'No'}</div>
+                                </div>
+                              </td>
+                              <td>
+                                <div className="small">
+                                  <div className="d-flex justify-content-between">
+                                    <span>Avg Hours/Day:</span>
+                                    <span className="fw-bold">{emp.attendance.averageHoursPerDay}h</span>
+                                  </div>
+                                  <div className="d-flex justify-content-between">
+                                    <span>Overtime:</span>
+                                    <span className="text-warning">{emp.attendance.overtimeHours}h</span>
+                                  </div>
+                                  <div className="d-flex justify-content-between">
+                                    <span>Manual Entries:</span>
+                                    <span className="text-info">{emp.manualTimeEntries.totalEntries}</span>
+                                  </div>
+                                  <div className="mt-1">
+                                    <div className="progress" style={{ height: "4px" }}>
+                                      <div 
+                                        className="progress-bar bg-success" 
+                                        style={{ 
+                                          width: `${Math.min(100, (emp.attendance.onTimeDays / Math.max(1, emp.attendance.totalDays)) * 100)}%` 
+                                        }}
+                                      ></div>
+                                    </div>
+                                    <small className="text-muted">On-time Rate</small>
+                                  </div>
+                                </div>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                      {employeeStats.employeeStats.filter(emp => emp.isIntern).length === 0 && (
+                        <div className="text-center py-4 text-muted">
+                          <i className="fas fa-graduation-cap fa-2x mb-2"></i>
+                          <p>No interns found</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Summary Cards */}
+                <div className="row g-4 mt-4">
+                  <div className="col-md-6">
+                    <div className="card border-0 shadow-sm">
+                      <div className="card-header bg-dark">
+                        <h6 className="mb-0" style={{color: "white !important"}}><i className="fas fa-chart-pie me-2"></i>Attendance Summary</h6>
+                      </div>
+                      <div className="card-body">
+                        <div className="row text-center">
+                          <div className="col-4">
+                            <div className="text-success">
+                              <i className="fas fa-check-circle fa-2x"></i>
+                              <div className="mt-2">
+                                <h4>{employeeStats.overallStats.attendance.totalOnTime}</h4>
+                                <small>On Time</small>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="col-4">
+                            <div className="text-warning">
+                              <i className="fas fa-clock fa-2x"></i>
+                              <div className="mt-2">
+                                <h4>{employeeStats.overallStats.attendance.totalLate}</h4>
+                                <small>Late</small>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="col-4">
+                            <div className="text-danger">
+                              <i className="fas fa-times-circle fa-2x"></i>
+                              <div className="mt-2">
+                                <h4>{employeeStats.overallStats.attendance.totalAbsent}</h4>
+                                <small>Absent</small>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="col-md-6">
+                    <div className="card border-0 shadow-sm">
+                      <div className="card-header bg-dark">
+                        <h6 className="mb-0" style={{color: "white !important"}}><i className="fas fa-calendar-alt me-2"></i>Leave Summary</h6>
+                      </div>
+                      <div className="card-body">
+                        <div className="row text-center">
+                          <div className="col-4">
+                            <div className="text-info">
+                              <i className="fas fa-thermometer-half fa-2x"></i>
+                              <div className="mt-2">
+                                <h4>{employeeStats.overallStats.leaves.totalSickDays}</h4>
+                                <small>Sick Days</small>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="col-4">
+                            <div className="text-primary">
+                              <i className="fas fa-coffee fa-2x"></i>
+                              <div className="mt-2">
+                                <h4>{employeeStats.overallStats.leaves.totalCasualDays}</h4>
+                                <small>Casual Days</small>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="col-4">
+                            <div className="text-success">
+                              <i className="fas fa-umbrella-beach fa-2x"></i>
+                              <div className="mt-2">
+                                <h4>{employeeStats.overallStats.leaves.totalAnnualDays}</h4>
+                                <small>Annual Days</small>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <div className="text-center py-5">
+                <i className="fas fa-chart-bar fa-3x text-muted mb-3"></i>
+                <p className="text-muted">No statistics available. Please try refreshing the page.</p>
+              </div>
+            )}
           </div>
         )}
 
@@ -752,7 +1463,10 @@ export default function HumanResourcePage() {
                         <button
                           onClick={() => {
                             setEditingEmployee(employee);
-                            setEmployeeFormData(employee);
+                            setEmployeeFormData({
+                              ...employee,
+                              isIntern: employee.isIntern || false
+                            });
                             setShowEmployeeForm(true);
                           }}
                           className="btn btn-outline-danger btn-sm flex-fill"
@@ -818,41 +1532,83 @@ export default function HumanResourcePage() {
                           <i className="fas fa-clock me-2"></i>
                           Overtime
                         </th>
+                        <th scope="col">
+                          <i className="fas fa-cogs me-2"></i>
+                          Actions
+                        </th>
                       </tr>
                     </thead>
                     <tbody>
-                      {attendance
-                        .filter(record => 
+                      {employees.map((employee, index) => {
+                        const todayAttendance = attendance.find(record => 
+                          record.employeeId === employee._id && 
                           new Date(record.date).toDateString() === new Date().toDateString()
-                        )
-                        .map((record, index) => {
-                          const employee = employees.find(emp => emp._id === record.employeeId);
-                          return (
-                            <tr key={index}>
-                              <td className="fw-medium">
-                                {employee ? employee.name : 'Unknown'}
-                              </td>
-                              <td>
-                                <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                                  record.status === 'on time' ? 'bg-green-500 text-white' :
-                                  record.status === 'late' ? 'bg-yellow-100 text-yellow-800' :
-                                  'bg-red-100 text-red-800'
-                                }`}>
-                                  {record.status}
-                                </span>
-                              </td>
-                              <td>
-                                {record.clockIn ? new Date(record.clockIn).toLocaleTimeString() : 'N/A'}
-                              </td>
-                              <td>
-                                {record.clockOut ? new Date(record.clockOut).toLocaleTimeString() : 'N/A'}
-                              </td>
-                              <td>
-                                {record.overtimeHours || 0} hours
-                              </td>
-                            </tr>
-                          );
-                        })}
+                        );
+                        
+                        return (
+                          <tr key={index}>
+                            <td className="fw-medium">
+                              {employee.name}
+                            </td>
+                            <td>
+                              <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                                !todayAttendance ? 'bg-red-100 text-red-800' :
+                                todayAttendance.status === 'on time' ? 'bg-green-500 text-white' :
+                                todayAttendance.status === 'late' ? 'bg-yellow-100 text-yellow-800' :
+                                'bg-red-100 text-red-800'
+                              }`}>
+                                {!todayAttendance ? 'absent' : todayAttendance.status}
+                              </span>
+                            </td>
+                            <td>
+                              {todayAttendance?.clockIn ? new Date(todayAttendance.clockIn).toLocaleTimeString() : 'N/A'}
+                            </td>
+                            <td>
+                              {todayAttendance?.clockOut ? new Date(todayAttendance.clockOut).toLocaleTimeString() : 'N/A'}
+                            </td>
+                            <td>
+                              {todayAttendance?.overtimeHours || 0} hours
+                            </td>
+                            <td>
+                              <div className="d-flex gap-2">
+                                {!todayAttendance?.clockIn ? (
+                                  <button
+                                    onClick={() => handleManualClockIn(employee._id)}
+                                    className="btn btn-sm btn-success"
+                                    title="Clock In (Login)"
+                                  >
+                                    <i className="fas fa-sign-in-alt me-1"></i>
+                                    Login
+                                  </button>
+                                ) : !todayAttendance?.clockOut ? (
+                                  <button
+                                    onClick={() => handleManualClockOut(employee._id)}
+                                    className="btn btn-sm btn-warning"
+                                    title="Clock Out (Logout)"
+                                  >
+                                    <i className="fas fa-sign-out-alt me-1"></i>
+                                    Logout
+                                  </button>
+                                ) : (
+                                  <span className="text-muted small">Complete</span>
+                                )}
+                                
+                                {/* Undo button - show if there's an attendance record to undo */}
+                                {todayAttendance && (
+                                  <button
+                                    onClick={() => handleUndoAttendance(employee._id, todayAttendance)}
+                                    className="btn btn-sm btn-outline-secondary"
+                                    title="Undo last action (restore previous state)"
+                                  >
+                                    <i className="fas fa-undo me-1"></i>
+                                    Undo
+                                  </button>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>
@@ -1203,6 +1959,20 @@ export default function HumanResourcePage() {
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
                     />
                   </div>
+                </div>
+                
+                {/* Intern Checkbox */}
+                <div className="flex items-center">
+                  <input
+                    type="checkbox"
+                    id="isIntern"
+                    checked={employeeFormData.isIntern}
+                    onChange={(e) => setEmployeeFormData({...employeeFormData, isIntern: e.target.checked})}
+                    className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                  />
+                  <label htmlFor="isIntern" className="ml-2 block text-sm text-gray-900">
+                    This employee is an intern
+                  </label>
                 </div>
                 
                 <div className="flex justify-end space-x-3 pt-4">
@@ -1573,6 +2343,182 @@ export default function HumanResourcePage() {
                     >
                       <i className="fas fa-save me-1"></i>
                       Update Record
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Manual Time Entry Form Modal */}
+      {showManualTimeForm && (
+        <div className="modal fade show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
+          <div className="modal-dialog modal-dialog-centered modal-lg">
+            <div className="modal-content border-0 shadow-lg">
+              <div className="modal-header" style={{ backgroundColor: '#dc3545', color: 'white' }}>
+                <h5 className="modal-title">
+                  <i className="fas fa-history me-2"></i>
+                  Manual Time Entry
+                </h5>
+                <button
+                  type="button"
+                  className="btn-close btn-close-white"
+                  onClick={() => {
+                    setShowManualTimeForm(false);
+                    resetManualTimeForm();
+                  }}
+                ></button>
+              </div>
+              <div className="modal-body">
+                <form onSubmit={handleManualTimeSubmit}>
+                  <div className="row">
+                    <div className="col-md-6 mb-3">
+                      <label className="form-label fw-medium">
+                        <i className="fas fa-user me-2 text-danger"></i>
+                        Employee *
+                      </label>
+                      <select
+                        required
+                        value={manualTimeFormData.employeeId}
+                        onChange={(e) => setManualTimeFormData({...manualTimeFormData, employeeId: e.target.value})}
+                        className="form-select border-2"
+                        style={{ borderColor: '#dc3545' }}
+                      >
+                        <option value="">Select Employee</option>
+                        {employees.map((employee) => (
+                          <option key={employee._id} value={employee._id}>
+                            {employee.name} - {employee.employeeId}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="col-md-6 mb-3">
+                      <label className="form-label fw-medium">
+                        <i className="fas fa-calendar me-2 text-danger"></i>
+                        Date *
+                      </label>
+                      <input
+                        type="date"
+                        required
+                        value={manualTimeFormData.date}
+                        onChange={(e) => setManualTimeFormData({...manualTimeFormData, date: e.target.value})}
+                        className="form-control border-2"
+                        style={{ borderColor: '#dc3545' }}
+                        max={new Date().toISOString().split('T')[0]}
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="row">
+                    <div className="col-md-6 mb-3">
+                      <label className="form-label fw-medium">
+                        <i className="fas fa-sign-in-alt me-2 text-success"></i>
+                        Clock In Time *
+                      </label>
+                      <input
+                        type="time"
+                        required
+                        value={manualTimeFormData.clockIn}
+                        onChange={(e) => setManualTimeFormData({...manualTimeFormData, clockIn: e.target.value})}
+                        className="form-control border-2"
+                        style={{ borderColor: '#dc3545' }}
+                      />
+                    </div>
+                    <div className="col-md-6 mb-3">
+                      <label className="form-label fw-medium">
+                        <i className="fas fa-sign-out-alt me-2 text-warning"></i>
+                        Clock Out Time *
+                      </label>
+                      <input
+                        type="time"
+                        required
+                        value={manualTimeFormData.clockOut}
+                        onChange={(e) => setManualTimeFormData({...manualTimeFormData, clockOut: e.target.value})}
+                        className="form-control border-2"
+                        style={{ borderColor: '#dc3545' }}
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="row">
+                    <div className="col-md-6 mb-3">
+                      <label className="form-label fw-medium">
+                        <i className="fas fa-coffee me-2 text-info"></i>
+                        Break Duration (minutes)
+                      </label>
+                      <input
+                        type="number"
+                        min="0"
+                        max="480"
+                        value={manualTimeFormData.breakDuration}
+                        onChange={(e) => setManualTimeFormData({...manualTimeFormData, breakDuration: parseInt(e.target.value) || 0})}
+                        className="form-control border-2"
+                        style={{ borderColor: '#dc3545' }}
+                      />
+                      <div className="form-text">
+                        <i className="fas fa-info-circle me-1"></i>
+                        Default: 60 minutes
+                      </div>
+                    </div>
+                    <div className="col-md-6 mb-3">
+                      <label className="form-label fw-medium">
+                        <i className="fas fa-question-circle me-2 text-danger"></i>
+                        Reason *
+                      </label>
+                      <select
+                        required
+                        value={manualTimeFormData.reason}
+                        onChange={(e) => setManualTimeFormData({...manualTimeFormData, reason: e.target.value})}
+                        className="form-select border-2"
+                        style={{ borderColor: '#dc3545' }}
+                      >
+                        <option value="">Select Reason</option>
+                        <option value="forgot_to_clock">Forgot to Clock In/Out</option>
+                        <option value="system_error">System Error</option>
+                        <option value="remote_work">Remote Work</option>
+                        <option value="field_work">Field Work</option>
+                        <option value="meeting_offsite">Off-site Meeting</option>
+                        <option value="admin_correction">Administrative Correction</option>
+                        <option value="other">Other</option>
+                      </select>
+                    </div>
+                  </div>
+                  
+                  <div className="mb-4">
+                    <label className="form-label fw-medium">
+                      <i className="fas fa-sticky-note me-2 text-secondary"></i>
+                      Additional Notes
+                    </label>
+                    <textarea
+                      value={manualTimeFormData.notes}
+                      onChange={(e) => setManualTimeFormData({...manualTimeFormData, notes: e.target.value})}
+                      rows={3}
+                      className="form-control border-2"
+                      style={{ borderColor: '#dc3545' }}
+                      placeholder="Any additional details or explanations..."
+                    />
+                  </div>
+                  
+                  <div className="d-flex justify-content-end gap-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowManualTimeForm(false);
+                        resetManualTimeForm();
+                      }}
+                      className="btn btn-outline-secondary"
+                    >
+                      <i className="fas fa-times me-1"></i>
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      className="btn btn-success"
+                    >
+                      <i className="fas fa-save me-1"></i>
+                      Add Time Entry
                     </button>
                   </div>
                 </form>

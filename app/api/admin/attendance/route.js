@@ -334,3 +334,87 @@ export async function PUT(request) {
     );
   }
 }
+
+// DELETE - Remove attendance record (Undo functionality)
+export async function DELETE(request) {
+  console.log('DELETE request received');
+  
+  // Check authentication
+  const isAuthenticated = await checkAuth(request);
+  if (!isAuthenticated) {
+    console.log('Authentication failed');
+    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+  }
+
+  try {
+    const { employeeId, date } = await request.json();
+    console.log('DELETE request data:', { employeeId, date });
+
+    // Validate required fields
+    if (!employeeId || !date) {
+      console.log('Missing required fields');
+      return NextResponse.json(
+        { message: "Employee ID and date are required" },
+        { status: 400 }
+      );
+    }
+
+    const { db } = await connectToDatabase();
+
+    // Parse the date to get start and end of day
+    const targetDate = new Date(date);
+    const startOfDay = new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate());
+    const endOfDay = new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate(), 23, 59, 59, 999);
+    
+    console.log('Date range for deletion:', { targetDate, startOfDay, endOfDay });
+    console.log('Searching for attendance record with employeeId:', employeeId);
+
+    // Delete the attendance record for the specified employee and date
+    // Try both string and ObjectId formats for employeeId
+    let query = {
+      date: {
+        $gte: startOfDay,
+        $lte: endOfDay
+      }
+    };
+    
+    // Try with ObjectId first if it's a valid ObjectId format
+    if (ObjectId.isValid(employeeId)) {
+      query.employeeId = new ObjectId(employeeId);
+    } else {
+      query.employeeId = employeeId;
+    }
+    
+    console.log('Final delete query:', query);
+    const result = await db.collection("attendance").deleteOne(query);
+    
+    // If no result with ObjectId, try with string
+    if (result.deletedCount === 0 && ObjectId.isValid(employeeId)) {
+      query.employeeId = employeeId;
+      console.log('Retrying with string employeeId:', query);
+      const retryResult = await db.collection("attendance").deleteOne(query);
+      console.log('Retry delete result:', retryResult);
+      result.deletedCount = retryResult.deletedCount;
+    }
+    
+    console.log('Delete operation result:', result);
+
+    if (result.deletedCount === 0) {
+      return NextResponse.json(
+        { message: "No attendance record found to delete" },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json(
+      { message: "Attendance record deleted successfully" },
+      { status: 200 }
+    );
+  } catch (error) {
+    console.error("Error deleting attendance:", error);
+    return NextResponse.json(
+      { message: "Error deleting attendance" },
+      { status: 500 }
+    );
+  }
+}

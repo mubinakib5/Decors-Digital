@@ -85,10 +85,34 @@ export async function POST(request) {
 
     const newEmployee = {
       ...employeeData,
+      isIntern: employeeData.isIntern || false,
       createdAt: new Date(),
       updatedAt: new Date(),
-      status: 'active'
-    };
+      status: 'active',
+      // Leave balances
+      leaveBalances: {
+        sick: employeeData.sickLeaveBalance || 10, // Default 10 days per year
+        casual: employeeData.casualLeaveBalance || 15, // Default 15 days per year
+        annual: employeeData.annualLeaveBalance || 21, // Default 21 days per year
+        usedSick: 0,
+        usedCasual: 0,
+        usedAnnual: 0
+      },
+      // Remote work status
+      remoteWorkStatus: {
+        isRemoteEnabled: employeeData.isRemoteEnabled || false,
+        currentStatus: 'office', // office, remote, hybrid
+        remoteWorkDays: [], // Array of days when working remotely
+        lastStatusUpdate: new Date()
+      },
+      // Additional tracking fields
+      attendanceStats: {
+        totalLateDays: 0,
+        totalAbsentDays: 0,
+        totalWorkingDays: 0,
+        lastUpdated: new Date()
+      }
+    }
 
     const result = await db.collection("employees").insertOne(newEmployee);
     

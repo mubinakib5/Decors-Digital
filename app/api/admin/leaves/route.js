@@ -189,8 +189,28 @@ export async function POST(request) {
     // Calculate leave days
     const leaveDays = calculateLeaveDays(leaveData.startDate, leaveData.endDate);
     
+    // Check leave balance
+    const leaveBalanceField = `leaveBalances.${leaveData.leaveType}`;
+    const usedLeaveField = `leaveBalances.used${leaveData.leaveType.charAt(0).toUpperCase() + leaveData.leaveType.slice(1)}`;
+    
+    const availableLeaves = employee[leaveBalanceField] || employee.leaveBalances?.[leaveData.leaveType] || 0;
+    const usedLeaves = employee[usedLeaveField] || employee.leaveBalances?.[`used${leaveData.leaveType.charAt(0).toUpperCase() + leaveData.leaveType.slice(1)}`] || 0;
+    const remainingLeaves = availableLeaves - usedLeaves;
+    
+    if (leaveDays > remainingLeaves) {
+      return NextResponse.json(
+        { 
+          message: `Insufficient leave balance. Available: ${remainingLeaves} days, Requested: ${leaveDays} days`,
+          availableLeaves: remainingLeaves,
+          requestedDays: leaveDays
+        },
+        { status: 400 }
+      );
+    }
+    
     const newLeave = {
       employeeId: leaveData.employeeId,
+      employeeName: employee.name,
       leaveType: leaveData.leaveType,
       startDate: startDate,
       endDate: endDate,
@@ -199,8 +219,13 @@ export async function POST(request) {
       status: 'pending',
       appliedDate: new Date(),
       createdAt: new Date(),
-      updatedAt: new Date()
-    };
+      updatedAt: new Date(),
+      balanceInfo: {
+        availableBeforeLeave: remainingLeaves,
+        requestedDays: leaveDays,
+        remainingAfterLeave: remainingLeaves - leaveDays
+      }
+    }
 
     const result = await db.collection("leaves").insertOne(newLeave);
     
@@ -316,12 +341,52 @@ export async function PUT(request) {
       }
     }
     
+    // Update leave balance if status is being approved
+    if (status === 'approved' && leaveRecord.status !== 'approved') {
+      const leaveDays = updateFields.leaveDays || leaveRecord.leaveDays;
+      const leaveType = updateFields.leaveType || leaveRecord.leaveType;
+      
+      // Update employee's used leave balance
+      const usedLeaveField = `leaveBalances.used${leaveType.charAt(0).toUpperCase() + leaveType.slice(1)}`;
+      
+      await db.collection("employees").updateOne(
+        { _id: new ObjectId(leaveRecord.employeeId) },
+        { 
+          $inc: { [usedLeaveField]: leaveDays },
+          $set: { 
+            "attendanceStats.lastUpdated": new Date(),
+            updatedAt: new Date()
+          }
+        }
+      );
+    }
+    
+    // Revert leave balance if status is being rejected after approval
+    if (status === 'rejected' && leaveRecord.status === 'approved') {
+      const leaveDays = leaveRecord.leaveDays;
+      const leaveType = leaveRecord.leaveType;
+      
+      // Revert employee's used leave balance
+      const usedLeaveField = `leaveBalances.used${leaveType.charAt(0).toUpperCase() + leaveType.slice(1)}`;
+      
+      await db.collection("employees").updateOne(
+        { _id: new ObjectId(leaveRecord.employeeId) },
+        { 
+          $inc: { [usedLeaveField]: -leaveDays },
+          $set: { 
+            "attendanceStats.lastUpdated": new Date(),
+            updatedAt: new Date()
+          }
+        }
+      );
+    }
+    
     await db.collection("leaves").updateOne(
       { _id: new ObjectId(leaveId) },
       { $set: updateFields }
     );
     
-    return NextResponse.json({ message: "Leave request updated successfully" });
+    return NextResponse.json({ message: "Leave request updated successfully" })
   } catch (error) {
     console.error("Error updating leave request:", error);
     return NextResponse.json(
