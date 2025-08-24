@@ -404,6 +404,91 @@ export default function HumanResourcePage() {
     }
   };
 
+  // Handle individual attendance status change
+  const handleAttendanceStatusChange = async (employeeId, newStatus) => {
+    try {
+      const today = new Date().toISOString().split('T')[0];
+      
+      // Check if attendance record exists for today
+      const todayAttendance = attendance.find(record => 
+        record.employeeId === employeeId && 
+        new Date(record.date).toDateString() === new Date().toDateString()
+      );
+      
+      let response;
+      
+      if (todayAttendance) {
+        // Update existing record
+        response = await fetch('/api/admin/attendance', {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            employeeId,
+            date: today,
+            status: newStatus
+          })
+        });
+      } else {
+        // For new records, we need to use the clock-in format that the API expects
+        if (newStatus === 'absent' || newStatus === 'off day') {
+          // For absent status and off day, create a manual attendance record
+          response = await fetch('/api/admin/attendance/manual', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              employeeId,
+              date: today,
+              status: newStatus
+            })
+          });
+        } else {
+          // For other statuses, simulate a clock-in action
+          response = await fetch('/api/admin/attendance', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              employeeId,
+              action: 'in',
+              timestamp: new Date().toISOString()
+            })
+          });
+          
+          // If successful and we need to set a specific status, update it
+          if (response.ok && newStatus !== 'on time') {
+            response = await fetch('/api/admin/attendance', {
+              method: 'PUT',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                employeeId,
+                date: today,
+                status: newStatus
+              })
+            });
+          }
+        }
+      }
+      
+      if (response.ok) {
+        showToast(`Attendance status updated to ${newStatus}!`);
+        loadData(); // Reload data to reflect changes
+      } else {
+        const error = await response.json();
+        showToast(error.message || "Error updating attendance status", "error");
+      }
+    } catch (error) {
+      console.error('Error updating attendance status:', error);
+      showToast("Error updating attendance status", "error");
+    }
+  };
+
   // Manual Clock In/Out Functions
   const handleManualClockIn = async (employeeId) => {
     try {
@@ -1546,19 +1631,46 @@ export default function HumanResourcePage() {
                         );
                         
                         return (
-                          <tr key={index}>
+                          <tr key={employee._id}>
                             <td className="fw-medium">
                               {employee.name}
                             </td>
                             <td>
-                              <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                                !todayAttendance ? 'bg-red-100 text-red-800' :
-                                todayAttendance.status === 'on time' ? 'bg-green-500 text-white' :
-                                todayAttendance.status === 'late' ? 'bg-yellow-100 text-yellow-800' :
-                                'bg-red-100 text-red-800'
-                              }`}>
-                                {!todayAttendance ? 'absent' : todayAttendance.status}
-                              </span>
+                              <select
+                                value={!todayAttendance ? 'absent' : todayAttendance.status}
+                                onChange={(e) => {
+                                  const newStatus = e.target.value;
+                                  handleAttendanceStatusChange(employee._id, newStatus);
+                                }}
+                                className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full border-0 ${
+                                  !todayAttendance ? 'bg-red-100 text-red-800' :
+                                  todayAttendance.status === 'on time' ? 'bg-green-500 text-white' :
+                                  todayAttendance.status === 'late' ? 'bg-yellow-100 text-yellow-800' :
+                                  todayAttendance.status === 'casual leave' ? 'bg-blue-100 text-blue-800' :
+                                  todayAttendance.status === 'sick leave' ? 'bg-purple-100 text-purple-800' :
+                                  todayAttendance.status === 'government vacation' ? 'bg-indigo-100 text-indigo-800' :
+                                  todayAttendance.status === 'off day' ? 'bg-gray-100 text-gray-800' :
+                                  'bg-red-100 text-red-800'
+                                }`}
+                                style={{ 
+                                  minWidth: '120px', 
+                                  fontSize: '12px',
+                                  appearance: 'none',
+                                  backgroundImage: 'url("data:image/svg+xml,%3csvg xmlns=\'http://www.w3.org/2000/svg\' fill=\'none\' viewBox=\'0 0 20 20\'%3e%3cpath stroke=\'%236b7280\' stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'1.5\' d=\'m6 8 4 4 4-4\'/%3e%3c/svg%3e")',
+                                  backgroundPosition: 'right 0.5rem center',
+                                  backgroundRepeat: 'no-repeat',
+                                  backgroundSize: '1.5em 1.5em',
+                                  paddingRight: '2.5rem'
+                                }}
+                              >
+                                <option value="on time">On Time</option>
+                                <option value="late">Late</option>
+                                <option value="absent">Absent</option>
+                                <option value="casual leave">Casual Leave</option>
+                                <option value="sick leave">Sick Leave</option>
+                                <option value="government vacation">Government Vacation</option>
+                                <option value="off day">Off Day</option>
+                              </select>
                             </td>
                             <td>
                               {todayAttendance?.clockIn ? new Date(todayAttendance.clockIn).toLocaleTimeString() : 'N/A'}
@@ -1591,6 +1703,29 @@ export default function HumanResourcePage() {
                                   </button>
                                 ) : (
                                   <span className="text-muted small">Complete</span>
+                                )}
+                                
+                                {/* Edit button - show if there's an attendance record to edit */}
+                                {todayAttendance && (
+                                  <button
+                                    onClick={() => {
+                                      setEditingAttendance(employee._id);
+                                      setEditAttendanceData({
+                                        employeeId: employee._id,
+                                        employeeName: employee.name,
+                                        date: new Date().toISOString().split('T')[0],
+                                        clockIn: todayAttendance.clockIn || '',
+                                        clockOut: todayAttendance.clockOut || '',
+                                        status: todayAttendance.status || 'present'
+                                      });
+                                      setShowEditAttendanceForm(true);
+                                    }}
+                                    className="btn btn-sm btn-primary"
+                                    title="Edit attendance times"
+                                  >
+                                    <i className="fas fa-edit me-1"></i>
+                                    Edit
+                                  </button>
                                 )}
                                 
                                 {/* Undo button - show if there's an attendance record to undo */}
@@ -2312,7 +2447,6 @@ export default function HumanResourcePage() {
                       Status *
                     </label>
                     <select
-                      required
                       value={editAttendanceData.status}
                       onChange={(e) => setEditAttendanceData({...editAttendanceData, status: e.target.value})}
                       className="form-select border-2"
@@ -2321,6 +2455,9 @@ export default function HumanResourcePage() {
                       <option value="on time">On Time</option>
                       <option value="late">Late</option>
                       <option value="absent">Absent</option>
+                      <option value="casual leave">Casual Leave</option>
+                      <option value="sick leave">Sick Leave</option>
+                      <option value="government vacation">Government Vacation</option>
                     </select>
                   </div>
                   
