@@ -27,6 +27,7 @@ export default function FinancialManagementPage() {
     company: "",
     description: "",
     amount: "",
+    isPaid: false,
   });
   const [incomeFormData, setIncomeFormData] = useState({
     date: new Date().toISOString().split("T")[0],
@@ -35,6 +36,7 @@ export default function FinancialManagementPage() {
     company: "",
     description: "",
     amount: "",
+    isPaid: false,
   });
   const [error, setError] = useState("");
   const [toast, setToast] = useState({
@@ -314,6 +316,7 @@ export default function FinancialManagementPage() {
           company: "",
           description: "",
           amount: "",
+          isPaid: false,
         });
         fetchData();
         showToast(
@@ -358,6 +361,7 @@ export default function FinancialManagementPage() {
           company: "",
           description: "",
           amount: "",
+          isPaid: false,
         });
         fetchData();
         showToast(
@@ -385,6 +389,7 @@ export default function FinancialManagementPage() {
       company: expense.company || "",
       description: expense.description,
       amount: expense.amount.toString(),
+      isPaid: expense.isPaid || false,
     });
     setShowExpenseForm(true);
   };
@@ -398,6 +403,7 @@ export default function FinancialManagementPage() {
       company: income.company || "",
       description: income.description,
       amount: income.amount.toString(),
+      isPaid: income.isPaid || false,
     });
     setShowIncomeForm(true);
   };
@@ -1009,8 +1015,10 @@ export default function FinancialManagementPage() {
                 date: new Date().toISOString().split("T")[0],
                 category: "",
                 subcategory: "",
+                company: "",
                 description: "",
                 amount: "",
+                isPaid: false,
               });
             }}
           >
@@ -1041,8 +1049,10 @@ export default function FinancialManagementPage() {
                 date: new Date().toISOString().split("T")[0],
                 category: "",
                 subcategory: "",
+                company: "",
                 description: "",
                 amount: "",
+                isPaid: false,
               });
             }}
           >
@@ -1182,44 +1192,55 @@ export default function FinancialManagementPage() {
                   {(() => {
                     // Calculate company-based data
                     const companyData = {};
-                    
+
                     // Process expenses
                     filteredExpenses.forEach((expense) => {
                       if (expense.company && expense.company.trim()) {
                         const company = expense.company.trim();
                         if (!companyData[company]) {
-                          companyData[company] = { expenses: 0, income: 0, net: 0 };
+                          companyData[company] = {
+                            expenses: 0,
+                            income: 0,
+                            net: 0,
+                          };
                         }
                         companyData[company].expenses += expense.amount;
                       }
                     });
-                    
+
                     // Process income
                     filteredIncome.forEach((income) => {
                       if (income.company && income.company.trim()) {
                         const company = income.company.trim();
                         if (!companyData[company]) {
-                          companyData[company] = { expenses: 0, income: 0, net: 0 };
+                          companyData[company] = {
+                            expenses: 0,
+                            income: 0,
+                            net: 0,
+                          };
                         }
                         companyData[company].income += income.amount;
                       }
                     });
-                    
+
                     // Calculate net amounts
                     Object.keys(companyData).forEach((company) => {
-                      companyData[company].net = companyData[company].income - companyData[company].expenses;
+                      companyData[company].net =
+                        companyData[company].income -
+                        companyData[company].expenses;
                     });
-                    
+
                     const companies = Object.keys(companyData);
-                    
+
                     if (companies.length === 0) {
                       return (
                         <p className="text-muted text-center">
-                          No company data available. Add company names to your expenses and income to see analysis.
+                          No company data available. Add company names to your
+                          expenses and income to see analysis.
                         </p>
                       );
                     }
-                    
+
                     return (
                       <div className="table-responsive">
                         <table className="table table-striped">
@@ -1234,7 +1255,10 @@ export default function FinancialManagementPage() {
                           </thead>
                           <tbody>
                             {companies
-                              .sort((a, b) => companyData[b].net - companyData[a].net)
+                              .sort(
+                                (a, b) =>
+                                  companyData[b].net - companyData[a].net
+                              )
                               .map((company) => {
                                 const data = companyData[company];
                                 const isProfit = data.net >= 0;
@@ -1251,21 +1275,30 @@ export default function FinancialManagementPage() {
                                     <td className="text-danger">
                                       Tk {data.expenses.toLocaleString()}
                                     </td>
-                                    <td className={isProfit ? "text-success" : "text-danger"}>
+                                    <td
+                                      className={
+                                        isProfit
+                                          ? "text-success"
+                                          : "text-danger"
+                                      }
+                                    >
                                       <strong>
-                                        {isProfit ? "+" : ""}Tk {data.net.toLocaleString()}
+                                        {isProfit ? "+" : ""}Tk{" "}
+                                        {data.net.toLocaleString()}
                                       </strong>
                                     </td>
                                     <td>
-                                      <span 
+                                      <span
                                         className="badge"
                                         style={{
-                                          backgroundColor: isProfit ? "#28a745" : "#dc3545",
+                                          backgroundColor: isProfit
+                                            ? "#28a745"
+                                            : "#dc3545",
                                           color: "white",
                                           padding: "0.375rem 0.75rem",
                                           fontSize: "0.75rem",
                                           fontWeight: "600",
-                                          borderRadius: "0.375rem"
+                                          borderRadius: "0.375rem",
                                         }}
                                       >
                                         {isProfit ? "Profit" : "Loss"}
@@ -1427,6 +1460,7 @@ export default function FinancialManagementPage() {
                         <th>Company</th>
                         <th>Description</th>
                         <th>Amount</th>
+                        <th>Status</th>
                         <th>Actions</th>
                       </tr>
                     </thead>
@@ -1456,6 +1490,17 @@ export default function FinancialManagementPage() {
                           <td>{expense.description}</td>
                           <td className="text-danger">
                             Tk {expense.amount.toLocaleString()}
+                          </td>
+                          <td>
+                            <span
+                              className={`badge ${
+                                expense.isPaid
+                                  ? "bg-success"
+                                  : "bg-warning text-dark"
+                              }`}
+                            >
+                              {expense.isPaid ? "Paid" : "Unpaid"}
+                            </span>
                           </td>
                           <td>
                             <i
@@ -1631,6 +1676,7 @@ export default function FinancialManagementPage() {
                         <th>Company</th>
                         <th>Description</th>
                         <th>Amount</th>
+                        <th>Status</th>
                         <th>Actions</th>
                       </tr>
                     </thead>
@@ -1660,6 +1706,17 @@ export default function FinancialManagementPage() {
                           <td>{income.description}</td>
                           <td className="text-success">
                             Tk {income.amount.toLocaleString()}
+                          </td>
+                          <td>
+                            <span
+                              className={`badge ${
+                                income.isPaid
+                                  ? "bg-success"
+                                  : "bg-warning text-dark"
+                              }`}
+                            >
+                              {income.isPaid ? "Received" : "Pending"}
+                            </span>
                           </td>
                           <td>
                             <i
@@ -1855,6 +1912,28 @@ export default function FinancialManagementPage() {
                       style={{ padding: "8px 12px" }}
                     />
                   </div>
+                  <div className="mb-3">
+                    <div className="form-check">
+                      <input
+                        type="checkbox"
+                        className="form-check-input"
+                        id="expensePaidStatus"
+                        checked={expenseFormData.isPaid || false}
+                        onChange={(e) =>
+                          setExpenseFormData({
+                            ...expenseFormData,
+                            isPaid: e.target.checked,
+                          })
+                        }
+                      />
+                      <label
+                        className="form-check-label"
+                        htmlFor="expensePaidStatus"
+                      >
+                        Mark as Paid
+                      </label>
+                    </div>
+                  </div>
                 </div>
                 <div className="modal-footer">
                   <button
@@ -2037,6 +2116,28 @@ export default function FinancialManagementPage() {
                       required
                       style={{ padding: "8px 12px" }}
                     />
+                  </div>
+                  <div className="mb-3">
+                    <div className="form-check">
+                      <input
+                        type="checkbox"
+                        className="form-check-input"
+                        id="incomePaidStatus"
+                        checked={incomeFormData.isPaid || false}
+                        onChange={(e) =>
+                          setIncomeFormData({
+                            ...incomeFormData,
+                            isPaid: e.target.checked,
+                          })
+                        }
+                      />
+                      <label
+                        className="form-check-label"
+                        htmlFor="incomePaidStatus"
+                      >
+                        Mark as Received
+                      </label>
+                    </div>
                   </div>
                 </div>
                 <div className="modal-footer">

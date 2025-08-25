@@ -1,12 +1,12 @@
-'use client';
+"use client";
 
-import Image from 'next/image';
-import { CALENDLY_URL } from '../constants';
+import Image from "next/image";
+import { CALENDLY_URL } from "../constants";
 
 export default function BannerSection() {
   const handleBookCall = () => {
     // Open Calendly in a new window/tab
-    window.open(CALENDLY_URL, '_blank');
+    window.open(CALENDLY_URL, "_blank");
   };
 
   return (
@@ -23,7 +23,7 @@ export default function BannerSection() {
           type="video/mp4"
         />
       </video>
-      
+
       <div className="container">
         <div className="d-flex flex-column gap-4 pb-8 position-relative z-1">
           <div className="row align-items-center">
@@ -74,11 +74,14 @@ export default function BannerSection() {
             data-aos-delay="300"
             data-aos-duration="1000"
           >
-            <button 
+            <button
               className="btn btn-primary fs-6 px-4 py-3 hstack justify-content-center gap-2"
               onClick={handleBookCall}
             >
-              <iconify-icon icon="lucide:calendar" className="fs-6"></iconify-icon>
+              <iconify-icon
+                icon="lucide:calendar"
+                className="fs-6"
+              ></iconify-icon>
               Book a Call
             </button>
             <p className="mb-0 text-white text-opacity-70 fs-6">

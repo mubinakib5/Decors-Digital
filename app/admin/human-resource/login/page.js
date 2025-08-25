@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
-export default function HRLoginPage() {
+function HRLoginForm() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -86,7 +86,7 @@ export default function HRLoginPage() {
 
           <form onSubmit={handleSubmit} className="space-y-6">
             {error && (
-              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+              <div className="bg-blue-50 border border-blue-200 text-blue-700 px-4 py-3 rounded-lg">
                 {error}
               </div>
             )}
@@ -183,6 +183,47 @@ export default function HRLoginPage() {
           </p>
         </div>
       </div>
+      
+      {/* HR-specific color overrides */}
+       <style jsx>{`
+         :global(.text-primary) {
+           color: #245e99 !important;
+         }
+         :global(.bg-primary) {
+           background-color: #245e99 !important;
+         }
+         :global(.border-primary) {
+           border-color: #245e99 !important;
+         }
+         :global(.btn-primary) {
+           background-color: #245e99 !important;
+           border-color: #245e99 !important;
+           color: #ffffff !important;
+         }
+         :global(.btn-primary:hover) {
+           background-color: transparent !important;
+           border-color: #245e99 !important;
+           color: #245e99 !important;
+         }
+         :global(.btn) {
+           background-color: #245e99 !important;
+           border-color: #245e99 !important;
+           color: #ffffff !important;
+         }
+         :global(.btn:hover) {
+           background-color: transparent !important;
+           border-color: #245e99 !important;
+           color: #245e99 !important;
+         }
+       `}</style>
     </div>
+  );
+}
+
+export default function HRLoginPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading...</div>}>
+      <HRLoginForm />
+    </Suspense>
   );
 }
