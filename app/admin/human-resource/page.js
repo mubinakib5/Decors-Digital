@@ -89,13 +89,13 @@ export default function HumanResourcePage() {
 
   const checkAuth = async () => {
     try {
-      const response = await fetch("/api/admin/auth-check");
+      const response = await fetch("/api/admin/hr-auth-check");
       if (!response.ok) {
-        router.push("/admin/login");
+        router.push("/admin/human-resource/login");
         return;
       }
     } catch (error) {
-      router.push("/admin/login");
+      router.push("/admin/human-resource/login");
     }
   };
 
@@ -738,9 +738,12 @@ export default function HumanResourcePage() {
       (record) => new Date(record.date).toDateString() === today
     );
     
+    // Get unique employee IDs who have attendance records today
+    const presentEmployeeIds = new Set(todayAttendance.map(record => record.employeeId));
+    
     const onTime = todayAttendance.filter(record => record.status === 'on time').length;
     const late = todayAttendance.filter(record => record.status === 'late').length;
-    const absent = employees.length - todayAttendance.length;
+    const absent = Math.max(0, employees.length - presentEmployeeIds.size);
     
     return { onTime, absent, late, total: employees.length };
   };
@@ -766,9 +769,13 @@ export default function HumanResourcePage() {
           className={`position-fixed top-0 end-0 m-3 p-3 rounded shadow-sm ${
             toast.type === "success"
               ? "bg-success text-white"
-              : "bg-danger text-white"
+              : "text-white"
           }`}
-          style={{ zIndex: 9999, minWidth: "300px" }}
+          style={{
+             zIndex: 9999,
+             minWidth: "300px",
+             backgroundColor: toast.type === "success" ? undefined : "#245e99"
+           }}
         >
           <div className="d-flex align-items-center">
             <i
@@ -795,17 +802,19 @@ export default function HumanResourcePage() {
         <h1 className="h3 mb-0 text-white">Human Resource Management</h1>
         <div className="d-flex flex-column flex-sm-row gap-2 w-100 w-md-auto">
           <button
-            className="btn btn-outline-secondary btn-sm"
+            className="btn btn-sm"
+            style={{ backgroundColor: "#245e99", borderColor: "#245e99", color: "white" }}
             onClick={() => router.push("/admin/expenses")}
           >
             <i className="bi bi-arrow-left me-1"></i>
             Back to Expenses
           </button>
           <button
-            className="btn btn-outline-secondary btn-sm"
+            className="btn btn-sm"
+            style={{ backgroundColor: "#245e99", borderColor: "#245e99", color: "white" }}
             onClick={() => {
-              fetch("/api/admin/logout", { method: "POST" });
-              router.push("/admin/login");
+              fetch("/api/admin/hr-logout", { method: "POST" });
+              router.push("/admin/human-resource/login");
             }}
           >
             <i className="bi bi-box-arrow-right me-1"></i>
@@ -820,27 +829,27 @@ export default function HumanResourcePage() {
         <div className="d-block d-lg-none mb-3">
           <div className="dropdown">
             <button
-              className="btn btn-outline-danger dropdown-toggle w-100"
+              className="btn dropdown-toggle w-100" style={{borderColor: "#245e99", color: "#245e99"}}
               type="button"
               data-bs-toggle="dropdown"
               aria-expanded="false"
             >
               {[
                 { id: "dashboard", name: "Dashboard" },
-                { id: "overview", name: "Employee Overview" },
-                { id: "employees", name: "Employees" },
                 { id: "attendance", name: "Attendance" },
                 { id: "leaves", name: "Leave Management" },
+                { id: "employees", name: "Employees" },
+                { id: "overview", name: "Employee Overview" },
                 { id: "reports", name: "Reports" },
               ].find(tab => tab.id === activeTab)?.name || "Select Tab"}
             </button>
             <ul className="dropdown-menu w-100">
               {[
                 { id: "dashboard", name: "Dashboard", icon: "bi-speedometer2" },
-                { id: "overview", name: "Employee Overview", icon: "bi-people" },
-                { id: "employees", name: "Employees", icon: "bi-person-badge" },
                 { id: "attendance", name: "Attendance", icon: "bi-clock" },
                 { id: "leaves", name: "Leave Management", icon: "bi-calendar-check" },
+                { id: "employees", name: "Employees", icon: "bi-person-badge" },
+                { id: "overview", name: "Employee Overview", icon: "bi-people" },
                 { id: "reports", name: "Reports", icon: "bi-graph-up" },
               ].map((tab) => (
                 <li key={tab.id}>
@@ -863,14 +872,14 @@ export default function HumanResourcePage() {
             className="nav nav-tabs"
             id="hrTabs"
             role="tablist"
-            style={{ borderBottomColor: "#ff0000", marginBottom: "0" }}
+            style={{ borderBottomColor: "#245e99", marginBottom: "0" }}
           >
             {[
               { id: "dashboard", name: "Dashboard" },
-              { id: "overview", name: "Employee Overview" },
-              { id: "employees", name: "Employees" },
               { id: "attendance", name: "Attendance" },
               { id: "leaves", name: "Leave Management" },
+              { id: "employees", name: "Employees" },
+              { id: "overview", name: "Employee Overview" },
               { id: "reports", name: "Reports" },
             ].map((tab) => (
               <li className="nav-item" role="presentation" key={tab.id}>
@@ -878,12 +887,12 @@ export default function HumanResourcePage() {
                   className={`nav-link ${activeTab === tab.id ? "active" : ""}`}
                   onClick={() => setActiveTab(tab.id)}
                   style={{
-                    color: activeTab === tab.id ? "#ffffff" : "#ff0000",
+                    color: activeTab === tab.id ? "#ffffff" : "#245e99",
                     backgroundColor:
-                      activeTab === tab.id ? "#ff0000" : "transparent",
-                    borderColor: "#ff0000",
-                    borderBottomColor:
-                      activeTab === tab.id ? "#ff0000" : "transparent",
+                      activeTab === tab.id ? "#245e99" : "transparent",
+                    borderColor: "#245e99",
+                     borderBottomColor:
+                       activeTab === tab.id ? "#245e99" : "transparent",
                   }}
                 >
                   {tab.name}
@@ -926,7 +935,7 @@ export default function HumanResourcePage() {
                     <div className="flex-shrink-0 mb-2 mb-sm-0 me-sm-3">
                       <div 
                         className="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold mx-auto"
-                        style={{ width: "48px", height: "48px", backgroundColor: "#dc3545" }}
+                        style={{ width: "48px", height: "48px", backgroundColor: "#245e99" }}
                       >
                         {stats.absent}
                       </div>
@@ -993,7 +1002,7 @@ export default function HumanResourcePage() {
             {/* Quick Actions */}
             <div className="card border-0 shadow-sm">
               <div className="card-body">
-                <h5 className="card-title mb-4" style={{ color: "#dc3545" }}>Quick Actions</h5>
+                <h5 className="card-title mb-4" style={{ color: "#245e99" }}>Quick Actions</h5>
                 <div className="row g-3">
                   <div className="col-6 col-lg-3">
                     <button
@@ -1003,7 +1012,7 @@ export default function HumanResourcePage() {
                         resetEmployeeForm();
                       }}
                       className="btn w-100"
-                      style={{ backgroundColor: "#dc3545", borderColor: "#dc3545", color: "white" }}
+                      style={{ backgroundColor: "#245e99", borderColor: "#245e99", color: "white" }}
                     >
                       <i className="fas fa-user-plus me-2"></i>
                       <span className="d-none d-sm-inline">Add New Employee</span>
@@ -1013,7 +1022,8 @@ export default function HumanResourcePage() {
                   <div className="col-6 col-lg-3">
                     <button
                       onClick={() => setShowClockForm(true)}
-                      className="btn btn-outline-danger w-100"
+                      className="btn w-100"
+                      style={{ backgroundColor: "#245e99", borderColor: "#245e99", color: "white" }}
                     >
                       <i className="fas fa-clock me-2"></i>
                       <span className="d-none d-sm-inline">Clock In/Out</span>
@@ -1023,7 +1033,8 @@ export default function HumanResourcePage() {
                   <div className="col-6 col-lg-3">
                     <button
                       onClick={() => setShowLeaveForm(true)}
-                      className="btn btn-outline-danger w-100"
+                      className="btn w-100"
+                      style={{ backgroundColor: "#245e99", borderColor: "#245e99", color: "white" }}
                     >
                       <i className="fas fa-calendar-alt me-2"></i>
                       <span className="d-none d-sm-inline">Apply Leave</span>
@@ -1036,7 +1047,8 @@ export default function HumanResourcePage() {
                         setShowManualTimeForm(true);
                         resetManualTimeForm();
                       }}
-                      className="btn btn-outline-danger w-100"
+                      className="btn w-100"
+                      style={{ backgroundColor: "#245e99", borderColor: "#245e99", color: "white" }}
                     >
                       <i className="fas fa-history me-2"></i>
                       <span className="d-none d-sm-inline">Manual Time Entry</span>
@@ -1050,7 +1062,7 @@ export default function HumanResourcePage() {
             {/* Recent Activity */}
             <div className="card border-0 shadow-sm">
               <div className="card-body">
-                <h5 className="card-title mb-4" style={{ color: "#dc3545" }}>Recent Activity</h5>
+                <h5 className="card-title mb-4" style={{ color: "#245e99" }}>Recent Activity</h5>
                 <div className="list-group list-group-flush">
                   {attendance.slice(0, 5).map((record, index) => {
                     const employee = employees.find(emp => emp._id === record.employeeId);
@@ -1080,7 +1092,7 @@ export default function HumanResourcePage() {
         {activeTab === "overview" && (
           <div className="tab-pane fade show active">
             <div className="d-flex justify-content-between align-items-center mb-4">
-              <h2 className="h3 mb-0" style={{ color: "#dc3545" }}>Employee Overview & Statistics</h2>
+              <h2 className="h3 mb-0" style={{ color: "#245e99" }}>Employee Overview & Statistics</h2>
               <div className="d-flex gap-2">
                 <select
                   value={statsPeriod}
@@ -1109,7 +1121,7 @@ export default function HumanResourcePage() {
 
             {statsLoading ? (
               <div className="text-center py-5">
-                <div className="spinner-border text-danger" role="status">
+                <div className="spinner-border" style={{color: "#245e99"}} role="status">
                   <span className="visually-hidden">Loading...</span>
                 </div>
                 <p className="mt-2 text-muted">Loading employee statistics...</p>
@@ -1122,9 +1134,9 @@ export default function HumanResourcePage() {
                     <div className="card border-0 shadow-sm h-100">
                       <div className="card-body text-center">
                         <div className="mb-2">
-                          <i className="fas fa-users fa-2x text-primary"></i>
+                          <i className="fas fa-users fa-2x" style={{color: "#245e99"}}></i>
                         </div>
-                        <h3 className="text-primary mb-1">{employeeStats.overallStats.totalEmployees}</h3>
+                        <h3 className="mb-1" style={{color: "#245e99"}}>{employeeStats.overallStats.totalEmployees}</h3>
                         <p className="text-muted mb-0">Total Employees</p>
                       </div>
                     </div>
@@ -1168,7 +1180,7 @@ export default function HumanResourcePage() {
                 <div className="row g-4 mb-4">
                   <div className="col-md-6">
                     <div className="card border-0 shadow-sm">
-                      <div className="card-header bg-primary text-white">
+                      <div className="card-header text-white" style={{backgroundColor: "#245e99"}}>
                         <h6 className="mb-0"><i className="fas fa-user-tie me-2"></i>Regular Employees ({employeeStats.overallStats.totalRegularEmployees})</h6>
                       </div>
                       <div className="card-body">
@@ -1246,7 +1258,7 @@ export default function HumanResourcePage() {
 
                 {/* Regular Employees Table */}
                 <div className="card border-0 shadow-sm mb-4">
-                  <div className="card-header" style={{ backgroundColor: "#dc3545", color: "white" }}>
+                  <div className="card-header" style={{ backgroundColor: "#245e99", color: "white" }}>
                     <h5 className="mb-0">
                       <i className="fas fa-user-tie me-2"></i>
                       Regular Employees Statistics ({statsPeriod.charAt(0).toUpperCase() + statsPeriod.slice(1)})
@@ -1292,7 +1304,7 @@ export default function HumanResourcePage() {
                                   </div>
                                   <div className="d-flex justify-content-between">
                                     <span>Absent:</span>
-                                    <span className="text-danger fw-bold">{emp.attendance.absentDays}</span>
+                                    <span style={{color: "#245e99"}} className="fw-bold">{emp.attendance.absentDays}</span>
                                   </div>
                                   <div className="d-flex justify-content-between">
                                     <span>Hours:</span>
@@ -1430,7 +1442,7 @@ export default function HumanResourcePage() {
                                   </div>
                                   <div className="d-flex justify-content-between">
                                     <span>Absent:</span>
-                                    <span className="text-danger fw-bold">{emp.attendance.absentDays}</span>
+                                    <span style={{color: "#245e99"}} className="fw-bold">{emp.attendance.absentDays}</span>
                                   </div>
                                   <div className="d-flex justify-content-between">
                                     <span>Hours:</span>
@@ -1530,7 +1542,7 @@ export default function HumanResourcePage() {
         {activeTab === "employees" && (
           <div className="tab-pane fade show active">
             <div className="d-flex justify-content-between align-items-center mb-4">
-              <h2 className="h3 mb-0" style={{ color: "#dc3545" }}>Employee Management</h2>
+              <h2 className="h3 mb-0" style={{ color: "#245e99" }}>Employee Management</h2>
               <button
                 onClick={() => {
                   setShowEmployeeForm(true);
@@ -1538,7 +1550,7 @@ export default function HumanResourcePage() {
                   resetEmployeeForm();
                 }}
                 className="btn"
-                style={{ backgroundColor: "#dc3545", borderColor: "#dc3545", color: "white" }}
+                style={{ backgroundColor: "#245e99", borderColor: "#245e99", color: "white" }}
               >
                 <i className="fas fa-plus me-2"></i>
                 Add Employee
@@ -1554,13 +1566,13 @@ export default function HumanResourcePage() {
                         <div className="flex-shrink-0 me-3">
                           <div 
                             className="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold"
-                            style={{ width: "48px", height: "48px", backgroundColor: "#dc3545" }}
+                            style={{ width: "48px", height: "48px", backgroundColor: "#245e99" }}
                           >
                             {employee.name.charAt(0).toUpperCase()}
                           </div>
                         </div>
                         <div className="flex-grow-1">
-                          <h6 className="card-title mb-1" style={{ color: "#dc3545" }}>
+                          <h6 className="card-title mb-1" style={{ color: "#245e99" }}>
                             {employee.name}
                           </h6>
                           <small className="text-muted">ID: {employee.employeeId}</small>
@@ -1590,14 +1602,14 @@ export default function HumanResourcePage() {
                             });
                             setShowEmployeeForm(true);
                           }}
-                          className="btn btn-outline-danger btn-sm flex-fill"
+                          className="btn btn-sm flex-fill" style={{borderColor: "#245e99", color: "#245e99"}}
                         >
                           <i className="fas fa-edit me-1"></i>
                           Edit
                         </button>
                         <button
                           onClick={() => handleDeleteEmployee(employee._id)}
-                          className="btn btn-outline-danger btn-sm flex-fill"
+                          className="btn btn-sm flex-fill" style={{borderColor: "#245e99", color: "#245e99"}}
                         >
                           <i className="fas fa-trash me-1"></i>
                           Delete
@@ -1615,11 +1627,11 @@ export default function HumanResourcePage() {
         {activeTab === "attendance" && (
           <div className="tab-pane fade show active">
             <div className="d-flex justify-content-between align-items-center mb-4">
-              <h2 className="h3 mb-0" style={{ color: "#dc3545" }}>Attendance Management</h2>
+              <h2 className="h3 mb-0" style={{ color: "#245e99" }}>Attendance Management</h2>
               <button
                 onClick={() => setShowClockForm(true)}
                 className="btn"
-                style={{ backgroundColor: "#dc3545", borderColor: "#dc3545", color: "white" }}
+                style={{ backgroundColor: "#245e99", borderColor: "#245e99", color: "white" }}
               >
                 <i className="fas fa-clock me-2"></i>
                 Clock In/Out
@@ -1628,7 +1640,7 @@ export default function HumanResourcePage() {
 
             <div className="card border-0 shadow-sm">
               <div className="card-body">
-                <h5 className="card-title mb-4" style={{ color: "#dc3545" }}>Today's Attendance</h5>
+                <h5 className="card-title mb-4" style={{ color: "#245e99" }}>Today's Attendance</h5>
                 <div className="table-responsive">
                   <table className="table table-hover">
                     <thead className="table-light">
@@ -1679,14 +1691,14 @@ export default function HumanResourcePage() {
                                   handleAttendanceStatusChange(employee._id, newStatus);
                                 }}
                                 className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full border-0 ${
-                                  !todayAttendance ? 'bg-red-100 text-red-800' :
+                                  !todayAttendance ? 'bg-blue-100 text-blue-800' :
                                   todayAttendance.status === 'on time' ? 'bg-green-500 text-white' :
                                   todayAttendance.status === 'late' ? 'bg-yellow-100 text-yellow-800' :
                                   todayAttendance.status === 'casual leave' ? 'bg-blue-100 text-blue-800' :
                                   todayAttendance.status === 'sick leave' ? 'bg-purple-100 text-purple-800' :
                                   todayAttendance.status === 'government vacation' ? 'bg-indigo-100 text-indigo-800' :
                                   todayAttendance.status === 'off day' ? 'bg-gray-100 text-gray-800' :
-                                  'bg-red-100 text-red-800'
+                                  'bg-blue-100 text-blue-800'
                                 }`}
                                 style={{ 
                                   minWidth: '120px', 
@@ -1722,7 +1734,8 @@ export default function HumanResourcePage() {
                                 {!todayAttendance?.clockIn ? (
                                   <button
                                     onClick={() => handleManualClockIn(employee._id)}
-                                    className="btn btn-sm btn-success"
+                                    className="btn btn-sm"
+                                    style={{ backgroundColor: "#245e99", borderColor: "#245e99", color: "white" }}
                                     title="Clock In (Login)"
                                   >
                                     <i className="fas fa-sign-in-alt me-1"></i>
@@ -1731,7 +1744,8 @@ export default function HumanResourcePage() {
                                 ) : !todayAttendance?.clockOut ? (
                                   <button
                                     onClick={() => handleManualClockOut(employee._id)}
-                                    className="btn btn-sm btn-warning"
+                                    className="btn btn-sm"
+                                    style={{ backgroundColor: "#245e99", borderColor: "#245e99", color: "white" }}
                                     title="Clock Out (Logout)"
                                   >
                                     <i className="fas fa-sign-out-alt me-1"></i>
@@ -1761,7 +1775,8 @@ export default function HumanResourcePage() {
                                       setShowEditAttendanceForm(true);
                                       console.log('Inline edit form should now be visible');
                                     }}
-                                    className="btn btn-sm btn-primary"
+                                    className="btn btn-sm"
+                                    style={{ backgroundColor: "#245e99", borderColor: "#245e99", color: "white" }}
                                     title="Edit attendance times"
                                   >
                                     <i className="fas fa-edit me-1"></i>
@@ -1773,7 +1788,8 @@ export default function HumanResourcePage() {
                                 {todayAttendance && (
                                   <button
                                     onClick={() => handleUndoAttendance(employee._id, todayAttendance)}
-                                    className="btn btn-sm btn-outline-secondary"
+                                    className="btn btn-sm"
+                                    style={{ backgroundColor: "#245e99", borderColor: "#245e99", color: "white" }}
                                     title="Undo last action (restore previous state)"
                                   >
                                     <i className="fas fa-undo me-1"></i>
@@ -1797,11 +1813,11 @@ export default function HumanResourcePage() {
         {activeTab === "leaves" && (
           <div className="tab-pane fade show active">
             <div className="d-flex justify-content-between align-items-center mb-4">
-              <h2 className="h3 mb-0" style={{ color: "#dc3545" }}>Leave Management</h2>
+              <h2 className="h3 mb-0" style={{ color: "#245e99" }}>Leave Management</h2>
               <button
                 onClick={() => setShowLeaveForm(true)}
                 className="btn"
-                style={{ backgroundColor: "#dc3545", borderColor: "#dc3545", color: "white" }}
+                style={{ backgroundColor: "#245e99", borderColor: "#245e99", color: "white" }}
               >
                 <i className="fas fa-calendar-plus me-2"></i>
                 Apply Leave
@@ -1810,7 +1826,7 @@ export default function HumanResourcePage() {
 
             <div className="card border-0 shadow-sm">
               <div className="card-body">
-                <h5 className="card-title mb-4" style={{ color: "#dc3545" }}>Leave Requests</h5>
+                <h5 className="card-title mb-4" style={{ color: "#245e99" }}>Leave Requests</h5>
                 <div className="table-responsive">
                   <table className="table table-hover">
                     <thead className="bg-gray-50">
@@ -1858,7 +1874,7 @@ export default function HumanResourcePage() {
                             <td className="px-6 py-4 whitespace-nowrap">
                               <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
                                 leave.status === 'approved' ? 'bg-green-100 text-green-800' :
-                                leave.status === 'rejected' ? 'bg-red-100 text-red-800' :
+                                leave.status === 'rejected' ? 'bg-blue-100 text-blue-800' :
                                 'bg-yellow-100 text-yellow-800'
                               }`}>
                                 {leave.status || 'pending'}
@@ -1879,7 +1895,7 @@ export default function HumanResourcePage() {
         {activeTab === "reports" && (
           <div className="tab-pane fade show active">
             <div className="d-flex justify-content-between align-items-center mb-4">
-              <h2 className="h3 mb-0" style={{ color: "#dc3545" }}>
+              <h2 className="h3 mb-0" style={{ color: "#245e99" }}>
                 <i className="fas fa-chart-pie me-2"></i>
                 Individual Employee Reports
               </h2>
@@ -1887,7 +1903,7 @@ export default function HumanResourcePage() {
 
             {/* Employee Selection and Filters */}
             <div className="card border-0 shadow-sm mb-4">
-              <div className="card-header" style={{ backgroundColor: "#dc3545", color: "white" }}>
+              <div className="card-header" style={{ backgroundColor: "#245e99", color: "white" }}>
                 <h5 className="mb-0">
                   <i className="fas fa-filter me-2"></i>
                   Report Filters
@@ -2234,7 +2250,7 @@ export default function HumanResourcePage() {
         <div className="modal fade show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
           <div className="modal-dialog modal-dialog-centered modal-dialog-scrollable">
             <div className="modal-content border-0 shadow-lg">
-              <div className="modal-header" style={{ backgroundColor: '#dc3545', color: 'white' }}>
+              <div className="modal-header" style={{ backgroundColor: '#245e99', color: 'white' }}>
                 <h5 className="modal-title">
                   <i className="fas fa-clock me-2"></i>
                   Clock In/Out
@@ -2254,7 +2270,7 @@ export default function HumanResourcePage() {
                 <form onSubmit={handleClockSubmit}>
                   <div className="mb-3">
                     <label className="form-label fw-medium">
-                      <i className="fas fa-user me-2 text-danger"></i>
+                      <i className="fas fa-user me-2" style={{color: "#245e99"}}></i>
                       Select Employee *
                     </label>
                     <select
@@ -2262,7 +2278,7 @@ export default function HumanResourcePage() {
                       value={selectedEmployee}
                       onChange={(e) => setSelectedEmployee(e.target.value)}
                       className="form-select border-2"
-                      style={{ borderColor: '#dc3545' }}
+                      style={{ borderColor: '#245e99' }}
                     >
                       <option value="">Choose Employee</option>
                       {employees.map((employee) => (
@@ -2275,7 +2291,7 @@ export default function HumanResourcePage() {
                   
                   <div className="mb-3">
                     <label className="form-label fw-medium">
-                      <i className="fas fa-tasks me-2 text-danger"></i>
+                      <i className="fas fa-tasks me-2" style={{color: "#245e99"}}></i>
                       Action *
                     </label>
                     <div className="d-flex gap-4">
@@ -2287,7 +2303,7 @@ export default function HumanResourcePage() {
                           onChange={(e) => setClockAction(e.target.value)}
                           className="form-check-input"
                           id="clockIn"
-                          style={{ borderColor: '#dc3545' }}
+                          style={{ borderColor: '#245e99' }}
                         />
                         <label className="form-check-label" htmlFor="clockIn">
                           <i className="fas fa-sign-in-alt me-1 text-success"></i>
@@ -2302,7 +2318,7 @@ export default function HumanResourcePage() {
                           onChange={(e) => setClockAction(e.target.value)}
                           className="form-check-input"
                           id="clockOut"
-                          style={{ borderColor: '#dc3545' }}
+                          style={{ borderColor: '#245e99' }}
                         />
                         <label className="form-check-label" htmlFor="clockOut">
                           <i className="fas fa-sign-out-alt me-1 text-warning"></i>
@@ -2314,7 +2330,7 @@ export default function HumanResourcePage() {
                   
                   <div className="mb-4">
                     <label className="form-label fw-medium">
-                      <i className="fas fa-clock me-2 text-danger"></i>
+                      <i className="fas fa-clock me-2" style={{color: "#245e99"}}></i>
                       Time *
                     </label>
                     <input
@@ -2323,7 +2339,7 @@ export default function HumanResourcePage() {
                       value={clockTime}
                       onChange={(e) => setClockTime(e.target.value)}
                       className="form-control border-2"
-                      style={{ borderColor: '#dc3545' }}
+                      style={{ borderColor: '#245e99' }}
                     />
                     <div className="form-text">
                       <i className="fas fa-info-circle me-1"></i>
@@ -2477,7 +2493,7 @@ export default function HumanResourcePage() {
         <div className="modal fade show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
           <div className="modal-dialog modal-dialog-centered modal-dialog-scrollable">
             <div className="modal-content border-0 shadow-lg">
-              <div className="modal-header" style={{ backgroundColor: '#dc3545', color: 'white' }}>
+              <div className="modal-header" style={{ backgroundColor: '#245e99', color: 'white' }}>
                 <h5 className="modal-title">
                   <i className="fas fa-edit me-2"></i>
                   Edit Attendance Record
@@ -2496,7 +2512,7 @@ export default function HumanResourcePage() {
                 {editingAttendance && (
                   <div className="mb-3 p-3 border rounded" style={{ backgroundColor: '#f8f9fa' }}>
                     <h6 className="mb-2">
-                      <i className="fas fa-user me-2 text-danger"></i>
+                      <i className="fas fa-user me-2" style={{color: "#245e99"}}></i>
                       Employee: {employees.find(emp => emp._id === editingAttendance.employeeId)?.name || 'Unknown'}
                     </h6>
                     <p className="mb-0 text-muted">
@@ -2517,7 +2533,7 @@ export default function HumanResourcePage() {
                         value={editAttendanceData.clockIn}
                         onChange={(e) => setEditAttendanceData({...editAttendanceData, clockIn: e.target.value})}
                         className="form-control border-2"
-                        style={{ borderColor: '#dc3545' }}
+                        style={{ borderColor: '#245e99' }}
                       />
                     </div>
                     <div className="col-md-6 mb-3">
@@ -2530,21 +2546,21 @@ export default function HumanResourcePage() {
                         value={editAttendanceData.clockOut}
                         onChange={(e) => setEditAttendanceData({...editAttendanceData, clockOut: e.target.value})}
                         className="form-control border-2"
-                        style={{ borderColor: '#dc3545' }}
+                        style={{ borderColor: '#245e99' }}
                       />
                     </div>
                   </div>
                   
                   <div className="mb-4">
                     <label className="form-label fw-medium">
-                      <i className="fas fa-user-check me-2 text-danger"></i>
+                      <i className="fas fa-user-check me-2" style={{color: "#245e99"}}></i>
                       Status *
                     </label>
                     <select
                       value={editAttendanceData.status}
                       onChange={(e) => setEditAttendanceData({...editAttendanceData, status: e.target.value})}
                       className="form-select border-2"
-                      style={{ borderColor: '#dc3545' }}
+                      style={{ borderColor: '#245e99' }}
                     >
                       <option value="on time">On Time</option>
                       <option value="late">Late</option>
@@ -2588,7 +2604,7 @@ export default function HumanResourcePage() {
         <div className="modal fade show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
           <div className="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg">
             <div className="modal-content border-0 shadow-lg">
-              <div className="modal-header" style={{ backgroundColor: '#dc3545', color: 'white' }}>
+              <div className="modal-header" style={{ backgroundColor: '#245e99', color: 'white' }}>
                 <h5 className="modal-title">
                   <i className="fas fa-history me-2"></i>
                   Manual Time Entry
@@ -2607,7 +2623,7 @@ export default function HumanResourcePage() {
                   <div className="row">
                     <div className="col-12 col-md-6 mb-3">
                       <label className="form-label fw-medium">
-                        <i className="fas fa-user me-2 text-danger"></i>
+                        <i className="fas fa-user me-2" style={{color: "#245e99"}}></i>
                         Employee *
                       </label>
                       <select
@@ -2615,7 +2631,7 @@ export default function HumanResourcePage() {
                         value={manualTimeFormData.employeeId}
                         onChange={(e) => setManualTimeFormData({...manualTimeFormData, employeeId: e.target.value})}
                         className="form-select border-2"
-                        style={{ borderColor: '#dc3545' }}
+                        style={{ borderColor: '#245e99' }}
                       >
                         <option value="">Select Employee</option>
                         {employees.map((employee) => (
@@ -2627,7 +2643,7 @@ export default function HumanResourcePage() {
                     </div>
                     <div className="col-12 col-md-6 mb-3">
                       <label className="form-label fw-medium">
-                        <i className="fas fa-calendar me-2 text-danger"></i>
+                        <i className="fas fa-calendar me-2" style={{color: "#245e99"}}></i>
                         Date *
                       </label>
                       <input
@@ -2636,7 +2652,7 @@ export default function HumanResourcePage() {
                         value={manualTimeFormData.date}
                         onChange={(e) => setManualTimeFormData({...manualTimeFormData, date: e.target.value})}
                         className="form-control border-2"
-                        style={{ borderColor: '#dc3545' }}
+                        style={{ borderColor: '#245e99' }}
                         max={new Date().toISOString().split('T')[0]}
                       />
                     </div>
@@ -2654,7 +2670,7 @@ export default function HumanResourcePage() {
                         value={manualTimeFormData.clockIn}
                         onChange={(e) => setManualTimeFormData({...manualTimeFormData, clockIn: e.target.value})}
                         className="form-control border-2"
-                        style={{ borderColor: '#dc3545' }}
+                        style={{ borderColor: '#245e99' }}
                       />
                     </div>
                     <div className="col-12 col-md-6 mb-3">
@@ -2668,7 +2684,7 @@ export default function HumanResourcePage() {
                         value={manualTimeFormData.clockOut}
                         onChange={(e) => setManualTimeFormData({...manualTimeFormData, clockOut: e.target.value})}
                         className="form-control border-2"
-                        style={{ borderColor: '#dc3545' }}
+                        style={{ borderColor: '#245e99' }}
                       />
                     </div>
                   </div>
@@ -2686,7 +2702,7 @@ export default function HumanResourcePage() {
                         value={manualTimeFormData.breakDuration}
                         onChange={(e) => setManualTimeFormData({...manualTimeFormData, breakDuration: parseInt(e.target.value) || 0})}
                         className="form-control border-2"
-                        style={{ borderColor: '#dc3545' }}
+                        style={{ borderColor: '#245e99' }}
                       />
                       <div className="form-text">
                         <i className="fas fa-info-circle me-1"></i>
@@ -2695,7 +2711,7 @@ export default function HumanResourcePage() {
                     </div>
                     <div className="col-md-6 mb-3">
                       <label className="form-label fw-medium">
-                        <i className="fas fa-question-circle me-2 text-danger"></i>
+                        <i className="fas fa-question-circle me-2" style={{color: "#245e99"}}></i>
                         Reason *
                       </label>
                       <select
@@ -2703,7 +2719,7 @@ export default function HumanResourcePage() {
                         value={manualTimeFormData.reason}
                         onChange={(e) => setManualTimeFormData({...manualTimeFormData, reason: e.target.value})}
                         className="form-select border-2"
-                        style={{ borderColor: '#dc3545' }}
+                        style={{ borderColor: '#245e99' }}
                       >
                         <option value="">Select Reason</option>
                         <option value="forgot_to_clock">Forgot to Clock In/Out</option>
@@ -2727,7 +2743,7 @@ export default function HumanResourcePage() {
                       onChange={(e) => setManualTimeFormData({...manualTimeFormData, notes: e.target.value})}
                       rows={3}
                       className="form-control border-2"
-                      style={{ borderColor: '#dc3545' }}
+                      style={{ borderColor: '#245e99' }}
                       placeholder="Any additional details or explanations..."
                     />
                   </div>

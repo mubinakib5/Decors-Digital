@@ -285,7 +285,7 @@ export async function PUT(request) {
     endOfDay.setDate(endOfDay.getDate() + 1);
     
     const attendanceRecord = await db.collection("attendance").findOne({
-      employeeId: employeeId,
+      employeeId: new ObjectId(employeeId),
       date: {
         $gte: startOfDay,
         $lt: endOfDay
