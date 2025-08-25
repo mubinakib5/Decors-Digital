@@ -34,7 +34,7 @@ export async function PUT(request, { params }) {
 
   try {
     const { id } = await params;
-    const { date, category, subcategory, company, description, amount } = await request.json();
+    const { date, category, subcategory, company, description, amount, isPaid } = await request.json();
 
     // Validate input
     if (!date || !category || !description || amount === undefined) {
@@ -70,6 +70,7 @@ export async function PUT(request, { params }) {
       company: company || "",
       description,
       amount: parseFloat(amount),
+      isPaid: isPaid !== undefined ? isPaid : true, // Default to true (Paid)
       updatedAt: new Date(),
     };
 

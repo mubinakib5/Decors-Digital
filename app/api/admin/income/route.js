@@ -66,7 +66,7 @@ export async function POST(request) {
   }
 
   try {
-    const { date, category, subcategory, company, description, amount } =
+    const { date, category, subcategory, company, description, amount, isPaid } =
       await request.json();
 
     // Validate input
@@ -95,6 +95,7 @@ export async function POST(request) {
       company: company || "",
       description,
       amount: parseFloat(amount),
+      isPaid: isPaid !== undefined ? isPaid : true, // Default to true (Paid)
       createdAt: new Date(),
       updatedAt: new Date(),
     };

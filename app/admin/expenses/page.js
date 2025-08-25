@@ -27,7 +27,7 @@ export default function FinancialManagementPage() {
     company: "",
     description: "",
     amount: "",
-    isPaid: false,
+    isPaid: true,
   });
   const [incomeFormData, setIncomeFormData] = useState({
     date: new Date().toISOString().split("T")[0],
@@ -36,7 +36,7 @@ export default function FinancialManagementPage() {
     company: "",
     description: "",
     amount: "",
-    isPaid: false,
+    isPaid: true,
   });
   const [error, setError] = useState("");
   const [toast, setToast] = useState({
@@ -389,7 +389,7 @@ export default function FinancialManagementPage() {
       company: expense.company || "",
       description: expense.description,
       amount: expense.amount.toString(),
-      isPaid: expense.isPaid || false,
+      isPaid: expense.isPaid !== undefined ? expense.isPaid : true,
     });
     setShowExpenseForm(true);
   };
@@ -403,7 +403,7 @@ export default function FinancialManagementPage() {
       company: income.company || "",
       description: income.description,
       amount: income.amount.toString(),
-      isPaid: income.isPaid || false,
+      isPaid: income.isPaid !== undefined ? income.isPaid : true,
     });
     setShowIncomeForm(true);
   };
@@ -1495,7 +1495,7 @@ export default function FinancialManagementPage() {
                             <span
                               className={`badge ${
                                 expense.isPaid
-                                  ? "bg-success"
+                                  ? "bg-success text-dark"
                                   : "bg-warning text-dark"
                               }`}
                             >
@@ -1711,7 +1711,7 @@ export default function FinancialManagementPage() {
                             <span
                               className={`badge ${
                                 income.isPaid
-                                  ? "bg-success"
+                                  ? "bg-success text-dark"
                                   : "bg-warning text-dark"
                               }`}
                             >
@@ -1918,11 +1918,11 @@ export default function FinancialManagementPage() {
                         type="checkbox"
                         className="form-check-input"
                         id="expensePaidStatus"
-                        checked={expenseFormData.isPaid || false}
+                        checked={!expenseFormData.isPaid}
                         onChange={(e) =>
                           setExpenseFormData({
                             ...expenseFormData,
-                            isPaid: e.target.checked,
+                            isPaid: !e.target.checked,
                           })
                         }
                       />
@@ -1930,7 +1930,7 @@ export default function FinancialManagementPage() {
                         className="form-check-label"
                         htmlFor="expensePaidStatus"
                       >
-                        Mark as Paid
+                        Mark as Unpaid
                       </label>
                     </div>
                   </div>
@@ -2123,11 +2123,11 @@ export default function FinancialManagementPage() {
                         type="checkbox"
                         className="form-check-input"
                         id="incomePaidStatus"
-                        checked={incomeFormData.isPaid || false}
+                        checked={!incomeFormData.isPaid}
                         onChange={(e) =>
                           setIncomeFormData({
                             ...incomeFormData,
-                            isPaid: e.target.checked,
+                            isPaid: !e.target.checked,
                           })
                         }
                       />
@@ -2135,7 +2135,7 @@ export default function FinancialManagementPage() {
                         className="form-check-label"
                         htmlFor="incomePaidStatus"
                       >
-                        Mark as Received
+                        Mark as Unpaid
                       </label>
                     </div>
                   </div>
