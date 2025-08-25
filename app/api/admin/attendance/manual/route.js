@@ -64,7 +64,7 @@ export async function POST(request) {
     
     // Check if attendance record already exists for this date
     const existingRecord = await db.collection("attendance").findOne({
-      employeeId: employeeId,
+      employeeId: new ObjectId(employeeId),
       date: dateOnly
     });
     
@@ -77,7 +77,7 @@ export async function POST(request) {
     
     // Create new manual attendance record
     const newRecord = {
-      employeeId: employeeId,
+      employeeId: new ObjectId(employeeId),
       date: dateOnly,
       status: status,
       clockIn: null,

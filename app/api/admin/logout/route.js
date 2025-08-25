@@ -10,7 +10,7 @@ export async function POST() {
   );
 
   // Clear the authentication cookie
-  response.cookies.delete("admin_token");
+  response.cookies.delete("admin-token");
 
   return response;
 }

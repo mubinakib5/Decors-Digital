@@ -160,7 +160,7 @@ export async function POST(request) {
     
     // Find existing attendance record for today
     let attendanceRecord = await db.collection("attendance").findOne({
-      employeeId: employeeId,
+      employeeId: new ObjectId(employeeId),
       date: dateOnly
     });
     
@@ -189,7 +189,7 @@ export async function POST(request) {
       } else {
         // Create new record
         await db.collection("attendance").insertOne({
-          employeeId: employeeId,
+          employeeId: new ObjectId(employeeId),
           date: dateOnly,
           clockIn: actionTime,
           status: status,
@@ -254,6 +254,7 @@ export async function PUT(request) {
 
   try {
     const { employeeId, date, clockIn, clockOut, status } = await request.json();
+    console.log('PUT request data:', { employeeId, date, clockIn, clockOut, status });
     
     if (!employeeId || !date) {
       return NextResponse.json(
@@ -271,19 +272,27 @@ export async function PUT(request) {
 
     const { db } = await connectToDatabase();
     
-    // Parse the date to get start and end of day
+    // Parse the date to match how dates are stored (dateOnly format)
     const targetDate = new Date(date);
-    const startOfDay = new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate());
-    const endOfDay = new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate(), 23, 59, 59, 999);
+    // Since the frontend sends UTC date, use it directly
+    const dateOnly = new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate());
+    console.log('Searching for attendance record:', { employeeId, dateOnly });
     
     // Find existing attendance record for this employee and date
+    // Search by date range since existing records use 'date' field, not 'dateOnly'
+    const startOfDay = new Date(dateOnly);
+    const endOfDay = new Date(dateOnly);
+    endOfDay.setDate(endOfDay.getDate() + 1);
+    
     const attendanceRecord = await db.collection("attendance").findOne({
       employeeId: employeeId,
       date: {
         $gte: startOfDay,
-        $lte: endOfDay
+        $lt: endOfDay
       }
     });
+    
+    console.log('Found attendance record:', attendanceRecord);
     
     if (!attendanceRecord) {
       return NextResponse.json(

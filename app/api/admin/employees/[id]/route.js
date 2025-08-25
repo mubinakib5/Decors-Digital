@@ -31,7 +31,7 @@ export async function GET(request, { params }) {
   }
 
   try {
-    const { id } = params;
+    const { id } = await params;
     
     if (!ObjectId.isValid(id)) {
       return NextResponse.json(
@@ -67,7 +67,7 @@ export async function PUT(request, { params }) {
   }
 
   try {
-    const { id } = params;
+    const { id } = await params;
     const updateData = await request.json();
     
     if (!ObjectId.isValid(id)) {
@@ -123,8 +123,11 @@ export async function PUT(request, { params }) {
       );
     }
 
+    // Remove _id from updateData to avoid modifying immutable field
+    const { _id, ...cleanUpdateData } = updateData;
+    
     const updatedEmployee = {
-      ...updateData,
+      ...cleanUpdateData,
       updatedAt: new Date()
     };
 
@@ -157,7 +160,7 @@ export async function DELETE(request, { params }) {
   }
 
   try {
-    const { id } = params;
+    const { id } = await params;
     
     if (!ObjectId.isValid(id)) {
       return NextResponse.json(

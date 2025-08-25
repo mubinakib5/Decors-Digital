@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 
 // Middleware to verify authentication
 async function verifyAuth(request) {
-  const token = request.cookies.get("admin_token")?.value;
+  const token = request.cookies.get("admin-token")?.value;
 
   if (!token) {
     return { error: "No token provided", status: 401 };

@@ -4,6 +4,10 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import jsPDF from "jspdf";
 import * as XLSX from "xlsx";
+import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement, Title } from 'chart.js';
+import { Pie, Bar } from 'react-chartjs-2';
+
+ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement, Title);
 
 export default function HumanResourcePage() {
   const [employees, setEmployees] = useState([]);
@@ -30,6 +34,12 @@ export default function HumanResourcePage() {
     clockOut: '',
     status: 'on time'
   }); // HH:MM format
+  
+  // Individual Employee Reports State
+  const [selectedEmployeeForReport, setSelectedEmployeeForReport] = useState("");
+  const [reportPeriod, setReportPeriod] = useState("monthly"); // daily, weekly, monthly
+  const [employeeReportData, setEmployeeReportData] = useState(null);
+  const [reportLoading, setReportLoading] = useState(false);
   const [reportType, setReportType] = useState("daily"); // daily, weekly, monthly
   const [reportDate, setReportDate] = useState(new Date().toISOString().split("T")[0]);
   
@@ -260,6 +270,7 @@ export default function HumanResourcePage() {
 
   // Edit Attendance Functions
   const handleEditAttendance = (record) => {
+    console.log('handleEditAttendance called with record:', record);
     setEditingAttendance(record);
     setEditAttendanceData({
       clockIn: record.clockIn ? new Date(record.clockIn).toTimeString().slice(0, 5) : '',
@@ -267,10 +278,14 @@ export default function HumanResourcePage() {
       status: record.status
     });
     setShowEditAttendanceForm(true);
+    console.log('Edit form should now be visible');
   };
 
   const handleEditAttendanceSubmit = async (e) => {
     e.preventDefault();
+    
+    console.log('Frontend - editingAttendance:', editingAttendance);
+    console.log('Frontend - editAttendanceData:', editAttendanceData);
     
     try {
       const today = new Date(editingAttendance.date);
@@ -287,16 +302,20 @@ export default function HumanResourcePage() {
         clockOutDateTime = new Date(today.getFullYear(), today.getMonth(), today.getDate(), parseInt(outHours), parseInt(outMinutes));
       }
 
+      const requestData = {
+        employeeId: editingAttendance.employeeId,
+        date: editingAttendance.date,
+        clockIn: clockInDateTime ? clockInDateTime.toISOString() : null,
+        clockOut: clockOutDateTime ? clockOutDateTime.toISOString() : null,
+        status: editAttendanceData.status
+      };
+      
+      console.log('Frontend - sending request data:', requestData);
+
       const response = await fetch("/api/admin/attendance", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          employeeId: editingAttendance.employeeId,
-          date: editingAttendance.date,
-          clockIn: clockInDateTime ? clockInDateTime.toISOString() : null,
-          clockOut: clockOutDateTime ? clockOutDateTime.toISOString() : null,
-          status: editAttendanceData.status
-        }),
+        body: JSON.stringify(requestData),
       });
 
       if (response.ok) {
@@ -582,6 +601,46 @@ export default function HumanResourcePage() {
     }
   };
 
+  // Individual Employee Report Functions
+  const fetchEmployeeReportData = async (employeeId, period) => {
+    if (!employeeId) return;
+    
+    setReportLoading(true);
+    try {
+      const response = await fetch(`/api/admin/employee-reports/${employeeId}?period=${period}`);
+      if (response.ok) {
+        const data = await response.json();
+        setEmployeeReportData(data);
+      } else {
+        console.error('Failed to fetch employee report data');
+        setEmployeeReportData(null);
+      }
+    } catch (error) {
+      console.error('Error fetching employee report data:', error);
+      setEmployeeReportData(null);
+    } finally {
+      setReportLoading(false);
+    }
+  };
+
+  // Handle employee selection change
+  const handleEmployeeReportChange = (employeeId) => {
+    setSelectedEmployeeForReport(employeeId);
+    if (employeeId) {
+      fetchEmployeeReportData(employeeId, reportPeriod);
+    } else {
+      setEmployeeReportData(null);
+    }
+  };
+
+  // Handle period change
+  const handleReportPeriodChange = (period) => {
+    setReportPeriod(period);
+    if (selectedEmployeeForReport) {
+      fetchEmployeeReportData(selectedEmployeeForReport, period);
+    }
+  };
+
   // Report Generation Functions
   const generateReport = () => {
     const reportData = getReportData();
@@ -732,9 +791,9 @@ export default function HumanResourcePage() {
       )}
 
       {/* Header */}
-      <div className="d-flex justify-content-between align-items-center mb-2">
+      <div className="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-3 gap-2">
         <h1 className="h3 mb-0 text-white">Human Resource Management</h1>
-        <div className="d-flex gap-2">
+        <div className="d-flex flex-column flex-sm-row gap-2 w-100 w-md-auto">
           <button
             className="btn btn-outline-secondary btn-sm"
             onClick={() => router.push("/admin/expenses")}
@@ -756,39 +815,83 @@ export default function HumanResourcePage() {
       </div>
 
       {/* Navigation Tabs */}
-      <div className="d-flex justify-content-between align-items-center mb-4">
-        <ul
-          className="nav nav-tabs"
-          id="hrTabs"
-          role="tablist"
-          style={{ borderBottomColor: "#ff0000", marginBottom: "0" }}
-        >
-          {[
-            { id: "dashboard", name: "Dashboard" },
-            { id: "overview", name: "Employee Overview" },
-            { id: "employees", name: "Employees" },
-            { id: "attendance", name: "Attendance" },
-            { id: "leaves", name: "Leave Management" },
-            { id: "reports", name: "Reports" },
-          ].map((tab) => (
-            <li className="nav-item" role="presentation" key={tab.id}>
-              <button
-                className={`nav-link ${activeTab === tab.id ? "active" : ""}`}
-                onClick={() => setActiveTab(tab.id)}
-                style={{
-                  color: activeTab === tab.id ? "#ffffff" : "#ff0000",
-                  backgroundColor:
-                    activeTab === tab.id ? "#ff0000" : "transparent",
-                  borderColor: "#ff0000",
-                  borderBottomColor:
-                    activeTab === tab.id ? "#ff0000" : "transparent",
-                }}
-              >
-                {tab.name}
-              </button>
-            </li>
-          ))}
-        </ul>
+      <div className="mb-4">
+        {/* Mobile Navigation Dropdown */}
+        <div className="d-block d-lg-none mb-3">
+          <div className="dropdown">
+            <button
+              className="btn btn-outline-danger dropdown-toggle w-100"
+              type="button"
+              data-bs-toggle="dropdown"
+              aria-expanded="false"
+            >
+              {[
+                { id: "dashboard", name: "Dashboard" },
+                { id: "overview", name: "Employee Overview" },
+                { id: "employees", name: "Employees" },
+                { id: "attendance", name: "Attendance" },
+                { id: "leaves", name: "Leave Management" },
+                { id: "reports", name: "Reports" },
+              ].find(tab => tab.id === activeTab)?.name || "Select Tab"}
+            </button>
+            <ul className="dropdown-menu w-100">
+              {[
+                { id: "dashboard", name: "Dashboard", icon: "bi-speedometer2" },
+                { id: "overview", name: "Employee Overview", icon: "bi-people" },
+                { id: "employees", name: "Employees", icon: "bi-person-badge" },
+                { id: "attendance", name: "Attendance", icon: "bi-clock" },
+                { id: "leaves", name: "Leave Management", icon: "bi-calendar-check" },
+                { id: "reports", name: "Reports", icon: "bi-graph-up" },
+              ].map((tab) => (
+                <li key={tab.id}>
+                  <button
+                    className={`dropdown-item ${activeTab === tab.id ? "active" : ""}`}
+                    onClick={() => setActiveTab(tab.id)}
+                  >
+                    <i className={`${tab.icon} me-2`}></i>
+                    {tab.name}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+
+        {/* Desktop Navigation Tabs */}
+        <div className="d-none d-lg-block">
+          <ul
+            className="nav nav-tabs"
+            id="hrTabs"
+            role="tablist"
+            style={{ borderBottomColor: "#ff0000", marginBottom: "0" }}
+          >
+            {[
+              { id: "dashboard", name: "Dashboard" },
+              { id: "overview", name: "Employee Overview" },
+              { id: "employees", name: "Employees" },
+              { id: "attendance", name: "Attendance" },
+              { id: "leaves", name: "Leave Management" },
+              { id: "reports", name: "Reports" },
+            ].map((tab) => (
+              <li className="nav-item" role="presentation" key={tab.id}>
+                <button
+                  className={`nav-link ${activeTab === tab.id ? "active" : ""}`}
+                  onClick={() => setActiveTab(tab.id)}
+                  style={{
+                    color: activeTab === tab.id ? "#ffffff" : "#ff0000",
+                    backgroundColor:
+                      activeTab === tab.id ? "#ff0000" : "transparent",
+                    borderColor: "#ff0000",
+                    borderBottomColor:
+                      activeTab === tab.id ? "#ff0000" : "transparent",
+                  }}
+                >
+                  {tab.name}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
       </div>
 
       {/* Main Content */}
@@ -797,89 +900,90 @@ export default function HumanResourcePage() {
         {activeTab === "dashboard" && (
           <div className="tab-pane fade show active">
             {/* Stats Cards */}
-            <div className="row g-4 mb-4">
-              <div className="col-md-3">
+            <div className="row g-3 g-md-4 mb-4">
+              <div className="col-6 col-lg-3">
                 <div className="card border-0 shadow-sm h-100">
-                  <div className="card-body d-flex align-items-center">
-                    <div className="flex-shrink-0 me-3">
+                  <div className="card-body d-flex flex-column flex-sm-row align-items-center text-center text-sm-start">
+                    <div className="flex-shrink-0 mb-2 mb-sm-0 me-sm-3">
                       <div 
-                        className="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold"
+                        className="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold mx-auto"
                         style={{ width: "48px", height: "48px", backgroundColor: "#28a745" }}
                       >
                         {stats.onTime}
                       </div>
                     </div>
                     <div className="flex-grow-1">
-                      <h6 className="card-subtitle mb-1 text-muted">On Time Today</h6>
-                      <h5 className="card-title mb-0">{stats.onTime} employees</h5>
+                      <h6 className="card-subtitle mb-1 text-muted small">On Time Today</h6>
+                      <h5 className="card-title mb-0 fs-6">{stats.onTime} employees</h5>
                     </div>
                   </div>
                 </div>
               </div>
 
-              <div className="col-md-3">
+              <div className="col-6 col-lg-3">
                 <div className="card border-0 shadow-sm h-100">
-                  <div className="card-body d-flex align-items-center">
-                    <div className="flex-shrink-0 me-3">
+                  <div className="card-body d-flex flex-column flex-sm-row align-items-center text-center text-sm-start">
+                    <div className="flex-shrink-0 mb-2 mb-sm-0 me-sm-3">
                       <div 
-                        className="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold"
+                        className="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold mx-auto"
                         style={{ width: "48px", height: "48px", backgroundColor: "#dc3545" }}
                       >
                         {stats.absent}
                       </div>
                     </div>
                     <div className="flex-grow-1">
-                      <h6 className="card-subtitle mb-1 text-muted">Absent Today</h6>
-                      <h5 className="card-title mb-0">{stats.absent} employees</h5>
+                      <h6 className="card-subtitle mb-1 text-muted small">Absent Today</h6>
+                      <h5 className="card-title mb-0 fs-6">{stats.absent} employees</h5>
                     </div>
                   </div>
                 </div>
               </div>
 
-              <div className="col-md-3">
+              <div className="col-6 col-lg-3">
                 <div className="card border-0 shadow-sm h-100">
-                  <div className="card-body d-flex align-items-center">
-                    <div className="flex-shrink-0 me-3">
+                  <div className="card-body d-flex flex-column flex-sm-row align-items-center text-center text-sm-start">
+                    <div className="flex-shrink-0 mb-2 mb-sm-0 me-sm-3">
                       <div 
-                        className="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold"
+                        className="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold mx-auto"
                         style={{ width: "48px", height: "48px", backgroundColor: "#ffc107" }}
                       >
                         {stats.late}
                       </div>
                     </div>
                     <div className="flex-grow-1">
-                      <h6 className="card-subtitle mb-1 text-muted">Late Today (After 10:45 AM)</h6>
-                      <h5 className="card-title mb-0">{stats.late} employees</h5>
+                      <h6 className="card-subtitle mb-1 text-muted small">Late Today</h6>
+                      <h5 className="card-title mb-0 fs-6">{stats.late} employees</h5>
                     </div>
                   </div>
                 </div>
               </div>
 
-              <div className="col-md-3">
+              <div className="col-6 col-lg-3">
                 <div className="card border-0 shadow-sm h-100">
-                  <div className="card-body d-flex align-items-center">
-                    <div className="flex-shrink-0 me-3">
+                  <div className="card-body d-flex flex-column flex-sm-row align-items-center text-center text-sm-start">
+                    <div className="flex-shrink-0 mb-2 mb-sm-0 me-sm-3">
                       <div 
-                        className="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold"
+                        className="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold mx-auto"
                         style={{ width: "48px", height: "48px", backgroundColor: "#007bff" }}
                       >
                         {stats.total}
                       </div>
                     </div>
                     <div className="flex-grow-1">
-                      <h6 className="card-subtitle mb-1 text-muted">Total Employees</h6>
-                      <h5 className="card-title mb-0">{stats.total} employees</h5>
+                      <h6 className="card-subtitle mb-1 text-muted small">Total Employees</h6>
+                      <h5 className="card-title mb-0 fs-6">{stats.total} employees</h5>
                     </div>
                   </div>
                 </div>
                 <div className="row g-3 mt-2">
-                  <div className="col-md-4">
+                  <div className="col-12 col-sm-6 col-md-4">
                     <button
                       onClick={updateAttendanceStatus}
                       className="btn btn-warning w-100"
                     >
                       <i className="fas fa-sync-alt me-2"></i>
-                      Update Status Records
+                      <span className="d-none d-sm-inline">Update Status Records</span>
+                      <span className="d-sm-none">Update Status</span>
                     </button>
                   </div>
                 </div>
@@ -891,7 +995,7 @@ export default function HumanResourcePage() {
               <div className="card-body">
                 <h5 className="card-title mb-4" style={{ color: "#dc3545" }}>Quick Actions</h5>
                 <div className="row g-3">
-                  <div className="col-md-3">
+                  <div className="col-6 col-lg-3">
                     <button
                       onClick={() => {
                         setShowEmployeeForm(true);
@@ -902,28 +1006,31 @@ export default function HumanResourcePage() {
                       style={{ backgroundColor: "#dc3545", borderColor: "#dc3545", color: "white" }}
                     >
                       <i className="fas fa-user-plus me-2"></i>
-                      Add New Employee
+                      <span className="d-none d-sm-inline">Add New Employee</span>
+                      <span className="d-sm-none">Add Employee</span>
                     </button>
                   </div>
-                  <div className="col-md-3">
+                  <div className="col-6 col-lg-3">
                     <button
                       onClick={() => setShowClockForm(true)}
                       className="btn btn-outline-danger w-100"
                     >
                       <i className="fas fa-clock me-2"></i>
-                      Clock In/Out
+                      <span className="d-none d-sm-inline">Clock In/Out</span>
+                      <span className="d-sm-none">Clock</span>
                     </button>
                   </div>
-                  <div className="col-md-3">
+                  <div className="col-6 col-lg-3">
                     <button
                       onClick={() => setShowLeaveForm(true)}
                       className="btn btn-outline-danger w-100"
                     >
                       <i className="fas fa-calendar-alt me-2"></i>
-                      Apply Leave
+                      <span className="d-none d-sm-inline">Apply Leave</span>
+                      <span className="d-sm-none">Leave</span>
                     </button>
                   </div>
-                  <div className="col-md-3">
+                  <div className="col-6 col-lg-3">
                     <button
                       onClick={() => {
                         setShowManualTimeForm(true);
@@ -932,7 +1039,8 @@ export default function HumanResourcePage() {
                       className="btn btn-outline-danger w-100"
                     >
                       <i className="fas fa-history me-2"></i>
-                      Manual Time Entry
+                      <span className="d-none d-sm-inline">Manual Time Entry</span>
+                      <span className="d-sm-none">Manual</span>
                     </button>
                   </div>
                 </div>
@@ -1149,12 +1257,12 @@ export default function HumanResourcePage() {
                       <table className="table table-hover mb-0">
                         <thead className="table-light">
                           <tr>
-                            <th>Employee</th>
-                            <th>Department</th>
-                            <th>Attendance</th>
-                            <th>Leave Usage</th>
-                            <th>Remote Work</th>
-                            <th>Performance</th>
+                            <th className="text-nowrap">Employee</th>
+                            <th className="text-nowrap d-none d-md-table-cell">Department</th>
+                            <th className="text-nowrap">Attendance</th>
+                            <th className="text-nowrap d-none d-lg-table-cell">Leave Usage</th>
+                            <th className="text-nowrap d-none d-xl-table-cell">Remote Work</th>
+                            <th className="text-nowrap d-none d-lg-table-cell">Performance</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -1164,9 +1272,12 @@ export default function HumanResourcePage() {
                                 <div>
                                   <div className="fw-bold">{emp.name}</div>
                                   <small className="text-muted">{emp.employeeCode} - {emp.designation}</small>
+                                  <div className="d-md-none mt-1">
+                                    <span className="badge bg-secondary">{emp.department}</span>
+                                  </div>
                                 </div>
                               </td>
-                              <td>
+                              <td className="d-none d-md-table-cell">
                                 <span className="badge bg-secondary">{emp.department}</span>
                               </td>
                               <td>
@@ -1189,7 +1300,7 @@ export default function HumanResourcePage() {
                                   </div>
                                 </div>
                               </td>
-                              <td>
+                              <td className="d-none d-lg-table-cell">
                                 <div className="small">
                                   <div className="d-flex justify-content-between">
                                     <span>Sick:</span>
@@ -1209,7 +1320,7 @@ export default function HumanResourcePage() {
                                   </div>
                                 </div>
                               </td>
-                              <td>
+                              <td className="d-none d-xl-table-cell">
                                 <div className="small">
                                   <div className="mb-1">
                                     <span className={`badge ${
@@ -1225,7 +1336,7 @@ export default function HumanResourcePage() {
                                   <div>Enabled: {emp.remoteWork.isEnabled ? 'Yes' : 'No'}</div>
                                 </div>
                               </td>
-                              <td>
+                              <td className="d-none d-lg-table-cell">
                                 <div className="small">
                                   <div className="d-flex justify-content-between">
                                     <span>Avg Hours/Day:</span>
@@ -1279,12 +1390,12 @@ export default function HumanResourcePage() {
                       <table className="table table-hover mb-0">
                         <thead className="table-light">
                           <tr>
-                            <th>Intern</th>
-                            <th>Department</th>
-                            <th>Attendance</th>
-                            <th>Leave Usage</th>
-                            <th>Remote Work</th>
-                            <th>Performance</th>
+                            <th className="text-nowrap">Intern</th>
+                            <th className="text-nowrap d-none d-md-table-cell">Department</th>
+                            <th className="text-nowrap">Attendance</th>
+                            <th className="text-nowrap d-none d-lg-table-cell">Leave Usage</th>
+                            <th className="text-nowrap d-none d-xl-table-cell">Remote Work</th>
+                            <th className="text-nowrap d-none d-lg-table-cell">Performance</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -1299,9 +1410,12 @@ export default function HumanResourcePage() {
                                     </span>
                                   </div>
                                   <small className="text-muted">{emp.employeeCode} - {emp.designation}</small>
+                                  <div className="d-md-none mt-1">
+                                    <span className="badge bg-secondary">{emp.department}</span>
+                                  </div>
                                 </div>
                               </td>
-                              <td>
+                              <td className="d-none d-md-table-cell">
                                 <span className="badge bg-secondary">{emp.department}</span>
                               </td>
                               <td>
@@ -1324,7 +1438,7 @@ export default function HumanResourcePage() {
                                   </div>
                                 </div>
                               </td>
-                              <td>
+                              <td className="d-none d-lg-table-cell">
                                 <div className="small">
                                   <div className="d-flex justify-content-between">
                                     <span>Sick:</span>
@@ -1344,7 +1458,7 @@ export default function HumanResourcePage() {
                                   </div>
                                 </div>
                               </td>
-                              <td>
+                              <td className="d-none d-xl-table-cell">
                                 <div className="small">
                                   <div className="mb-1">
                                     <span className={`badge ${
@@ -1360,7 +1474,7 @@ export default function HumanResourcePage() {
                                   <div>Enabled: {emp.remoteWork.isEnabled ? 'Yes' : 'No'}</div>
                                 </div>
                               </td>
-                              <td>
+                              <td className="d-none d-lg-table-cell">
                                 <div className="small">
                                   <div className="d-flex justify-content-between">
                                     <span>Avg Hours/Day:</span>
@@ -1401,85 +1515,7 @@ export default function HumanResourcePage() {
                   </div>
                 </div>
 
-                {/* Summary Cards */}
-                <div className="row g-4 mt-4">
-                  <div className="col-md-6">
-                    <div className="card border-0 shadow-sm">
-                      <div className="card-header bg-dark">
-                        <h6 className="mb-0" style={{color: "white !important"}}><i className="fas fa-chart-pie me-2"></i>Attendance Summary</h6>
-                      </div>
-                      <div className="card-body">
-                        <div className="row text-center">
-                          <div className="col-4">
-                            <div className="text-success">
-                              <i className="fas fa-check-circle fa-2x"></i>
-                              <div className="mt-2">
-                                <h4>{employeeStats.overallStats.attendance.totalOnTime}</h4>
-                                <small>On Time</small>
-                              </div>
-                            </div>
-                          </div>
-                          <div className="col-4">
-                            <div className="text-warning">
-                              <i className="fas fa-clock fa-2x"></i>
-                              <div className="mt-2">
-                                <h4>{employeeStats.overallStats.attendance.totalLate}</h4>
-                                <small>Late</small>
-                              </div>
-                            </div>
-                          </div>
-                          <div className="col-4">
-                            <div className="text-danger">
-                              <i className="fas fa-times-circle fa-2x"></i>
-                              <div className="mt-2">
-                                <h4>{employeeStats.overallStats.attendance.totalAbsent}</h4>
-                                <small>Absent</small>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="col-md-6">
-                    <div className="card border-0 shadow-sm">
-                      <div className="card-header bg-dark">
-                        <h6 className="mb-0" style={{color: "white !important"}}><i className="fas fa-calendar-alt me-2"></i>Leave Summary</h6>
-                      </div>
-                      <div className="card-body">
-                        <div className="row text-center">
-                          <div className="col-4">
-                            <div className="text-info">
-                              <i className="fas fa-thermometer-half fa-2x"></i>
-                              <div className="mt-2">
-                                <h4>{employeeStats.overallStats.leaves.totalSickDays}</h4>
-                                <small>Sick Days</small>
-                              </div>
-                            </div>
-                          </div>
-                          <div className="col-4">
-                            <div className="text-primary">
-                              <i className="fas fa-coffee fa-2x"></i>
-                              <div className="mt-2">
-                                <h4>{employeeStats.overallStats.leaves.totalCasualDays}</h4>
-                                <small>Casual Days</small>
-                              </div>
-                            </div>
-                          </div>
-                          <div className="col-4">
-                            <div className="text-success">
-                              <i className="fas fa-umbrella-beach fa-2x"></i>
-                              <div className="mt-2">
-                                <h4>{employeeStats.overallStats.leaves.totalAnnualDays}</h4>
-                                <small>Annual Days</small>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+
               </>
             ) : (
               <div className="text-center py-5">
@@ -1709,16 +1745,21 @@ export default function HumanResourcePage() {
                                 {todayAttendance && (
                                   <button
                                     onClick={() => {
-                                      setEditingAttendance(employee._id);
-                                      setEditAttendanceData({
+                                      console.log('Inline edit button clicked for employee:', employee._id);
+                                      console.log('todayAttendance:', todayAttendance);
+                                      setEditingAttendance({
                                         employeeId: employee._id,
                                         employeeName: employee.name,
                                         date: new Date().toISOString().split('T')[0],
-                                        clockIn: todayAttendance.clockIn || '',
-                                        clockOut: todayAttendance.clockOut || '',
-                                        status: todayAttendance.status || 'present'
+                                        ...todayAttendance
+                                      });
+                                      setEditAttendanceData({
+                                        clockIn: todayAttendance.clockIn ? new Date(todayAttendance.clockIn).toTimeString().slice(0, 5) : '',
+                                        clockOut: todayAttendance.clockOut ? new Date(todayAttendance.clockOut).toTimeString().slice(0, 5) : '',
+                                        status: todayAttendance.status || 'on time'
                                       });
                                       setShowEditAttendanceForm(true);
+                                      console.log('Inline edit form should now be visible');
                                     }}
                                     className="btn btn-sm btn-primary"
                                     title="Edit attendance times"
@@ -1834,138 +1875,191 @@ export default function HumanResourcePage() {
           </div>
         )}
 
-        {/* Reports Tab */}
+        {/* Reports Tab - Individual Employee Reports */}
         {activeTab === "reports" && (
-          <div className="space-y-6">
-            <h2 className="text-2xl font-bold text-gray-900">Reports</h2>
-            
-            <div className="bg-white shadow rounded-lg">
-              <div className="px-4 py-5 sm:p-6">
-                <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">Generate Report</h3>
-                
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Report Type
+          <div className="tab-pane fade show active">
+            <div className="d-flex justify-content-between align-items-center mb-4">
+              <h2 className="h3 mb-0" style={{ color: "#dc3545" }}>
+                <i className="fas fa-chart-pie me-2"></i>
+                Individual Employee Reports
+              </h2>
+            </div>
+
+            {/* Employee Selection and Filters */}
+            <div className="card border-0 shadow-sm mb-4">
+              <div className="card-header" style={{ backgroundColor: "#dc3545", color: "white" }}>
+                <h5 className="mb-0">
+                  <i className="fas fa-filter me-2"></i>
+                  Report Filters
+                </h5>
+              </div>
+              <div className="card-body">
+                <div className="row g-3">
+                  <div className="col-md-6">
+                    <label className="form-label fw-bold">
+                      <i className="fas fa-user me-2"></i>
+                      Select Employee
                     </label>
                     <select
-                      value={reportType}
-                      onChange={(e) => setReportType(e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                      className="form-select"
+                      value={selectedEmployeeForReport}
+                      onChange={(e) => handleEmployeeReportChange(e.target.value)}
+                    >
+                      <option value="">Choose an employee...</option>
+                      {employees.map((employee) => (
+                        <option key={employee._id} value={employee._id}>
+                          {employee.name} - {employee.employeeId} ({employee.department})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="col-md-6">
+                    <label className="form-label fw-bold">
+                      <i className="fas fa-calendar me-2"></i>
+                      Time Period
+                    </label>
+                    <select
+                      className="form-select"
+                      value={reportPeriod}
+                      onChange={(e) => handleReportPeriodChange(e.target.value)}
                     >
                       <option value="daily">Daily</option>
                       <option value="weekly">Weekly</option>
                       <option value="monthly">Monthly</option>
                     </select>
                   </div>
-                  
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Date
-                    </label>
-                    <input
-                      type="date"
-                      value={reportDate}
-                      onChange={(e) => setReportDate(e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                    />
-                  </div>
-                  
-                  <div className="flex items-end space-x-2">
-                    <button
-                      onClick={exportToPDF}
-                      className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md"
-                    >
-                      Export PDF
-                    </button>
-                    <button
-                      onClick={exportToExcel}
-                      className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md"
-                    >
-                      Export Excel
-                    </button>
-                  </div>
-                </div>
-                
-                <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
-                  <p className="text-sm text-blue-800">
-                    <i className="fas fa-info-circle me-2"></i>
-                    <strong>Note:</strong> Employees are marked as "Late" if they clock in after 10:45 AM.
-                  </p>
-                </div>
-                
-                <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
-                      <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Employee
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Date
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Status
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Clock In
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Clock Out
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Overtime
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Actions
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                      {generateReport().map((record, index) => {
-                        const employee = employees.find(emp => emp._id === record.employeeId);
-                        return (
-                          <tr key={index}>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                              {employee ? employee.name : 'Unknown'}
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                              {new Date(record.date).toLocaleDateString()}
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                                record.status === 'on time' ? 'bg-green-500 text-white' :
-                                record.status === 'late' ? 'bg-yellow-100 text-yellow-800' :
-                                'bg-red-100 text-red-800'
-                              }`}>
-                                {record.status}
-                              </span>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                              {record.clockIn ? new Date(record.clockIn).toLocaleTimeString() : 'N/A'}
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                              {record.clockOut ? new Date(record.clockOut).toLocaleTimeString() : 'N/A'}
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                              {record.overtimeHours || 0} hours
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                              <button
-                                onClick={() => handleEditAttendance(record)}
-                                className="text-indigo-600 hover:text-indigo-900 mr-3"
-                              >
-                                <i className="fas fa-edit"></i> Edit
-                              </button>
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
                 </div>
               </div>
             </div>
+
+            {/* Loading State */}
+            {reportLoading && (
+              <div className="text-center py-5">
+                <div className="spinner-border text-primary" role="status">
+                  <span className="visually-hidden">Loading...</span>
+                </div>
+                <p className="mt-2 text-muted">Loading employee report data...</p>
+              </div>
+            )}
+
+            {/* No Employee Selected */}
+            {!selectedEmployeeForReport && !reportLoading && (
+              <div className="text-center py-5">
+                <i className="fas fa-user-plus fa-3x text-muted mb-3"></i>
+                <h4 className="text-muted">Select an Employee</h4>
+                <p className="text-muted">Choose an employee from the dropdown above to view their attendance report.</p>
+              </div>
+            )}
+
+            {/* Employee Report Data */}
+            {employeeReportData && !reportLoading && (
+              <>
+                {/* Employee Info Card */}
+                <div className="card border-0 shadow-sm mb-4">
+                  <div className="card-header" style={{ backgroundColor: "#28a745", color: "white" }}>
+                    <h5 className="mb-0">
+                      <i className="fas fa-id-card me-2"></i>
+                      {employeeReportData.employee.name} - Report Summary
+                    </h5>
+                  </div>
+                  <div className="card-body">
+                    <div className="row">
+                      <div className="col-md-3">
+                        <div className="text-center">
+                          <i className="fas fa-user-tie fa-2x text-primary mb-2"></i>
+                          <h6>Employee ID</h6>
+                          <p className="fw-bold">{employeeReportData.employee.employeeId}</p>
+                        </div>
+                      </div>
+                      <div className="col-md-3">
+                        <div className="text-center">
+                          <i className="fas fa-building fa-2x text-info mb-2"></i>
+                          <h6>Department</h6>
+                          <p className="fw-bold">{employeeReportData.employee.department}</p>
+                        </div>
+                      </div>
+                      <div className="col-md-3">
+                        <div className="text-center">
+                          <i className="fas fa-briefcase fa-2x text-warning mb-2"></i>
+                          <h6>Designation</h6>
+                          <p className="fw-bold">{employeeReportData.employee.designation}</p>
+                        </div>
+                      </div>
+                      <div className="col-md-3">
+                        <div className="text-center">
+                          <i className="fas fa-calendar-alt fa-2x text-success mb-2"></i>
+                          <h6>Report Period</h6>
+                          <p className="fw-bold">
+                            {reportPeriod.charAt(0).toUpperCase() + reportPeriod.slice(1)}
+                          </p>
+                          <small className="text-muted">
+                            {employeeReportData.dateRange.start} to {employeeReportData.dateRange.end}
+                          </small>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Charts Row */}
+                <div className="row">
+                  {/* Pie Chart */}
+                  <div className="col-12 col-lg-6 mb-4">
+                    <div className="card border-0 shadow-sm h-100">
+                      <div className="card-header" style={{ backgroundColor: "#6f42c1", color: "white" }}>
+                        <h5 className="mb-0">
+                          <i className="fas fa-chart-pie me-2"></i>
+                          Attendance Distribution
+                        </h5>
+                      </div>
+                      <div className="card-body d-flex align-items-center justify-content-center">
+                        <div className="w-100" style={{ maxWidth: '300px', height: '300px' }}>
+                          <Pie
+                            data={{
+                              labels: employeeReportData.chartData.labels,
+                              datasets: [{
+                                data: employeeReportData.chartData.data,
+                                backgroundColor: employeeReportData.chartData.backgroundColor,
+                                borderWidth: 2,
+                                borderColor: '#fff'
+                              }]
+                            }}
+                            options={{
+                              responsive: true,
+                              maintainAspectRatio: true,
+                              plugins: {
+                                legend: {
+                                  position: 'bottom',
+                                  labels: {
+                                    padding: 20,
+                                    usePointStyle: true
+                                  }
+                                },
+                                tooltip: {
+                                  callbacks: {
+                                    label: function(context) {
+                                      const label = context.label || '';
+                                      const value = context.parsed || 0;
+                                      const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                      const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
+                                      return `${label}: ${value} days (${percentage}%)`;
+                                    }
+                                  }
+                                }
+                              }
+                            }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+
+                </div>
+
+
+              </>
+            )}
           </div>
         )}
       </div>
@@ -2138,7 +2232,7 @@ export default function HumanResourcePage() {
       {/* Clock In/Out Form Modal */}
       {showClockForm && (
         <div className="modal fade show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
-          <div className="modal-dialog modal-dialog-centered">
+          <div className="modal-dialog modal-dialog-centered modal-dialog-scrollable">
             <div className="modal-content border-0 shadow-lg">
               <div className="modal-header" style={{ backgroundColor: '#dc3545', color: 'white' }}>
                 <h5 className="modal-title">
@@ -2381,7 +2475,7 @@ export default function HumanResourcePage() {
       {/* Edit Attendance Form Modal */}
       {showEditAttendanceForm && (
         <div className="modal fade show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
-          <div className="modal-dialog modal-dialog-centered">
+          <div className="modal-dialog modal-dialog-centered modal-dialog-scrollable">
             <div className="modal-content border-0 shadow-lg">
               <div className="modal-header" style={{ backgroundColor: '#dc3545', color: 'white' }}>
                 <h5 className="modal-title">
@@ -2492,7 +2586,7 @@ export default function HumanResourcePage() {
       {/* Manual Time Entry Form Modal */}
       {showManualTimeForm && (
         <div className="modal fade show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
-          <div className="modal-dialog modal-dialog-centered modal-lg">
+          <div className="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg">
             <div className="modal-content border-0 shadow-lg">
               <div className="modal-header" style={{ backgroundColor: '#dc3545', color: 'white' }}>
                 <h5 className="modal-title">
@@ -2511,7 +2605,7 @@ export default function HumanResourcePage() {
               <div className="modal-body">
                 <form onSubmit={handleManualTimeSubmit}>
                   <div className="row">
-                    <div className="col-md-6 mb-3">
+                    <div className="col-12 col-md-6 mb-3">
                       <label className="form-label fw-medium">
                         <i className="fas fa-user me-2 text-danger"></i>
                         Employee *
@@ -2531,7 +2625,7 @@ export default function HumanResourcePage() {
                         ))}
                       </select>
                     </div>
-                    <div className="col-md-6 mb-3">
+                    <div className="col-12 col-md-6 mb-3">
                       <label className="form-label fw-medium">
                         <i className="fas fa-calendar me-2 text-danger"></i>
                         Date *
@@ -2549,7 +2643,7 @@ export default function HumanResourcePage() {
                   </div>
                   
                   <div className="row">
-                    <div className="col-md-6 mb-3">
+                    <div className="col-12 col-md-6 mb-3">
                       <label className="form-label fw-medium">
                         <i className="fas fa-sign-in-alt me-2 text-success"></i>
                         Clock In Time *
@@ -2563,7 +2657,7 @@ export default function HumanResourcePage() {
                         style={{ borderColor: '#dc3545' }}
                       />
                     </div>
-                    <div className="col-md-6 mb-3">
+                    <div className="col-12 col-md-6 mb-3">
                       <label className="form-label fw-medium">
                         <i className="fas fa-sign-out-alt me-2 text-warning"></i>
                         Clock Out Time *
