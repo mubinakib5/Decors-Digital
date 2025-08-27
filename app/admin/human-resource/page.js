@@ -3468,10 +3468,9 @@ export default function HumanResourcePage() {
                           className="fas fa-question-circle me-2"
                           style={{ color: "#245e99" }}
                         ></i>
-                        Reason *
+                        Reason
                       </label>
                       <select
-                        required
                         value={manualTimeFormData.reason}
                         onChange={(e) =>
                           setManualTimeFormData({
