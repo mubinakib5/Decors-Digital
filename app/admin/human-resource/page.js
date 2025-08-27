@@ -414,10 +414,22 @@ export default function HumanResourcePage() {
   const handleManualTimeSubmit = async (e) => {
     e.preventDefault();
     try {
+      // Map form data to API expected format
+      const apiData = {
+        employeeId: manualTimeFormData.employeeId,
+        date: manualTimeFormData.date,
+        startTime: manualTimeFormData.clockIn,
+        endTime: manualTimeFormData.clockOut,
+        description: manualTimeFormData.reason || manualTimeFormData.notes || '',
+        projectName: '' // Add if needed
+      };
+
+      console.log('Submitting manual time entry:', apiData);
+
       const response = await fetch("/api/admin/manual-time", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(manualTimeFormData),
+        body: JSON.stringify(apiData),
       });
 
       if (response.ok) {
@@ -427,10 +439,12 @@ export default function HumanResourcePage() {
         loadData();
       } else {
         const error = await response.json();
+        console.error('API Error:', error);
         showToast(error.message || "Error adding manual time entry", "error");
       }
     } catch (error) {
-      showToast("Error adding manual time entry", "error");
+      console.error('Network Error:', error);
+      showToast("Network error. Please try again.", "error");
     }
   };
 
