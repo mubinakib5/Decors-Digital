@@ -124,6 +124,8 @@ export default function HumanResourcePage() {
   const loadData = async () => {
     try {
       setLoading(true);
+      console.log('HR Page: Starting to load data...');
+      
       // Load employees, attendance, and leaves data
       const [employeesRes, attendanceRes, leavesRes] = await Promise.all([
         fetch("/api/admin/employees"),
@@ -131,24 +133,40 @@ export default function HumanResourcePage() {
         fetch("/api/admin/leaves"),
       ]);
 
+      console.log('HR Page: API responses received', {
+        employees: employeesRes.status,
+        attendance: attendanceRes.status,
+        leaves: leavesRes.status
+      });
+
       if (employeesRes.ok) {
         const employeesData = await employeesRes.json();
         setEmployees(employeesData);
+        console.log('HR Page: Employees loaded successfully', employeesData.length, 'employees');
+      } else {
+        console.error('HR Page: Failed to load employees', employeesRes.status, employeesRes.statusText);
       }
 
       if (attendanceRes.ok) {
         const attendanceData = await attendanceRes.json();
         setAttendance(attendanceData);
+        console.log('HR Page: Attendance loaded successfully', attendanceData.length, 'records');
+      } else {
+        console.error('HR Page: Failed to load attendance', attendanceRes.status, attendanceRes.statusText);
       }
 
       if (leavesRes.ok) {
         const leavesData = await leavesRes.json();
         setLeaves(leavesData);
+        console.log('HR Page: Leaves loaded successfully', leavesData.length, 'records');
+      } else {
+        console.error('HR Page: Failed to load leaves', leavesRes.status, leavesRes.statusText);
       }
     } catch (error) {
-      console.error("Error loading data:", error);
+      console.error("HR Page: Error loading data:", error);
     } finally {
       setLoading(false);
+      console.log('HR Page: Data loading completed');
     }
   };
 
