@@ -96,6 +96,16 @@ export default function HumanResourcePage() {
     notes: "",
   });
 
+  const [bulkTimeEntry, setBulkTimeEntry] = useState({
+    isBulkMode: false,
+    startDate: new Date().toISOString().split("T")[0],
+    endDate: new Date().toISOString().split("T")[0],
+    employeeId: "",
+    reason: "",
+    notes: "",
+    dateEntries: [] // Array of {date, clockIn, clockOut, breakDuration}
+  });
+
   const [toast, setToast] = useState({
     show: false,
     message: "",
@@ -432,12 +442,35 @@ export default function HumanResourcePage() {
   const handleManualTimeSubmit = async (e) => {
     e.preventDefault();
     try {
+      // Create proper datetime objects from date and time strings
+      const entryDate = new Date(manualTimeFormData.date);
+      
+      // Parse start time and create datetime
+      const [startHours, startMinutes] = manualTimeFormData.clockIn.split(':');
+      const startDateTime = new Date(
+        entryDate.getFullYear(),
+        entryDate.getMonth(),
+        entryDate.getDate(),
+        parseInt(startHours),
+        parseInt(startMinutes)
+      );
+      
+      // Parse end time and create datetime
+      const [endHours, endMinutes] = manualTimeFormData.clockOut.split(':');
+      const endDateTime = new Date(
+        entryDate.getFullYear(),
+        entryDate.getMonth(),
+        entryDate.getDate(),
+        parseInt(endHours),
+        parseInt(endMinutes)
+      );
+      
       // Map form data to API expected format
       const apiData = {
         employeeId: manualTimeFormData.employeeId,
         date: manualTimeFormData.date,
-        startTime: manualTimeFormData.clockIn,
-        endTime: manualTimeFormData.clockOut,
+        startTime: startDateTime.toISOString(),
+        endTime: endDateTime.toISOString(),
         description: manualTimeFormData.reason || manualTimeFormData.notes || '',
         projectName: '' // Add if needed
       };
@@ -466,6 +499,81 @@ export default function HumanResourcePage() {
     }
   };
 
+  const handleBulkTimeSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      let successCount = 0;
+      let errorCount = 0;
+      const errors = [];
+
+      for (const entry of bulkTimeEntry.dateEntries) {
+        try {
+          const entryDate = new Date(entry.date);
+          
+          // Parse start time and create datetime
+          const [startHours, startMinutes] = entry.clockIn.split(':');
+          const startDateTime = new Date(
+            entryDate.getFullYear(),
+            entryDate.getMonth(),
+            entryDate.getDate(),
+            parseInt(startHours),
+            parseInt(startMinutes)
+          );
+          
+          // Parse end time and create datetime
+          const [endHours, endMinutes] = entry.clockOut.split(':');
+          const endDateTime = new Date(
+            entryDate.getFullYear(),
+            entryDate.getMonth(),
+            entryDate.getDate(),
+            parseInt(endHours),
+            parseInt(endMinutes)
+          );
+          
+          const apiData = {
+            employeeId: bulkTimeEntry.employeeId,
+            date: entry.date,
+            startTime: startDateTime.toISOString(),
+            endTime: endDateTime.toISOString(),
+            description: bulkTimeEntry.reason || bulkTimeEntry.notes || '',
+            projectName: ''
+          };
+
+          const response = await fetch("/api/admin/manual-time", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(apiData),
+          });
+
+          if (response.ok) {
+            successCount++;
+          } else {
+            const error = await response.json();
+            errors.push(`${entry.date}: ${error.message || 'Unknown error'}`);
+            errorCount++;
+          }
+        } catch (entryError) {
+          errors.push(`${entry.date}: Network error`);
+          errorCount++;
+        }
+      }
+
+      if (successCount > 0) {
+        showToast(`Successfully added ${successCount} time entries`);
+        setShowManualTimeForm(false);
+        resetBulkTimeForm();
+        loadData();
+      }
+      
+      if (errorCount > 0) {
+        showToast(`${errorCount} entries failed. ${errors.slice(0, 3).join(', ')}${errors.length > 3 ? '...' : ''}`, "error");
+      }
+    } catch (error) {
+      console.error('Bulk submission error:', error);
+      showToast("Error submitting bulk entries. Please try again.", "error");
+    }
+  };
+
   const resetManualTimeForm = () => {
     setManualTimeFormData({
       employeeId: "",
@@ -476,6 +584,63 @@ export default function HumanResourcePage() {
       reason: "",
       notes: "",
     });
+  };
+
+  const resetBulkTimeForm = () => {
+    setBulkTimeEntry({
+      isBulkMode: false,
+      startDate: new Date().toISOString().split("T")[0],
+      endDate: new Date().toISOString().split("T")[0],
+      employeeId: "",
+      reason: "",
+      notes: "",
+      dateEntries: []
+    });
+  };
+
+  const generateDateEntries = (startDate, endDate) => {
+    const entries = [];
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    
+    for (let date = new Date(start); date <= end; date.setDate(date.getDate() + 1)) {
+      entries.push({
+        date: date.toISOString().split('T')[0],
+        clockIn: "09:00",
+        clockOut: "17:00",
+        breakDuration: 60
+      });
+    }
+    
+    return entries;
+  };
+
+  const handleBulkModeToggle = () => {
+    const newBulkMode = !bulkTimeEntry.isBulkMode;
+    setBulkTimeEntry(prev => ({
+      ...prev,
+      isBulkMode: newBulkMode,
+      dateEntries: newBulkMode ? generateDateEntries(prev.startDate, prev.endDate) : []
+    }));
+  };
+
+  const handleDateRangeChange = (field, value) => {
+    setBulkTimeEntry(prev => {
+      const updated = { ...prev, [field]: value };
+      if (field === 'startDate' || field === 'endDate') {
+        updated.dateEntries = generateDateEntries(updated.startDate, updated.endDate);
+      }
+      return updated;
+    });
+  };
+
+  const updateDateEntry = (index, field, value) => {
+    setBulkTimeEntry(prev => ({
+      ...prev,
+      dateEntries: prev.dateEntries.map((entry, i) => 
+        i === index ? { ...entry, [field]: value } : entry
+      )
+    }));
   };
 
   // Update attendance status from 'present' to 'on time'
@@ -915,18 +1080,6 @@ export default function HumanResourcePage() {
       <div className="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-3 gap-2">
         <h1 className="h3 mb-0 text-white">Human Resource Management</h1>
         <div className="d-flex flex-column flex-sm-row gap-2 w-100 w-md-auto">
-          <button
-            className="btn btn-sm"
-            style={{
-              backgroundColor: "#245e99",
-              borderColor: "#245e99",
-              color: "white",
-            }}
-            onClick={() => router.push("/admin/expenses")}
-          >
-            <i className="bi bi-arrow-left me-1"></i>
-            Back to Expenses
-          </button>
           <button
             className="btn btn-sm"
             style={{
@@ -2657,7 +2810,344 @@ export default function HumanResourcePage() {
                       </div>
                     </div>
                   </div>
+
+                  {/* Statistics Cards */}
+                  <div className="col-12 col-lg-6 mb-4">
+                    <div className="card border-0 shadow-sm h-100">
+                      <div
+                        className="card-header"
+                        style={{ backgroundColor: "#17a2b8", color: "white" }}
+                      >
+                        <h5 className="mb-0">
+                          <i className="fas fa-chart-bar me-2"></i>
+                          Attendance Statistics
+                        </h5>
+                      </div>
+                      <div className="card-body">
+                        <div className="row g-3">
+                          {/* On Time */}
+                          <div className="col-6">
+                            <div className="text-center p-3 rounded" style={{ backgroundColor: "#d4edda" }}>
+                              <div className="text-success mb-2">
+                                <i className="fas fa-check-circle fa-2x"></i>
+                              </div>
+                              <h3 className="mb-1 text-success">
+                                {employeeReportData.chartData.data[0] || 0}
+                              </h3>
+                              <small className="text-muted fw-medium">On Time Days</small>
+                            </div>
+                          </div>
+
+                          {/* Late */}
+                          <div className="col-6">
+                            <div className="text-center p-3 rounded" style={{ backgroundColor: "#fff3cd" }}>
+                              <div className="text-warning mb-2">
+                                <i className="fas fa-clock fa-2x"></i>
+                              </div>
+                              <h3 className="mb-1 text-warning">
+                                {employeeReportData.chartData.data[1] || 0}
+                              </h3>
+                              <small className="text-muted fw-medium">Late Days</small>
+                            </div>
+                          </div>
+
+                          {/* Absent */}
+                          <div className="col-6">
+                            <div className="text-center p-3 rounded" style={{ backgroundColor: "#f8d7da" }}>
+                              <div className="text-danger mb-2">
+                                <i className="fas fa-times-circle fa-2x"></i>
+                              </div>
+                              <h3 className="mb-1 text-danger">
+                                {employeeReportData.chartData.data[2] || 0}
+                              </h3>
+                              <small className="text-muted fw-medium">Absent Days</small>
+                            </div>
+                          </div>
+
+                          {/* Leave Days */}
+                          <div className="col-6">
+                            <div className="text-center p-3 rounded" style={{ backgroundColor: "#d1ecf1" }}>
+                              <div className="text-info mb-2">
+                                <i className="fas fa-calendar-alt fa-2x"></i>
+                              </div>
+                              <h3 className="mb-1 text-info">
+                                {(employeeReportData.chartData.data[3] || 0) + (employeeReportData.chartData.data[4] || 0)}
+                              </h3>
+                              <small className="text-muted fw-medium">Leave Days</small>
+                              <div className="mt-1">
+                                <small className="text-muted d-block">
+                                  Sick: {employeeReportData.chartData.data[3] || 0} | 
+                                  Casual: {employeeReportData.chartData.data[4] || 0}
+                                </small>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Summary */}
+                        <div className="mt-4 p-3 rounded" style={{ backgroundColor: "#f8f9fa" }}>
+                          <div className="row text-center">
+                            <div className="col-4">
+                              <div className="text-primary">
+                                <i className="fas fa-calendar-day fa-lg"></i>
+                                <div className="mt-1">
+                                  <h6 className="mb-0">
+                                    {employeeReportData.chartData.data.reduce((a, b) => a + b, 0)}
+                                  </h6>
+                                  <small className="text-muted">Total Days</small>
+                                </div>
+                              </div>
+                            </div>
+                            <div className="col-4">
+                              <div className="text-success">
+                                <i className="fas fa-percentage fa-lg"></i>
+                                <div className="mt-1">
+                                  <h6 className="mb-0">
+                                    {employeeReportData.chartData.data.reduce((a, b) => a + b, 0) > 0 
+                                      ? ((employeeReportData.chartData.data[0] / employeeReportData.chartData.data.reduce((a, b) => a + b, 0)) * 100).toFixed(1)
+                                      : 0}%
+                                  </h6>
+                                  <small className="text-muted">On-Time Rate</small>
+                                </div>
+                              </div>
+                            </div>
+                            <div className="col-4">
+                              <div className="text-info">
+                                <i className="fas fa-user-check fa-lg"></i>
+                                <div className="mt-1">
+                                  <h6 className="mb-0">
+                                    {(employeeReportData.chartData.data[0] || 0) + (employeeReportData.chartData.data[1] || 0)}
+                                  </h6>
+                                  <small className="text-muted">Present Days</small>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
+
+                {/* Attendance Records Table */}
+                <div className="card border-0 shadow-sm mb-4">
+                  <div
+                    className="card-header"
+                    style={{ backgroundColor: "#17a2b8", color: "white" }}
+                  >
+                    <h5 className="mb-0">
+                      <i className="fas fa-table me-2"></i>
+                      Detailed Attendance Records
+                    </h5>
+                  </div>
+                  <div className="card-body p-0">
+                    {employeeReportData.attendanceRecords && employeeReportData.attendanceRecords.length > 0 ? (
+                      <div className="table-responsive">
+                        <table className="table table-hover mb-0">
+                          <thead className="table-light">
+                            <tr>
+                              <th className="text-nowrap">
+                                <i className="fas fa-calendar me-2"></i>
+                                Date
+                              </th>
+                              <th className="text-nowrap">
+                                <i className="fas fa-sign-in-alt me-2"></i>
+                                Clock In
+                              </th>
+                              <th className="text-nowrap">
+                                <i className="fas fa-sign-out-alt me-2"></i>
+                                Clock Out
+                              </th>
+                              <th className="text-nowrap">
+                                <i className="fas fa-info-circle me-2"></i>
+                                Status
+                              </th>
+                              <th className="text-nowrap">
+                                <i className="fas fa-clock me-2"></i>
+                                Hours Worked
+                              </th>
+                              <th className="text-nowrap">
+                                <i className="fas fa-plus-circle me-2"></i>
+                                Overtime
+                              </th>
+                              <th className="text-nowrap">
+                                <i className="fas fa-file-alt me-2"></i>
+                                Description
+                              </th>
+                              <th className="text-nowrap">
+                                <i className="fas fa-project-diagram me-2"></i>
+                                Project
+                              </th>
+                              <th className="text-nowrap">
+                                <i className="fas fa-tag me-2"></i>
+                                Type
+                              </th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {employeeReportData.attendanceRecords.map((record, index) => (
+                              <tr key={index}>
+                                <td className="fw-medium">
+                                  {new Date(record.date).toLocaleDateString()}
+                                </td>
+                                <td>
+                                  {record.clockIn
+                                    ? new Date(record.clockIn).toLocaleTimeString([], {
+                                        hour: '2-digit',
+                                        minute: '2-digit'
+                                      })
+                                    : '-'}
+                                </td>
+                                <td>
+                                  {record.clockOut
+                                    ? new Date(record.clockOut).toLocaleTimeString([], {
+                                        hour: '2-digit',
+                                        minute: '2-digit'
+                                      })
+                                    : '-'}
+                                </td>
+                                <td>
+                                  <span
+                                    className={`badge ${
+                                      record.status === 'on time'
+                                        ? 'bg-success'
+                                        : record.status === 'late'
+                                        ? 'bg-warning text-dark'
+                                        : record.status === 'absent'
+                                        ? 'bg-danger'
+                                        : record.status === 'manual entry'
+                                        ? 'bg-info'
+                                        : record.status === 'present'
+                                        ? 'bg-primary'
+                                        : record.status === 'half day'
+                                        ? 'bg-warning text-dark'
+                                        : 'bg-secondary'
+                                    }`}
+                                  >
+                                    {record.status || 'N/A'}
+                                  </span>
+                                </td>
+                                <td>
+                                  {record.hoursWorked
+                                    ? `${record.hoursWorked.toFixed(2)} hrs`
+                                    : '-'}
+                                </td>
+                                <td>
+                                  {record.overtimeHours && record.overtimeHours > 0
+                                    ? `${record.overtimeHours.toFixed(2)} hrs`
+                                    : '-'}
+                                </td>
+                                <td>
+                                  {record.description || '-'}
+                                </td>
+                                <td>
+                                  {record.projectName || '-'}
+                                </td>
+                                <td>
+                                  <span
+                                    className={`badge ${
+                                      record.entryType === 'manual'
+                                        ? 'bg-info'
+                                        : 'bg-primary'
+                                    }`}
+                                  >
+                                    {record.entryType === 'manual' ? 'Manual Entry' : 'Regular'}
+                                  </span>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    ) : (
+                      <div className="text-center py-4">
+                        <i className="fas fa-calendar-times fa-3x text-muted mb-3"></i>
+                        <h5 className="text-muted">No Attendance Records</h5>
+                        <p className="text-muted">
+                          No attendance records found for the selected period.
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Leave Records Table */}
+                {employeeReportData.leaveRecords && employeeReportData.leaveRecords.length > 0 && (
+                  <div className="card border-0 shadow-sm mb-4">
+                    <div
+                      className="card-header"
+                      style={{ backgroundColor: "#fd7e14", color: "white" }}
+                    >
+                      <h5 className="mb-0">
+                        <i className="fas fa-calendar-minus me-2"></i>
+                        Leave Records
+                      </h5>
+                    </div>
+                    <div className="card-body p-0">
+                      <div className="table-responsive">
+                        <table className="table table-hover mb-0">
+                          <thead className="table-light">
+                            <tr>
+                              <th className="text-nowrap">
+                                <i className="fas fa-calendar-alt me-2"></i>
+                                Start Date
+                              </th>
+                              <th className="text-nowrap">
+                                <i className="fas fa-calendar-alt me-2"></i>
+                                End Date
+                              </th>
+                              <th className="text-nowrap">
+                                <i className="fas fa-tag me-2"></i>
+                                Type
+                              </th>
+                              <th className="text-nowrap">
+                                <i className="fas fa-comment me-2"></i>
+                                Reason
+                              </th>
+                              <th className="text-nowrap">
+                                <i className="fas fa-check-circle me-2"></i>
+                                Status
+                              </th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {employeeReportData.leaveRecords.map((leave, index) => (
+                              <tr key={index}>
+                                <td className="fw-medium">
+                                  {new Date(leave.startDate).toLocaleDateString()}
+                                </td>
+                                <td className="fw-medium">
+                                  {new Date(leave.endDate).toLocaleDateString()}
+                                </td>
+                                <td>
+                                  <span
+                                    className={`badge ${
+                                      leave.leaveType === 'sick'
+                                        ? 'bg-danger'
+                                        : leave.leaveType === 'casual'
+                                        ? 'bg-info'
+                                        : 'bg-secondary'
+                                    }`}
+                                  >
+                                    {leave.leaveType || 'N/A'}
+                                  </span>
+                                </td>
+                                <td>
+                                  {leave.reason || '-'}
+                                </td>
+                                <td>
+                                  <span className="badge bg-success">
+                                    {leave.status || 'approved'}
+                                  </span>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </>
             )}
           </div>
@@ -3373,7 +3863,29 @@ export default function HumanResourcePage() {
                 ></button>
               </div>
               <div className="modal-body">
-                <form onSubmit={handleManualTimeSubmit}>
+                {/* Mode Toggle */}
+                <div className="mb-4">
+                  <div className="form-check form-switch">
+                    <input
+                      className="form-check-input"
+                      type="checkbox"
+                      id="bulkModeToggle"
+                      checked={bulkTimeEntry.isBulkMode}
+                      onChange={handleBulkModeToggle}
+                    />
+                    <label className="form-check-label fw-medium" htmlFor="bulkModeToggle">
+                      <i className="fas fa-calendar-alt me-2" style={{ color: "#245e99" }}></i>
+                      Bulk Date Range Entry
+                    </label>
+                  </div>
+                  <small className="text-muted">
+                    {bulkTimeEntry.isBulkMode 
+                      ? "Add time entries for multiple dates at once" 
+                      : "Add time entry for a single date"}
+                  </small>
+                </div>
+
+                <form onSubmit={bulkTimeEntry.isBulkMode ? handleBulkTimeSubmit : handleManualTimeSubmit}>
                   <div className="row">
                     <div className="col-12 col-md-6 mb-3">
                       <label className="form-label fw-medium">
@@ -3385,13 +3897,17 @@ export default function HumanResourcePage() {
                       </label>
                       <select
                         required
-                        value={manualTimeFormData.employeeId}
-                        onChange={(e) =>
-                          setManualTimeFormData({
-                            ...manualTimeFormData,
-                            employeeId: e.target.value,
-                          })
-                        }
+                        value={bulkTimeEntry.isBulkMode ? bulkTimeEntry.employeeId : manualTimeFormData.employeeId}
+                        onChange={(e) => {
+                          if (bulkTimeEntry.isBulkMode) {
+                            handleDateRangeChange('employeeId', e.target.value);
+                          } else {
+                            setManualTimeFormData({
+                              ...manualTimeFormData,
+                              employeeId: e.target.value,
+                            });
+                          }
+                        }}
                         className="form-select border-2"
                         style={{ borderColor: "#245e99" }}
                       >
@@ -3403,147 +3919,290 @@ export default function HumanResourcePage() {
                         ))}
                       </select>
                     </div>
-                    <div className="col-12 col-md-6 mb-3">
-                      <label className="form-label fw-medium">
-                        <i
-                          className="fas fa-calendar me-2"
-                          style={{ color: "#245e99" }}
-                        ></i>
-                        Date *
-                      </label>
-                      <input
-                        type="date"
-                        required
-                        value={manualTimeFormData.date}
-                        onChange={(e) =>
-                          setManualTimeFormData({
-                            ...manualTimeFormData,
-                            date: e.target.value,
-                          })
-                        }
-                        className="form-control border-2"
-                        style={{ borderColor: "#245e99" }}
-                        max={new Date().toISOString().split("T")[0]}
-                      />
-                    </div>
+                    
+                    {/* Date Selection - Single or Range */}
+                    {bulkTimeEntry.isBulkMode ? (
+                      <>
+                        <div className="col-12 col-md-3 mb-3">
+                          <label className="form-label fw-medium">
+                            <i
+                              className="fas fa-calendar me-2"
+                              style={{ color: "#245e99" }}
+                            ></i>
+                            Start Date *
+                          </label>
+                          <input
+                            type="date"
+                            required
+                            value={bulkTimeEntry.startDate}
+                            onChange={(e) => handleDateRangeChange('startDate', e.target.value)}
+                            className="form-control border-2"
+                            style={{ borderColor: "#245e99" }}
+                            max={new Date().toISOString().split("T")[0]}
+                          />
+                        </div>
+                        <div className="col-12 col-md-3 mb-3">
+                          <label className="form-label fw-medium">
+                            <i
+                              className="fas fa-calendar me-2"
+                              style={{ color: "#245e99" }}
+                            ></i>
+                            End Date *
+                          </label>
+                          <input
+                            type="date"
+                            required
+                            value={bulkTimeEntry.endDate}
+                            onChange={(e) => handleDateRangeChange('endDate', e.target.value)}
+                            className="form-control border-2"
+                            style={{ borderColor: "#245e99" }}
+                            max={new Date().toISOString().split("T")[0]}
+                            min={bulkTimeEntry.startDate}
+                          />
+                        </div>
+                      </>
+                    ) : (
+                      <div className="col-12 col-md-6 mb-3">
+                        <label className="form-label fw-medium">
+                          <i
+                            className="fas fa-calendar me-2"
+                            style={{ color: "#245e99" }}
+                          ></i>
+                          Date *
+                        </label>
+                        <input
+                          type="date"
+                          required
+                          value={manualTimeFormData.date}
+                          onChange={(e) =>
+                            setManualTimeFormData({
+                              ...manualTimeFormData,
+                              date: e.target.value,
+                            })
+                          }
+                          className="form-control border-2"
+                          style={{ borderColor: "#245e99" }}
+                          max={new Date().toISOString().split("T")[0]}
+                        />
+                      </div>
+                    )}
                   </div>
 
-                  <div className="row">
-                    <div className="col-12 col-md-6 mb-3">
-                      <label className="form-label fw-medium">
-                        <i className="fas fa-sign-in-alt me-2 text-success"></i>
-                        Clock In Time *
-                      </label>
-                      <input
-                        type="time"
-                        required
-                        value={manualTimeFormData.clockIn}
-                        onChange={(e) =>
-                          setManualTimeFormData({
-                            ...manualTimeFormData,
-                            clockIn: e.target.value,
-                          })
-                        }
-                        className="form-control border-2"
-                        style={{ borderColor: "#245e99" }}
-                      />
-                    </div>
-                    <div className="col-12 col-md-6 mb-3">
-                      <label className="form-label fw-medium">
-                        <i className="fas fa-sign-out-alt me-2 text-warning"></i>
-                        Clock Out Time *
-                      </label>
-                      <input
-                        type="time"
-                        required
-                        value={manualTimeFormData.clockOut}
-                        onChange={(e) =>
-                          setManualTimeFormData({
-                            ...manualTimeFormData,
-                            clockOut: e.target.value,
-                          })
-                        }
-                        className="form-control border-2"
-                        style={{ borderColor: "#245e99" }}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="row">
-                    <div className="col-md-6 mb-3">
-                      <label className="form-label fw-medium">
-                        <i className="fas fa-coffee me-2 text-info"></i>
-                        Break Duration (minutes)
-                      </label>
-                      <input
-                        type="number"
-                        min="0"
-                        max="480"
-                        value={manualTimeFormData.breakDuration}
-                        onChange={(e) =>
-                          setManualTimeFormData({
-                            ...manualTimeFormData,
-                            breakDuration: parseInt(e.target.value) || 0,
-                          })
-                        }
-                        className="form-control border-2"
-                        style={{ borderColor: "#245e99" }}
-                      />
-                      <div className="form-text">
-                        <i className="fas fa-info-circle me-1"></i>
-                        Default: 60 minutes
+                  {/* Bulk Date Entries or Single Time Entry */}
+                  {bulkTimeEntry.isBulkMode ? (
+                    <div className="mb-4">
+                      <h6 className="fw-medium mb-3">
+                        <i className="fas fa-list me-2" style={{ color: "#245e99" }}></i>
+                        Time Entries ({bulkTimeEntry.dateEntries.length} days)
+                      </h6>
+                      <div className="border rounded p-3" style={{ maxHeight: "300px", overflowY: "auto" }}>
+                        {bulkTimeEntry.dateEntries.map((entry, index) => (
+                          <div key={entry.date} className="row align-items-center mb-3 pb-3 border-bottom">
+                            <div className="col-md-3">
+                              <label className="form-label fw-medium small">
+                                <i className="fas fa-calendar me-1" style={{ color: "#245e99" }}></i>
+                                {new Date(entry.date).toLocaleDateString()}
+                              </label>
+                            </div>
+                            <div className="col-md-3">
+                              <label className="form-label small">Clock In *</label>
+                              <input
+                                type="time"
+                                required
+                                value={entry.clockIn}
+                                onChange={(e) => updateDateEntry(index, 'clockIn', e.target.value)}
+                                className="form-control form-control-sm border-2"
+                                style={{ borderColor: "#245e99" }}
+                              />
+                            </div>
+                            <div className="col-md-3">
+                              <label className="form-label small">Clock Out *</label>
+                              <input
+                                type="time"
+                                required
+                                value={entry.clockOut}
+                                onChange={(e) => updateDateEntry(index, 'clockOut', e.target.value)}
+                                className="form-control form-control-sm border-2"
+                                style={{ borderColor: "#245e99" }}
+                              />
+                            </div>
+                            <div className="col-md-3">
+                              <label className="form-label small">Break (min)</label>
+                              <input
+                                type="number"
+                                min="0"
+                                max="480"
+                                value={entry.breakDuration}
+                                onChange={(e) => updateDateEntry(index, 'breakDuration', parseInt(e.target.value) || 0)}
+                                className="form-control form-control-sm border-2"
+                                style={{ borderColor: "#245e99" }}
+                              />
+                            </div>
+                          </div>
+                        ))}
                       </div>
                     </div>
-                    <div className="col-md-6 mb-3">
-                      <label className="form-label fw-medium">
-                        <i
-                          className="fas fa-question-circle me-2"
-                          style={{ color: "#245e99" }}
-                        ></i>
-                        Reason
-                      </label>
-                      <select
-                        value={manualTimeFormData.reason}
-                        onChange={(e) =>
-                          setManualTimeFormData({
-                            ...manualTimeFormData,
-                            reason: e.target.value,
-                          })
-                        }
-                        className="form-select border-2"
-                        style={{ borderColor: "#245e99" }}
-                      >
-                        <option value="">Select Reason</option>
-                        <option value="forgot_to_clock">
-                          Forgot to Clock In/Out
-                        </option>
-                        <option value="system_error">System Error</option>
-                        <option value="remote_work">Remote Work</option>
-                        <option value="field_work">Field Work</option>
-                        <option value="meeting_offsite">
-                          Off-site Meeting
-                        </option>
-                        <option value="admin_correction">
-                          Administrative Correction
-                        </option>
-                        <option value="other">Other</option>
-                      </select>
+                  ) : (
+                    <div className="row">
+                      <div className="col-12 col-md-6 mb-3">
+                        <label className="form-label fw-medium">
+                          <i className="fas fa-sign-in-alt me-2 text-success"></i>
+                          Clock In Time *
+                        </label>
+                        <input
+                          type="time"
+                          required
+                          value={manualTimeFormData.clockIn}
+                          onChange={(e) =>
+                            setManualTimeFormData({
+                              ...manualTimeFormData,
+                              clockIn: e.target.value,
+                            })
+                          }
+                          className="form-control border-2"
+                          style={{ borderColor: "#245e99" }}
+                        />
+                      </div>
+                      <div className="col-12 col-md-6 mb-3">
+                        <label className="form-label fw-medium">
+                          <i className="fas fa-sign-out-alt me-2 text-warning"></i>
+                          Clock Out Time *
+                        </label>
+                        <input
+                          type="time"
+                          required
+                          value={manualTimeFormData.clockOut}
+                          onChange={(e) =>
+                            setManualTimeFormData({
+                              ...manualTimeFormData,
+                              clockOut: e.target.value,
+                            })
+                          }
+                          className="form-control border-2"
+                          style={{ borderColor: "#245e99" }}
+                        />
+                      </div>
                     </div>
-                  </div>
+                  )}
+
+                  {/* Break Duration and Reason - Only for Single Mode */}
+                  {!bulkTimeEntry.isBulkMode && (
+                    <div className="row">
+                      <div className="col-md-6 mb-3">
+                        <label className="form-label fw-medium">
+                          <i className="fas fa-coffee me-2 text-info"></i>
+                          Break Duration (minutes)
+                        </label>
+                        <input
+                          type="number"
+                          min="0"
+                          max="480"
+                          value={manualTimeFormData.breakDuration}
+                          onChange={(e) =>
+                            setManualTimeFormData({
+                              ...manualTimeFormData,
+                              breakDuration: parseInt(e.target.value) || 0,
+                            })
+                          }
+                          className="form-control border-2"
+                          style={{ borderColor: "#245e99" }}
+                        />
+                        <div className="form-text">
+                          <i className="fas fa-info-circle me-1"></i>
+                          Default: 60 minutes
+                        </div>
+                      </div>
+                      <div className="col-md-6 mb-3">
+                        <label className="form-label fw-medium">
+                          <i
+                            className="fas fa-question-circle me-2"
+                            style={{ color: "#245e99" }}
+                          ></i>
+                          Reason
+                        </label>
+                        <select
+                          value={manualTimeFormData.reason}
+                          onChange={(e) =>
+                            setManualTimeFormData({
+                              ...manualTimeFormData,
+                              reason: e.target.value,
+                            })
+                          }
+                          className="form-select border-2"
+                          style={{ borderColor: "#245e99" }}
+                        >
+                          <option value="">Select Reason</option>
+                          <option value="forgot_to_clock">
+                            Forgot to Clock In/Out
+                          </option>
+                          <option value="system_error">System Error</option>
+                          <option value="remote_work">Remote Work</option>
+                          <option value="field_work">Field Work</option>
+                          <option value="meeting_offsite">
+                            Off-site Meeting
+                          </option>
+                          <option value="admin_correction">
+                            Administrative Correction
+                          </option>
+                          <option value="other">Other</option>
+                        </select>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Bulk Mode - Common Reason and Notes */}
+                  {bulkTimeEntry.isBulkMode && (
+                    <div className="row">
+                      <div className="col-md-6 mb-3">
+                        <label className="form-label fw-medium">
+                          <i
+                            className="fas fa-question-circle me-2"
+                            style={{ color: "#245e99" }}
+                          ></i>
+                          Reason (applies to all dates)
+                        </label>
+                        <select
+                          value={bulkTimeEntry.reason}
+                          onChange={(e) => handleDateRangeChange('reason', e.target.value)}
+                          className="form-select border-2"
+                          style={{ borderColor: "#245e99" }}
+                        >
+                          <option value="">Select Reason</option>
+                          <option value="forgot_to_clock">
+                            Forgot to Clock In/Out
+                          </option>
+                          <option value="system_error">System Error</option>
+                          <option value="remote_work">Remote Work</option>
+                          <option value="field_work">Field Work</option>
+                          <option value="meeting_offsite">
+                            Off-site Meeting
+                          </option>
+                          <option value="admin_correction">
+                            Administrative Correction
+                          </option>
+                          <option value="other">Other</option>
+                        </select>
+                      </div>
+                    </div>
+                  )}
 
                   <div className="mb-4">
                     <label className="form-label fw-medium">
                       <i className="fas fa-sticky-note me-2 text-secondary"></i>
-                      Additional Notes
+                      Additional Notes {bulkTimeEntry.isBulkMode && '(applies to all dates)'}
                     </label>
                     <textarea
-                      value={manualTimeFormData.notes}
-                      onChange={(e) =>
-                        setManualTimeFormData({
-                          ...manualTimeFormData,
-                          notes: e.target.value,
-                        })
-                      }
+                      value={bulkTimeEntry.isBulkMode ? bulkTimeEntry.notes : manualTimeFormData.notes}
+                      onChange={(e) => {
+                        if (bulkTimeEntry.isBulkMode) {
+                          handleDateRangeChange('notes', e.target.value);
+                        } else {
+                          setManualTimeFormData({
+                            ...manualTimeFormData,
+                            notes: e.target.value,
+                          });
+                        }
+                      }}
                       rows={3}
                       className="form-control border-2"
                       style={{ borderColor: "#245e99" }}
@@ -3557,6 +4216,7 @@ export default function HumanResourcePage() {
                       onClick={() => {
                         setShowManualTimeForm(false);
                         resetManualTimeForm();
+                        resetBulkTimeForm();
                       }}
                       className="btn btn-outline-secondary"
                     >
@@ -3564,8 +4224,10 @@ export default function HumanResourcePage() {
                       Cancel
                     </button>
                     <button type="submit" className="btn btn-success">
-                      <i className="fas fa-save me-1"></i>
-                      Add Time Entry
+                      <i className={`fas ${bulkTimeEntry.isBulkMode ? 'fa-calendar-plus' : 'fa-save'} me-1`}></i>
+                      {bulkTimeEntry.isBulkMode 
+                        ? `Add ${bulkTimeEntry.dateEntries.length} Time Entries` 
+                        : 'Add Time Entry'}
                     </button>
                   </div>
                 </form>

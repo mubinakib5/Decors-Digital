@@ -172,6 +172,33 @@ export async function GET(request, { params }) {
       .sort({ date: 1 })
       .toArray();
 
+    // Get manual time entries for the period
+    // Get manual time entries for the period
+    const manualTimeEntries = await db.collection("manual_time_entries")
+      .find({
+        employeeId: id,
+        date: { $gte: start, $lte: end }
+      })
+      .sort({ date: 1 })
+      .toArray();
+
+    // Convert manual time entries to attendance record format
+    const manualAttendanceRecords = manualTimeEntries.map(entry => ({
+      date: entry.date,
+      clockIn: entry.startTime,
+      clockOut: entry.endTime,
+      status: 'manual entry',
+      hoursWorked: entry.hoursWorked,
+      overtimeHours: entry.overtimeHours,
+      description: entry.description,
+      projectName: entry.projectName,
+      entryType: 'manual'
+    }));
+
+    // Combine attendance records and manual entries
+    const allAttendanceRecords = [...attendanceRecords, ...manualAttendanceRecords]
+      .sort((a, b) => new Date(a.date) - new Date(b.date));
+
     // Get leave records for the period
     const leaveRecords = await db.collection("leaves")
       .find({
@@ -182,8 +209,8 @@ export async function GET(request, { params }) {
       })
       .toArray();
 
-    // Calculate chart data
-    const chartData = calculateAttendanceChartData(attendanceRecords, leaveRecords, period);
+    // Calculate chart data using combined records
+    const chartData = calculateAttendanceChartData(allAttendanceRecords, leaveRecords, period);
 
     return NextResponse.json({
       employee: {
@@ -199,8 +226,28 @@ export async function GET(request, { params }) {
         end: end.toISOString().split('T')[0]
       },
       chartData,
+      attendanceRecords: allAttendanceRecords.map(record => ({
+        date: record.date,
+        clockIn: record.clockIn,
+        clockOut: record.clockOut,
+        status: record.status,
+        hoursWorked: record.hoursWorked,
+        overtimeHours: record.overtimeHours,
+        description: record.description,
+        projectName: record.projectName,
+        entryType: record.entryType || 'regular'
+      })),
+      leaveRecords: leaveRecords.map(leave => ({
+        startDate: leave.startDate,
+        endDate: leave.endDate,
+        leaveType: leave.leaveType,
+        reason: leave.reason,
+        status: leave.status
+      })),
       rawData: {
         attendanceRecords: attendanceRecords.length,
+        manualTimeEntries: manualTimeEntries.length,
+        totalRecords: allAttendanceRecords.length,
         leaveRecords: leaveRecords.length
       }
     });

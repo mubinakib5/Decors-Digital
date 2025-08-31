@@ -109,10 +109,23 @@ export async function POST(request) {
   }
 
   try {
-    const { employeeId, date, startTime, endTime, description, projectName } = await request.json();
+    const requestBody = await request.json();
+    console.log('Manual Time API - Received request body:', JSON.stringify(requestBody, null, 2));
+    
+    const { employeeId, date, startTime, endTime, description, projectName } = requestBody;
+    
+    console.log('Manual Time API - Extracted fields:', {
+      employeeId,
+      date,
+      startTime,
+      endTime,
+      description,
+      projectName
+    });
     
     // Validate required fields
     if (!employeeId || !date || !startTime || !endTime) {
+      console.log('Manual Time API - Validation failed: Missing required fields');
       return NextResponse.json(
         { message: "Employee ID, date, start time, and end time are required" },
         { status: 400 }
@@ -142,8 +155,15 @@ export async function POST(request) {
     const startDateTime = new Date(`${date}T${startTime}:00`);
     const endDateTime = new Date(`${date}T${endTime}:00`);
     
+    console.log('Manual Time API - Date/Time objects:', {
+      entryDate: entryDate.toISOString(),
+      startDateTime: startDateTime.toISOString(),
+      endDateTime: endDateTime.toISOString()
+    });
+    
     // Validate time range
     if (startDateTime >= endDateTime) {
+      console.log('Manual Time API - Time validation failed: End time must be after start time');
       return NextResponse.json(
         { message: "End time must be after start time" },
         { status: 400 }
@@ -153,6 +173,12 @@ export async function POST(request) {
     // Calculate hours worked
     const hoursWorked = calculateHoursWorked(startDateTime, endDateTime);
     const overtimeHours = calculateOvertimeHours(hoursWorked, employee.workSchedule);
+    
+    console.log('Manual Time API - Calculated hours:', {
+      hoursWorked,
+      overtimeHours,
+      employeeWorkSchedule: employee.workSchedule
+    });
     
     const newEntry = {
       employeeId: employeeId,
@@ -169,7 +195,14 @@ export async function POST(request) {
       updatedAt: new Date()
     };
 
+    console.log('Manual Time API - New entry object:', JSON.stringify(newEntry, null, 2));
+
     const result = await db.collection("manual_time_entries").insertOne(newEntry);
+    
+    console.log('Manual Time API - Database insert result:', {
+      insertedId: result.insertedId,
+      acknowledged: result.acknowledged
+    });
     
     return NextResponse.json(
       { 
