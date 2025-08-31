@@ -53,6 +53,19 @@ export default function HumanResourcePage() {
     clockOut: "",
     status: "on time",
   }); // HH:MM format
+  
+  // Reports Edit/Delete State
+  const [showReportEditForm, setShowReportEditForm] = useState(false);
+  const [editingReportRecord, setEditingReportRecord] = useState(null);
+  const [reportEditData, setReportEditData] = useState({
+    clockIn: "",
+    clockOut: "",
+    status: "on time",
+    description: "",
+    projectName: ""
+  });
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [recordToDelete, setRecordToDelete] = useState(null);
 
   // Individual Employee Reports State
   const [selectedEmployeeForReport, setSelectedEmployeeForReport] =
@@ -442,35 +455,12 @@ export default function HumanResourcePage() {
   const handleManualTimeSubmit = async (e) => {
     e.preventDefault();
     try {
-      // Create proper datetime objects from date and time strings
-      const entryDate = new Date(manualTimeFormData.date);
-      
-      // Parse start time and create datetime
-      const [startHours, startMinutes] = manualTimeFormData.clockIn.split(':');
-      const startDateTime = new Date(
-        entryDate.getFullYear(),
-        entryDate.getMonth(),
-        entryDate.getDate(),
-        parseInt(startHours),
-        parseInt(startMinutes)
-      );
-      
-      // Parse end time and create datetime
-      const [endHours, endMinutes] = manualTimeFormData.clockOut.split(':');
-      const endDateTime = new Date(
-        entryDate.getFullYear(),
-        entryDate.getMonth(),
-        entryDate.getDate(),
-        parseInt(endHours),
-        parseInt(endMinutes)
-      );
-      
       // Map form data to API expected format
       const apiData = {
         employeeId: manualTimeFormData.employeeId,
         date: manualTimeFormData.date,
-        startTime: startDateTime.toISOString(),
-        endTime: endDateTime.toISOString(),
+        startTime: manualTimeFormData.clockIn, // Send time as HH:MM format
+        endTime: manualTimeFormData.clockOut,  // Send time as HH:MM format
         description: manualTimeFormData.reason || manualTimeFormData.notes || '',
         projectName: '' // Add if needed
       };
@@ -508,33 +498,11 @@ export default function HumanResourcePage() {
 
       for (const entry of bulkTimeEntry.dateEntries) {
         try {
-          const entryDate = new Date(entry.date);
-          
-          // Parse start time and create datetime
-          const [startHours, startMinutes] = entry.clockIn.split(':');
-          const startDateTime = new Date(
-            entryDate.getFullYear(),
-            entryDate.getMonth(),
-            entryDate.getDate(),
-            parseInt(startHours),
-            parseInt(startMinutes)
-          );
-          
-          // Parse end time and create datetime
-          const [endHours, endMinutes] = entry.clockOut.split(':');
-          const endDateTime = new Date(
-            entryDate.getFullYear(),
-            entryDate.getMonth(),
-            entryDate.getDate(),
-            parseInt(endHours),
-            parseInt(endMinutes)
-          );
-          
           const apiData = {
             employeeId: bulkTimeEntry.employeeId,
             date: entry.date,
-            startTime: startDateTime.toISOString(),
-            endTime: endDateTime.toISOString(),
+            startTime: entry.clockIn, // Send time as HH:MM format
+            endTime: entry.clockOut,  // Send time as HH:MM format
             description: bulkTimeEntry.reason || bulkTimeEntry.notes || '',
             projectName: ''
           };
@@ -855,6 +823,169 @@ export default function HumanResourcePage() {
     } catch (error) {
       console.error("Error restoring attendance record:", error);
       showToast("Error restoring attendance record", "error");
+    }
+  };
+
+  // Reports Edit/Delete Functions
+  const handleReportRecordEdit = (record) => {
+    setEditingReportRecord(record);
+    setReportEditData({
+      clockIn: record.clockIn
+        ? new Date(record.clockIn).toLocaleTimeString('en-GB', { hour12: false, hour: '2-digit', minute: '2-digit' })
+        : "",
+      clockOut: record.clockOut
+        ? new Date(record.clockOut).toLocaleTimeString('en-GB', { hour12: false, hour: '2-digit', minute: '2-digit' })
+        : "",
+      status: record.status || "on time",
+      description: record.description || "",
+      projectName: record.projectName || ""
+    });
+    setShowReportEditForm(true);
+  };
+
+  const handleReportRecordDelete = (record) => {
+    console.log("Deleting report record:", record);
+    setRecordToDelete(record);
+    setShowDeleteConfirm(true);
+  };
+
+  const confirmDeleteRecord = async () => {
+    if (!recordToDelete) return;
+
+    try {
+      let response;
+      
+      if (recordToDelete.entryType === 'manual') {
+        // Delete manual time entry
+        response = await fetch(`/api/admin/manual-time?id=${recordToDelete._id}`, {
+          method: "DELETE"
+        });
+      } else {
+        // Delete regular attendance record
+        response = await fetch("/api/admin/attendance", {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            employeeId: recordToDelete.employeeId || selectedEmployeeForReport,
+            date: recordToDelete.date,
+          }),
+        });
+      }
+
+      if (response.ok) {
+        showToast("Record deleted successfully!");
+        // Refresh the employee report data
+        if (selectedEmployeeForReport) {
+          fetchEmployeeReportData(selectedEmployeeForReport, reportPeriod);
+        }
+        loadData(); // Also refresh main data
+      } else {
+        const error = await response.json();
+        showToast(error.message || "Error deleting record", "error");
+      }
+    } catch (error) {
+      console.error("Error deleting record:", error);
+      showToast("Error deleting record", "error");
+    } finally {
+      setShowDeleteConfirm(false);
+      setRecordToDelete(null);
+    }
+  };
+
+  const handleReportEditSubmit = async (e) => {
+    e.preventDefault();
+    if (!editingReportRecord) return;
+
+    try {
+      let response;
+      
+      if (editingReportRecord.entryType === 'manual') {
+        // Update manual time entry
+        const recordDate = new Date(editingReportRecord.date);
+        const dateString = recordDate.toISOString().split('T')[0]; // Format as YYYY-MM-DD
+        
+        const updateData = {
+          id: editingReportRecord._id,
+          employeeId: editingReportRecord.employeeId || selectedEmployeeForReport,
+          date: dateString,
+          startTime: reportEditData.clockIn || null,
+          endTime: reportEditData.clockOut || null,
+          description: reportEditData.description,
+          projectName: reportEditData.projectName
+        };
+        
+        response = await fetch("/api/admin/manual-time", {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(updateData),
+        });
+      } else {
+        // Update regular attendance record
+        const recordDate = new Date(editingReportRecord.date);
+        let clockInDateTime = null;
+        let clockOutDateTime = null;
+
+        if (reportEditData.clockIn) {
+          const [inHours, inMinutes] = reportEditData.clockIn.split(":");
+          clockInDateTime = new Date(
+            recordDate.getFullYear(),
+            recordDate.getMonth(),
+            recordDate.getDate(),
+            parseInt(inHours),
+            parseInt(inMinutes)
+          );
+        }
+
+        if (reportEditData.clockOut) {
+          const [outHours, outMinutes] = reportEditData.clockOut.split(":");
+          clockOutDateTime = new Date(
+            recordDate.getFullYear(),
+            recordDate.getMonth(),
+            recordDate.getDate(),
+            parseInt(outHours),
+            parseInt(outMinutes)
+          );
+        }
+
+        const requestData = {
+          employeeId: editingReportRecord.employeeId || selectedEmployeeForReport,
+          date: editingReportRecord.date,
+          clockIn: clockInDateTime ? clockInDateTime.toISOString() : null,
+          clockOut: clockOutDateTime ? clockOutDateTime.toISOString() : null,
+          status: reportEditData.status,
+        };
+        
+        console.log('Regular attendance update data:', requestData);
+
+        response = await fetch("/api/admin/attendance", {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(requestData),
+        });
+      }
+
+      if (response.ok) {
+        showToast("Record updated successfully!");
+        setShowReportEditForm(false);
+        setEditingReportRecord(null);
+        // Refresh the employee report data
+        if (selectedEmployeeForReport) {
+          fetchEmployeeReportData(selectedEmployeeForReport, reportPeriod);
+        }
+        loadData(); // Also refresh main data
+      } else {
+        const error = await response.json();
+        showToast(error.message || "Error updating record", "error");
+      }
+    } catch (error) {
+      console.error("Error updating record:", error);
+      showToast("Error updating record", "error");
     }
   };
 
@@ -2982,6 +3113,10 @@ export default function HumanResourcePage() {
                                 <i className="fas fa-tag me-2"></i>
                                 Type
                               </th>
+                              <th className="text-nowrap">
+                                <i className="fas fa-cogs me-2"></i>
+                                Actions
+                              </th>
                             </tr>
                           </thead>
                           <tbody>
@@ -3053,6 +3188,58 @@ export default function HumanResourcePage() {
                                   >
                                     {record.entryType === 'manual' ? 'Manual Entry' : 'Regular'}
                                   </span>
+                                </td>
+                                <td>
+                                  <div className="btn-group" role="group">
+                                    <button
+                                      type="button"
+                                      className="btn btn-sm"
+                                      onClick={() => handleReportRecordEdit(record)}
+                                      title="Edit Record"
+                                      style={{
+                                        backgroundColor: '#245e99',
+                                        borderColor: '#245e99',
+                                        color: 'white'
+                                      }}
+                                      onMouseEnter={(e) => {
+                                        e.target.style.backgroundColor = 'white';
+                                        e.target.style.color = '#245e99';
+                                        e.target.style.borderColor = '#245e99';
+                                      }}
+                                      onMouseLeave={(e) => {
+                                        e.target.style.backgroundColor = '#245e99';
+                                        e.target.style.color = 'white';
+                                        e.target.style.borderColor = '#245e99';
+                                      }}
+                                    >
+                                      <iconify-icon icon="mdi:pencil" width="16" height="16"></iconify-icon>
+                                      <span className="ms-1">Edit</span>
+                                    </button>
+                                    <button
+                                      type="button"
+                                      className="btn btn-sm"
+                                      onClick={() => handleReportRecordDelete(record)}
+                                      title="Delete Record"
+                                      style={{
+                                        backgroundColor: '#dc3545',
+                                        borderColor: '#dc3545',
+                                        color: 'white'
+                                      }}
+                                      onMouseEnter={(e) => {
+                                        e.target.style.backgroundColor = 'white';
+                                        e.target.style.color = '#dc3545';
+                                        e.target.style.borderColor = '#dc3545';
+                                      }}
+                                      onMouseLeave={(e) => {
+                                        e.target.style.backgroundColor = '#dc3545';
+                                        e.target.style.color = 'white';
+                                        e.target.style.borderColor = '#dc3545';
+                                      }}
+                                    >
+                                      <iconify-icon icon="mdi:delete" width="16" height="16"></iconify-icon>
+                                      <span className="ms-1">Delete</span>
+                                    </button>
+                                  </div>
                                 </td>
                               </tr>
                             ))}
@@ -4231,6 +4418,221 @@ export default function HumanResourcePage() {
                     </button>
                   </div>
                 </form>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Report Edit Modal */}
+      {showReportEditForm && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+          <div className="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white">
+            <div className="mt-3">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-medium text-gray-900">
+                  Edit Attendance Record
+                </h3>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowReportEditForm(false);
+                    setEditingReportRecord(null);
+                  }}
+                  className="text-gray-400 hover:text-gray-600 focus:outline-none focus:text-gray-600"
+                >
+                  <svg
+                    className="h-6 w-6"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M6 18L18 6M6 6l12 12"
+                    />
+                  </svg>
+                </button>
+              </div>
+              <form onSubmit={handleReportEditSubmit} className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Clock In Time
+                    </label>
+                    <input
+                      type="time"
+                      value={reportEditData.clockIn}
+                      onChange={(e) =>
+                        setReportEditData({
+                          ...reportEditData,
+                          clockIn: e.target.value,
+                        })
+                      }
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Clock Out Time
+                    </label>
+                    <input
+                      type="time"
+                      value={reportEditData.clockOut}
+                      onChange={(e) =>
+                        setReportEditData({
+                          ...reportEditData,
+                          clockOut: e.target.value,
+                        })
+                      }
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                    />
+                  </div>
+                </div>
+                
+                {editingReportRecord?.entryType !== 'manual' && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Status
+                    </label>
+                    <select
+                      value={reportEditData.status}
+                      onChange={(e) =>
+                        setReportEditData({
+                          ...reportEditData,
+                          status: e.target.value,
+                        })
+                      }
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                    >
+                      <option value="on time">On Time</option>
+                      <option value="late">Late</option>
+                      <option value="absent">Absent</option>
+                      <option value="present">Present</option>
+                      <option value="half day">Half Day</option>
+                    </select>
+                  </div>
+                )}
+                
+                {editingReportRecord?.entryType === 'manual' && (
+                  <>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Description
+                      </label>
+                      <textarea
+                        value={reportEditData.description}
+                        onChange={(e) =>
+                          setReportEditData({
+                            ...reportEditData,
+                            description: e.target.value,
+                          })
+                        }
+                        rows={3}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                        placeholder="Enter description..."
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Project Name
+                      </label>
+                      <input
+                        type="text"
+                        value={reportEditData.projectName}
+                        onChange={(e) =>
+                          setReportEditData({
+                            ...reportEditData,
+                            projectName: e.target.value,
+                          })
+                        }
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                        placeholder="Enter project name..."
+                      />
+                    </div>
+                  </>
+                )}
+                
+                <div className="flex justify-end space-x-3 pt-4">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowReportEditForm(false);
+                      setEditingReportRecord(null);
+                    }}
+                    className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  >
+                    Update Record
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+          <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+            <div className="mt-3 text-center">
+              <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100">
+                <svg
+                  className="h-6 w-6 text-red-600"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"
+                  />
+                </svg>
+              </div>
+              <h3 className="text-lg leading-6 font-medium text-gray-900 mt-2">
+                Delete Record
+              </h3>
+              <div className="mt-2 px-7 py-3">
+                <p className="text-sm text-gray-500">
+                  Are you sure you want to delete this attendance record? This action cannot be undone.
+                </p>
+                {recordToDelete && (
+                  <div className="mt-3 p-3 bg-gray-50 rounded-md">
+                    <p className="text-sm font-medium text-gray-700">
+                      Date: {new Date(recordToDelete.date).toLocaleDateString()}
+                    </p>
+                    <p className="text-sm text-gray-600">
+                      Type: {recordToDelete.entryType === 'manual' ? 'Manual Entry' : 'Regular'}
+                    </p>
+                  </div>
+                )}
+              </div>
+              <div className="flex justify-center space-x-3 px-4 py-3">
+                <button
+                  onClick={() => {
+                    setShowDeleteConfirm(false);
+                    setRecordToDelete(null);
+                  }}
+                  className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={confirmDeleteRecord}
+                  className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500"
+                >
+                  Delete
+                </button>
               </div>
             </div>
           </div>

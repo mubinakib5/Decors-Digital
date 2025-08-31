@@ -33,6 +33,23 @@ function getDateRange(period) {
   return { start, end };
 }
 
+// Helper function to determine attendance status
+function getAttendanceStatus(clockIn, workSchedule = "9:00-17:00") {
+  if (!clockIn) return "absent";
+  
+  const clockInTime = new Date(clockIn);
+  
+  // Set late threshold to 10:45 AM
+  const lateThreshold = new Date(clockInTime);
+  lateThreshold.setHours(10, 45, 0, 0);
+  
+  if (clockInTime <= lateThreshold) {
+    return "on time";
+  } else {
+    return "late";
+  }
+}
+
 // Helper function to calculate attendance statistics for charts
 function calculateAttendanceChartData(attendanceRecords, leaveRecords, period) {
   const stats = {
@@ -183,17 +200,35 @@ export async function GET(request, { params }) {
       .toArray();
 
     // Convert manual time entries to attendance record format
-    const manualAttendanceRecords = manualTimeEntries.map(entry => ({
-      date: entry.date,
-      clockIn: entry.startTime,
-      clockOut: entry.endTime,
-      status: 'manual entry',
-      hoursWorked: entry.hoursWorked,
-      overtimeHours: entry.overtimeHours,
-      description: entry.description,
-      projectName: entry.projectName,
-      entryType: 'manual'
-    }));
+    const manualAttendanceRecords = manualTimeEntries.map(entry => {
+      // Skip entries with invalid dates (Unix epoch indicates corrupted data)
+      const isValidStartTime = entry.startTime && entry.startTime.getTime() > 0;
+      const isValidEndTime = entry.endTime && entry.endTime.getTime() > 0;
+      
+      if (!isValidStartTime || !isValidEndTime) {
+        console.warn(`Skipping manual entry ${entry._id} with invalid dates:`, {
+          startTime: entry.startTime,
+          endTime: entry.endTime
+        });
+        return null; // Will be filtered out
+      }
+      
+      // Calculate proper attendance status based on clock-in time
+      const attendanceStatus = getAttendanceStatus(entry.startTime, employee.workSchedule);
+      
+      return {
+        _id: entry._id.toString(), // Convert ObjectId to string for frontend
+        date: entry.date,
+        clockIn: entry.startTime,
+        clockOut: entry.endTime,
+        status: attendanceStatus, // Use calculated status instead of 'manual entry'
+        hoursWorked: entry.hoursWorked,
+        overtimeHours: entry.overtimeHours,
+        description: entry.description,
+        projectName: entry.projectName,
+        entryType: 'manual'
+      };
+    }).filter(record => record !== null); // Remove null entries
 
     // Combine attendance records and manual entries
     const allAttendanceRecords = [...attendanceRecords, ...manualAttendanceRecords]
@@ -227,6 +262,7 @@ export async function GET(request, { params }) {
       },
       chartData,
       attendanceRecords: allAttendanceRecords.map(record => ({
+        _id: record._id ? record._id.toString() : null, // Include ID for editing
         date: record.date,
         clockIn: record.clockIn,
         clockOut: record.clockOut,

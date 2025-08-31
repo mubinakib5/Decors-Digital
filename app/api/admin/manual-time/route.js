@@ -1,8 +1,8 @@
 import { connectToDatabase } from "@/app/utils/mongodb";
-import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
 import jwt from "jsonwebtoken";
 import { ObjectId } from "mongodb";
+import { cookies } from "next/headers";
+import { NextResponse } from "next/server";
 
 // Force dynamic rendering for API routes
 export const dynamic = "force-dynamic";
@@ -26,9 +26,15 @@ async function checkAuth(request) {
   // Try HR token
   if (hrToken) {
     try {
-      const decoded = jwt.verify(hrToken.value, process.env.JWT_SECRET || "fallback-secret");
+      const decoded = jwt.verify(
+        hrToken.value,
+        process.env.JWT_SECRET || "fallback-secret"
+      );
       // Verify HR role
-      if (decoded.role === "hr_admin" && decoded.department === "human_resource") {
+      if (
+        decoded.role === "hr_admin" &&
+        decoded.department === "human_resource"
+      ) {
         return true;
       }
     } catch (error) {
@@ -54,7 +60,7 @@ function calculateOvertimeHours(hoursWorked, workSchedule = "9:00-17:00") {
   const [startHour] = startTime.split(":").map(Number);
   const [endHour] = endTime.split(":").map(Number);
   const standardHours = endHour - startHour;
-  
+
   return Math.max(0, hoursWorked - standardHours);
 }
 
@@ -66,32 +72,33 @@ export async function GET(request) {
 
   try {
     const { searchParams } = new URL(request.url);
-    const employeeId = searchParams.get('employeeId');
-    const startDate = searchParams.get('startDate');
-    const endDate = searchParams.get('endDate');
-    
+    const employeeId = searchParams.get("employeeId");
+    const startDate = searchParams.get("startDate");
+    const endDate = searchParams.get("endDate");
+
     const { db } = await connectToDatabase();
-    
+
     let query = {};
-    
+
     // Filter by employee ID if provided
     if (employeeId) {
       query.employeeId = employeeId;
     }
-    
+
     // Filter by date range if provided
     if (startDate && endDate) {
       query.date = {
         $gte: new Date(startDate),
-        $lte: new Date(endDate)
+        $lte: new Date(endDate),
       };
     }
-    
-    const manualEntries = await db.collection("manual_time_entries")
+
+    const manualEntries = await db
+      .collection("manual_time_entries")
       .find(query)
       .sort({ date: -1, createdAt: -1 })
       .toArray();
-    
+
     return NextResponse.json(manualEntries);
   } catch (error) {
     console.error("Error fetching manual time entries:", error);
@@ -110,28 +117,34 @@ export async function POST(request) {
 
   try {
     const requestBody = await request.json();
-    console.log('Manual Time API - Received request body:', JSON.stringify(requestBody, null, 2));
-    
-    const { employeeId, date, startTime, endTime, description, projectName } = requestBody;
-    
-    console.log('Manual Time API - Extracted fields:', {
+    console.log(
+      "Manual Time API - Received request body:",
+      JSON.stringify(requestBody, null, 2)
+    );
+
+    const { employeeId, date, startTime, endTime, description, projectName } =
+      requestBody;
+
+    console.log("Manual Time API - Extracted fields:", {
       employeeId,
       date,
       startTime,
       endTime,
       description,
-      projectName
+      projectName,
     });
-    
+
     // Validate required fields
     if (!employeeId || !date || !startTime || !endTime) {
-      console.log('Manual Time API - Validation failed: Missing required fields');
+      console.log(
+        "Manual Time API - Validation failed: Missing required fields"
+      );
       return NextResponse.json(
         { message: "Employee ID, date, start time, and end time are required" },
         { status: 400 }
       );
     }
-    
+
     if (!ObjectId.isValid(employeeId)) {
       return NextResponse.json(
         { message: "Invalid employee ID" },
@@ -140,46 +153,53 @@ export async function POST(request) {
     }
 
     const { db } = await connectToDatabase();
-    
+
     // Verify employee exists
-    const employee = await db.collection("employees").findOne({ _id: new ObjectId(employeeId) });
+    const employee = await db
+      .collection("employees")
+      .findOne({ _id: new ObjectId(employeeId) });
     if (!employee) {
       return NextResponse.json(
         { message: "Employee not found" },
         { status: 404 }
       );
     }
-    
+
     // Create full datetime objects for calculation
     const entryDate = new Date(date);
     const startDateTime = new Date(`${date}T${startTime}:00`);
     const endDateTime = new Date(`${date}T${endTime}:00`);
-    
-    console.log('Manual Time API - Date/Time objects:', {
+
+    console.log("Manual Time API - Date/Time objects:", {
       entryDate: entryDate.toISOString(),
       startDateTime: startDateTime.toISOString(),
-      endDateTime: endDateTime.toISOString()
+      endDateTime: endDateTime.toISOString(),
     });
-    
+
     // Validate time range
     if (startDateTime >= endDateTime) {
-      console.log('Manual Time API - Time validation failed: End time must be after start time');
+      console.log(
+        "Manual Time API - Time validation failed: End time must be after start time"
+      );
       return NextResponse.json(
         { message: "End time must be after start time" },
         { status: 400 }
       );
     }
-    
+
     // Calculate hours worked
     const hoursWorked = calculateHoursWorked(startDateTime, endDateTime);
-    const overtimeHours = calculateOvertimeHours(hoursWorked, employee.workSchedule);
-    
-    console.log('Manual Time API - Calculated hours:', {
+    const overtimeHours = calculateOvertimeHours(
+      hoursWorked,
+      employee.workSchedule
+    );
+
+    console.log("Manual Time API - Calculated hours:", {
       hoursWorked,
       overtimeHours,
-      employeeWorkSchedule: employee.workSchedule
+      employeeWorkSchedule: employee.workSchedule,
     });
-    
+
     const newEntry = {
       employeeId: employeeId,
       employeeName: employee.name,
@@ -188,28 +208,33 @@ export async function POST(request) {
       endTime: endDateTime,
       hoursWorked: parseFloat(hoursWorked.toFixed(2)),
       overtimeHours: parseFloat(overtimeHours.toFixed(2)),
-      description: description || '',
-      projectName: projectName || '',
-      entryType: 'manual',
+      description: description || "",
+      projectName: projectName || "",
+      entryType: "manual",
       createdAt: new Date(),
-      updatedAt: new Date()
+      updatedAt: new Date(),
     };
 
-    console.log('Manual Time API - New entry object:', JSON.stringify(newEntry, null, 2));
+    console.log(
+      "Manual Time API - New entry object:",
+      JSON.stringify(newEntry, null, 2)
+    );
 
-    const result = await db.collection("manual_time_entries").insertOne(newEntry);
-    
-    console.log('Manual Time API - Database insert result:', {
+    const result = await db
+      .collection("manual_time_entries")
+      .insertOne(newEntry);
+
+    console.log("Manual Time API - Database insert result:", {
       insertedId: result.insertedId,
-      acknowledged: result.acknowledged
+      acknowledged: result.acknowledged,
     });
-    
+
     return NextResponse.json(
-      { 
-        message: "Manual time entry created successfully", 
+      {
+        message: "Manual time entry created successfully",
         id: result.insertedId,
         hoursWorked: hoursWorked.toFixed(2),
-        overtimeHours: overtimeHours.toFixed(2)
+        overtimeHours: overtimeHours.toFixed(2),
       },
       { status: 201 }
     );
@@ -229,58 +254,94 @@ export async function PUT(request) {
   }
 
   try {
-    const { id, employeeId, date, startTime, endTime, description, projectName } = await request.json();
-    
-    if (!id || !ObjectId.isValid(id)) {
+    const requestBody = await request.json();
+    const {
+      id,
+      employeeId,
+      date,
+      startTime,
+      endTime,
+      description,
+      projectName,
+    } = requestBody;
+
+    // Validate required fields
+    if (!id) {
       return NextResponse.json(
-        { message: "Valid entry ID is required" },
+        { message: "Entry ID is required" },
+        { status: 400 }
+      );
+    }
+
+    // Validate ObjectId format
+    if (!ObjectId.isValid(id)) {
+      return NextResponse.json(
+        { message: "Valid ID is required" },
         { status: 400 }
       );
     }
 
     const { db } = await connectToDatabase();
-    
+
     // Find existing entry
-    const existingEntry = await db.collection("manual_time_entries").findOne({ _id: new ObjectId(id) });
+    const existingEntry = await db
+      .collection("manual_time_entries")
+      .findOne({ _id: new ObjectId(id) });
     if (!existingEntry) {
       return NextResponse.json(
         { message: "Manual time entry not found" },
         { status: 404 }
       );
     }
-    
+
     // Get employee info for calculations
-    const employee = await db.collection("employees").findOne({ _id: new ObjectId(existingEntry.employeeId) });
-    
+    const employee = await db
+      .collection("employees")
+      .findOne({ _id: new ObjectId(existingEntry.employeeId) });
+
     const updateData = {
-      updatedAt: new Date()
+      updatedAt: new Date(),
     };
-    
+
     // Update fields if provided
     if (date) updateData.date = new Date(date);
-    if (startTime) updateData.startTime = new Date(`${date || existingEntry.date.toISOString().split('T')[0]}T${startTime}:00`);
-    if (endTime) updateData.endTime = new Date(`${date || existingEntry.date.toISOString().split('T')[0]}T${endTime}:00`);
+    if (startTime)
+      updateData.startTime = new Date(
+        `${
+          date || existingEntry.date.toISOString().split("T")[0]
+        }T${startTime}:00`
+      );
+    if (endTime)
+      updateData.endTime = new Date(
+        `${
+          date || existingEntry.date.toISOString().split("T")[0]
+        }T${endTime}:00`
+      );
     if (description !== undefined) updateData.description = description;
     if (projectName !== undefined) updateData.projectName = projectName;
-    
+
     // Recalculate hours if times are updated
     const finalStartTime = updateData.startTime || existingEntry.startTime;
     const finalEndTime = updateData.endTime || existingEntry.endTime;
-    
+
     if (finalStartTime && finalEndTime) {
       const hoursWorked = calculateHoursWorked(finalStartTime, finalEndTime);
-      const overtimeHours = calculateOvertimeHours(hoursWorked, employee?.workSchedule);
-      
+      const overtimeHours = calculateOvertimeHours(
+        hoursWorked,
+        employee?.workSchedule
+      );
+
       updateData.hoursWorked = parseFloat(hoursWorked.toFixed(2));
       updateData.overtimeHours = parseFloat(overtimeHours.toFixed(2));
     }
-    
-    await db.collection("manual_time_entries").updateOne(
-      { _id: new ObjectId(id) },
-      { $set: updateData }
-    );
-    
-    return NextResponse.json({ message: "Manual time entry updated successfully" });
+
+    await db
+      .collection("manual_time_entries")
+      .updateOne({ _id: new ObjectId(id) }, { $set: updateData });
+
+    return NextResponse.json({
+      message: "Manual time entry updated successfully",
+    });
   } catch (error) {
     console.error("Error updating manual time entry:", error);
     return NextResponse.json(
@@ -298,8 +359,8 @@ export async function DELETE(request) {
 
   try {
     const { searchParams } = new URL(request.url);
-    const id = searchParams.get('id');
-    
+    const id = searchParams.get("id");
+
     if (!id || !ObjectId.isValid(id)) {
       return NextResponse.json(
         { message: "Valid entry ID is required" },
@@ -308,17 +369,21 @@ export async function DELETE(request) {
     }
 
     const { db } = await connectToDatabase();
-    
-    const result = await db.collection("manual_time_entries").deleteOne({ _id: new ObjectId(id) });
-    
+
+    const result = await db
+      .collection("manual_time_entries")
+      .deleteOne({ _id: new ObjectId(id) });
+
     if (result.deletedCount === 0) {
       return NextResponse.json(
         { message: "Manual time entry not found" },
         { status: 404 }
       );
     }
-    
-    return NextResponse.json({ message: "Manual time entry deleted successfully" });
+
+    return NextResponse.json({
+      message: "Manual time entry deleted successfully",
+    });
   } catch (error) {
     console.error("Error deleting manual time entry:", error);
     return NextResponse.json(
