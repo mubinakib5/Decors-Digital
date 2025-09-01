@@ -4063,8 +4063,12 @@ export default function HumanResourcePage() {
                       <option value="on time">On Time</option>
                       <option value="late">Late</option>
                       <option value="absent">Absent</option>
-                      <option value="casual leave">Casual Leave</option>
                       <option value="sick leave">Sick Leave</option>
+                      <option value="casual leave">Casual Leave</option>
+                      <option value="paid leave">Paid Leave</option>
+                      <option value="half day">Half Day</option>
+                      <option value="work from home">Work From Home</option>
+                      <option value="off day">Off Day</option>
                       <option value="government vacation">
                         Government Vacation
                       </option>
