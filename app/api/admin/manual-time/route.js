@@ -64,6 +64,23 @@ function calculateOvertimeHours(hoursWorked, workSchedule = "9:00-17:00") {
   return Math.max(0, hoursWorked - standardHours);
 }
 
+// Helper function to determine attendance status
+function getAttendanceStatus(clockIn, workSchedule = "9:00-17:00") {
+  if (!clockIn) return "absent";
+  
+  const clockInTime = new Date(clockIn);
+  
+  // Set late threshold to 10:45 AM
+  const lateThreshold = new Date(clockInTime);
+  lateThreshold.setHours(10, 45, 0, 0);
+  
+  if (clockInTime <= lateThreshold) {
+    return "on time";
+  } else {
+    return "late";
+  }
+}
+
 // GET - Fetch manual time entries
 export async function GET(request) {
   if (!(await checkAuth(request))) {
@@ -187,16 +204,18 @@ export async function POST(request) {
       );
     }
 
-    // Calculate hours worked
+    // Calculate hours worked and status
     const hoursWorked = calculateHoursWorked(startDateTime, endDateTime);
     const overtimeHours = calculateOvertimeHours(
       hoursWorked,
       employee.workSchedule
     );
+    const attendanceStatus = getAttendanceStatus(startDateTime, employee.workSchedule);
 
-    console.log("Manual Time API - Calculated hours:", {
+    console.log("Manual Time API - Calculated hours and status:", {
       hoursWorked,
       overtimeHours,
+      attendanceStatus,
       employeeWorkSchedule: employee.workSchedule,
     });
 
@@ -208,6 +227,7 @@ export async function POST(request) {
       endTime: endDateTime,
       hoursWorked: parseFloat(hoursWorked.toFixed(2)),
       overtimeHours: parseFloat(overtimeHours.toFixed(2)),
+      status: attendanceStatus,
       description: description || "",
       projectName: projectName || "",
       entryType: "manual",
@@ -263,6 +283,7 @@ export async function PUT(request) {
       endTime,
       description,
       projectName,
+      status,
     } = requestBody;
 
     // Validate required fields
@@ -319,8 +340,9 @@ export async function PUT(request) {
       );
     if (description !== undefined) updateData.description = description;
     if (projectName !== undefined) updateData.projectName = projectName;
+    if (status !== undefined) updateData.status = status;
 
-    // Recalculate hours if times are updated
+    // Recalculate hours and status if times are updated
     const finalStartTime = updateData.startTime || existingEntry.startTime;
     const finalEndTime = updateData.endTime || existingEntry.endTime;
 
@@ -330,9 +352,11 @@ export async function PUT(request) {
         hoursWorked,
         employee?.workSchedule
       );
+      const attendanceStatus = getAttendanceStatus(finalStartTime, employee?.workSchedule);
 
       updateData.hoursWorked = parseFloat(hoursWorked.toFixed(2));
       updateData.overtimeHours = parseFloat(overtimeHours.toFixed(2));
+      updateData.status = attendanceStatus;
     }
 
     await db

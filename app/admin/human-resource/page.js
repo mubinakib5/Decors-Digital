@@ -54,6 +54,54 @@ export default function HumanResourcePage() {
     status: "on time",
   }); // HH:MM format
   
+  // Helper function to format time in 12-hour AM/PM format
+  const formatTime = (dateString) => {
+    if (!dateString) return 'N/A';
+    return new Date(dateString).toLocaleTimeString([], {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true
+    });
+  };
+
+  // Helper function to get descriptive report period name
+  const getReportPeriodDisplayName = (period) => {
+    const now = new Date();
+    const monthNames = [
+      'January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December'
+    ];
+
+    switch (period) {
+      case 'daily':
+        return 'Today';
+      case 'weekly':
+        return 'This Week';
+      case 'monthly':
+        return 'This Month';
+      case 'previous-month-1':
+        const prevMonth1 = new Date(now.getFullYear(), now.getMonth() - 1);
+        return `${monthNames[prevMonth1.getMonth()]} ${prevMonth1.getFullYear()}`;
+      case 'previous-month-2':
+        const prevMonth2 = new Date(now.getFullYear(), now.getMonth() - 2);
+        return `${monthNames[prevMonth2.getMonth()]} ${prevMonth2.getFullYear()}`;
+      case 'previous-month-3':
+        const prevMonth3 = new Date(now.getFullYear(), now.getMonth() - 3);
+        return `${monthNames[prevMonth3.getMonth()]} ${prevMonth3.getFullYear()}`;
+      case 'previous-month-4':
+        const prevMonth4 = new Date(now.getFullYear(), now.getMonth() - 4);
+        return `${monthNames[prevMonth4.getMonth()]} ${prevMonth4.getFullYear()}`;
+      case 'previous-month-5':
+        const prevMonth5 = new Date(now.getFullYear(), now.getMonth() - 5);
+        return `${monthNames[prevMonth5.getMonth()]} ${prevMonth5.getFullYear()}`;
+      case 'previous-month-6':
+        const prevMonth6 = new Date(now.getFullYear(), now.getMonth() - 6);
+        return `${monthNames[prevMonth6.getMonth()]} ${prevMonth6.getFullYear()}`;
+      default:
+        return period.charAt(0).toUpperCase() + period.slice(1);
+    }
+  };
+  
   // Reports Edit/Delete State
   const [showReportEditForm, setShowReportEditForm] = useState(false);
   const [editingReportRecord, setEditingReportRecord] = useState(null);
@@ -102,9 +150,9 @@ export default function HumanResourcePage() {
   const [manualTimeFormData, setManualTimeFormData] = useState({
     employeeId: "",
     date: new Date().toISOString().split("T")[0],
-    clockIn: "09:00",
-    clockOut: "17:00",
-    breakDuration: 60, // minutes
+    clockIn: "10:30",
+    clockOut: "18:30",
+    status: "on time",
     reason: "",
     notes: "",
   });
@@ -116,7 +164,7 @@ export default function HumanResourcePage() {
     employeeId: "",
     reason: "",
     notes: "",
-    dateEntries: [] // Array of {date, clockIn, clockOut, breakDuration}
+    dateEntries: [] // Array of {date, clockIn, clockOut, status}
   });
 
   const [toast, setToast] = useState({
@@ -256,6 +304,7 @@ export default function HumanResourcePage() {
         setEditingEmployee(null);
         resetEmployeeForm();
         loadData();
+          loadEmployeeStats(); // Refresh employee statistics
       } else {
         const error = await response.json();
         showToast(error.message || "Error saving employee", "error");
@@ -390,9 +439,12 @@ export default function HumanResourcePage() {
         );
       }
 
+      // Format date properly for the API
+      const formattedDate = new Date(editingAttendance.date).toISOString().split('T')[0];
+      
       const requestData = {
         employeeId: editingAttendance.employeeId,
-        date: editingAttendance.date,
+        date: formattedDate,
         clockIn: clockInDateTime ? clockInDateTime.toISOString() : null,
         clockOut: clockOutDateTime ? clockOutDateTime.toISOString() : null,
         status: editAttendanceData.status,
@@ -442,6 +494,7 @@ export default function HumanResourcePage() {
           reason: "",
         });
         loadData();
+        loadEmployeeStats(); // Refresh employee statistics
       } else {
         const error = await response.json();
         showToast(error.message || "Error submitting leave request", "error");
@@ -461,6 +514,7 @@ export default function HumanResourcePage() {
         date: manualTimeFormData.date,
         startTime: manualTimeFormData.clockIn, // Send time as HH:MM format
         endTime: manualTimeFormData.clockOut,  // Send time as HH:MM format
+        status: manualTimeFormData.status,
         description: manualTimeFormData.reason || manualTimeFormData.notes || '',
         projectName: '' // Add if needed
       };
@@ -478,6 +532,7 @@ export default function HumanResourcePage() {
         setShowManualTimeForm(false);
         resetManualTimeForm();
         loadData();
+        loadEmployeeStats(); // Refresh employee statistics
       } else {
         const error = await response.json();
         console.error('API Error:', error);
@@ -503,6 +558,7 @@ export default function HumanResourcePage() {
             date: entry.date,
             startTime: entry.clockIn, // Send time as HH:MM format
             endTime: entry.clockOut,  // Send time as HH:MM format
+            status: entry.status,
             description: bulkTimeEntry.reason || bulkTimeEntry.notes || '',
             projectName: ''
           };
@@ -531,6 +587,7 @@ export default function HumanResourcePage() {
         setShowManualTimeForm(false);
         resetBulkTimeForm();
         loadData();
+        loadEmployeeStats(); // Refresh employee statistics
       }
       
       if (errorCount > 0) {
@@ -546,9 +603,9 @@ export default function HumanResourcePage() {
     setManualTimeFormData({
       employeeId: "",
       date: new Date().toISOString().split("T")[0],
-      clockIn: "09:00",
-      clockOut: "17:00",
-      breakDuration: 60,
+      clockIn: "10:30",
+      clockOut: "18:30",
+      status: "on time",
       reason: "",
       notes: "",
     });
@@ -572,12 +629,16 @@ export default function HumanResourcePage() {
     const end = new Date(endDate);
     
     for (let date = new Date(start); date <= end; date.setDate(date.getDate() + 1)) {
-      entries.push({
-        date: date.toISOString().split('T')[0],
-        clockIn: "09:00",
-        clockOut: "17:00",
-        breakDuration: 60
-      });
+      const dayOfWeek = date.getDay();
+      // Skip Friday (5) and Saturday (6) - weekend days
+      if (dayOfWeek !== 5 && dayOfWeek !== 6) {
+        entries.push({
+          date: date.toISOString().split('T')[0],
+          clockIn: "10:30",
+          clockOut: "18:30",
+          status: "on time"
+        });
+      }
     }
     
     return entries;
@@ -716,6 +777,7 @@ export default function HumanResourcePage() {
       if (response.ok) {
         showToast(`Attendance status updated to ${newStatus}!`);
         loadData(); // Reload data to reflect changes
+        loadEmployeeStats(); // Refresh employee statistics
       } else {
         const error = await response.json();
         showToast(error.message || "Error updating attendance status", "error");
@@ -744,6 +806,7 @@ export default function HumanResourcePage() {
       if (response.ok) {
         showToast("Employee clocked in successfully!");
         loadData(); // Reload data to reflect changes
+        loadEmployeeStats(); // Refresh employee statistics
       } else {
         const error = await response.json();
         showToast(error.message || "Error clocking in employee", "error");
@@ -771,6 +834,7 @@ export default function HumanResourcePage() {
       if (response.ok) {
         showToast("Employee clocked out successfully!");
         loadData(); // Reload data to reflect changes
+        loadEmployeeStats(); // Refresh employee statistics
       } else {
         const error = await response.json();
         showToast(error.message || "Error clocking out employee", "error");
@@ -881,6 +945,7 @@ export default function HumanResourcePage() {
           fetchEmployeeReportData(selectedEmployeeForReport, reportPeriod);
         }
         loadData(); // Also refresh main data
+        loadEmployeeStats(); // Refresh employee statistics
       } else {
         const error = await response.json();
         showToast(error.message || "Error deleting record", "error");
@@ -913,7 +978,8 @@ export default function HumanResourcePage() {
           startTime: reportEditData.clockIn || null,
           endTime: reportEditData.clockOut || null,
           description: reportEditData.description,
-          projectName: reportEditData.projectName
+          projectName: reportEditData.projectName,
+          status: reportEditData.status
         };
         
         response = await fetch("/api/admin/manual-time", {
@@ -951,9 +1017,12 @@ export default function HumanResourcePage() {
           );
         }
 
+        // Format date properly for the API
+        const formattedDate = new Date(editingReportRecord.date).toISOString().split('T')[0];
+        
         const requestData = {
           employeeId: editingReportRecord.employeeId || selectedEmployeeForReport,
-          date: editingReportRecord.date,
+          date: formattedDate,
           clockIn: clockInDateTime ? clockInDateTime.toISOString() : null,
           clockOut: clockOutDateTime ? clockOutDateTime.toISOString() : null,
           status: reportEditData.status,
@@ -979,6 +1048,7 @@ export default function HumanResourcePage() {
           fetchEmployeeReportData(selectedEmployeeForReport, reportPeriod);
         }
         loadData(); // Also refresh main data
+        loadEmployeeStats(); // Refresh employee statistics
       } else {
         const error = await response.json();
         showToast(error.message || "Error updating record", "error");
@@ -993,16 +1063,18 @@ export default function HumanResourcePage() {
   const fetchEmployeeReportData = async (employeeId, period) => {
     if (!employeeId) return;
 
+    console.log('Fetching employee report data for:', { employeeId, period });
     setReportLoading(true);
     try {
-      const response = await fetch(
-        `/api/admin/employee-reports/${employeeId}?period=${period}`
-      );
+      const apiUrl = `/api/admin/employee-reports/${employeeId}?period=${period}`;
+      console.log('Making API call to:', apiUrl);
+      const response = await fetch(apiUrl);
       if (response.ok) {
         const data = await response.json();
+        console.log('Employee report data received:', data);
         setEmployeeReportData(data);
       } else {
-        console.error("Failed to fetch employee report data");
+        console.error("Failed to fetch employee report data", response.status, response.statusText);
         setEmployeeReportData(null);
       }
     } catch (error) {
@@ -1015,6 +1087,7 @@ export default function HumanResourcePage() {
 
   // Handle employee selection change
   const handleEmployeeReportChange = (employeeId) => {
+    console.log('Selected employee ID for report:', employeeId);
     setSelectedEmployeeForReport(employeeId);
     if (employeeId) {
       fetchEmployeeReportData(employeeId, reportPeriod);
@@ -1120,12 +1193,8 @@ export default function HumanResourcePage() {
         "Employee ID": employee ? employee.employeeId : "Unknown",
         Date: new Date(record.date).toLocaleDateString(),
         Status: record.status,
-        "Clock In": record.clockIn
-          ? new Date(record.clockIn).toLocaleTimeString()
-          : "N/A",
-        "Clock Out": record.clockOut
-          ? new Date(record.clockOut).toLocaleTimeString()
-          : "N/A",
+        "Clock In": formatTime(record.clockIn),
+        "Clock Out": formatTime(record.clockOut),
         "Overtime Hours": record.overtimeHours || 0,
       };
     });
@@ -1558,8 +1627,7 @@ export default function HumanResourcePage() {
                           </small>
                         </div>
                         <small className="text-muted">
-                          {record.clockIn &&
-                            new Date(record.clockIn).toLocaleTimeString()}
+                          {record.clockIn && formatTime(record.clockIn)}
                         </small>
                       </div>
                     );
@@ -1587,6 +1655,12 @@ export default function HumanResourcePage() {
                   <option value="today">Today</option>
                   <option value="week">This Week</option>
                   <option value="month">This Month</option>
+                  <option value="previous-month-1">{getReportPeriodDisplayName('previous-month-1')}</option>
+                  <option value="previous-month-2">{getReportPeriodDisplayName('previous-month-2')}</option>
+                  <option value="previous-month-3">{getReportPeriodDisplayName('previous-month-3')}</option>
+                  <option value="previous-month-4">{getReportPeriodDisplayName('previous-month-4')}</option>
+                  <option value="previous-month-5">{getReportPeriodDisplayName('previous-month-5')}</option>
+                  <option value="previous-month-6">{getReportPeriodDisplayName('previous-month-6')}</option>
                   <option value="year">This Year</option>
                 </select>
                 <select
@@ -1872,6 +1946,12 @@ export default function HumanResourcePage() {
                                       </span>
                                     </div>
                                     <div className="d-flex justify-content-between">
+                                      <span>On Time:</span>
+                                      <span className="text-success fw-bold">
+                                        {emp.attendance.onTimeDays}
+                                      </span>
+                                    </div>
+                                    <div className="d-flex justify-content-between">
                                       <span>Late:</span>
                                       <span className="text-warning fw-bold">
                                         {emp.attendance.lateDays}
@@ -1899,22 +1979,26 @@ export default function HumanResourcePage() {
                                     <div className="d-flex justify-content-between">
                                       <span>Sick:</span>
                                       <span className="text-info">
-                                        {emp.leaves.sick.taken}/
-                                        {emp.leaves.sick.available}
+                                        {emp.leaves.sick.taken} days
                                       </span>
                                     </div>
                                     <div className="d-flex justify-content-between">
                                       <span>Casual:</span>
                                       <span className="text-primary">
-                                        {emp.leaves.casual.taken}/
-                                        {emp.leaves.casual.available}
+                                        {emp.leaves.casual.taken} days
                                       </span>
                                     </div>
                                     <div className="d-flex justify-content-between">
-                                      <span>Annual:</span>
+                                      <span>Holidays:</span>
                                       <span className="text-success">
-                                        {emp.leaves.annual.taken}/
-                                        {emp.leaves.annual.available}
+                                        {emp.leaves.annual.taken} days
+                                      </span>
+                                    </div>
+                                    <div className="d-flex justify-content-between">
+                                      <span>Paid:</span>
+                                      <span className="text-warning">
+                                        {emp.leaves.paid.taken}/
+                                        {emp.leaves.paid.available}
                                       </span>
                                     </div>
                                     <div className="d-flex justify-content-between">
@@ -2127,22 +2211,26 @@ export default function HumanResourcePage() {
                                     <div className="d-flex justify-content-between">
                                       <span>Sick:</span>
                                       <span className="text-info">
-                                        {emp.leaves.sick.taken}/
-                                        {emp.leaves.sick.available}
+                                        {emp.leaves.sick.taken} days
                                       </span>
                                     </div>
                                     <div className="d-flex justify-content-between">
                                       <span>Casual:</span>
                                       <span className="text-primary">
-                                        {emp.leaves.casual.taken}/
-                                        {emp.leaves.casual.available}
+                                        {emp.leaves.casual.taken} days
                                       </span>
                                     </div>
                                     <div className="d-flex justify-content-between">
-                                      <span>Annual:</span>
+                                      <span>Holidays:</span>
                                       <span className="text-success">
-                                        {emp.leaves.annual.taken}/
-                                        {emp.leaves.annual.available}
+                                        {emp.leaves.annual.taken} days
+                                      </span>
+                                    </div>
+                                    <div className="d-flex justify-content-between">
+                                      <span>Paid:</span>
+                                      <span className="text-warning">
+                                        {emp.leaves.paid.taken}/
+                                        {emp.leaves.paid.available}
                                       </span>
                                     </div>
                                     <div className="d-flex justify-content-between">
@@ -2489,18 +2577,10 @@ export default function HumanResourcePage() {
                               </select>
                             </td>
                             <td>
-                              {todayAttendance?.clockIn
-                                ? new Date(
-                                    todayAttendance.clockIn
-                                  ).toLocaleTimeString()
-                                : "N/A"}
+                              {formatTime(todayAttendance?.clockIn)}
                             </td>
                             <td>
-                              {todayAttendance?.clockOut
-                                ? new Date(
-                                    todayAttendance.clockOut
-                                  ).toLocaleTimeString()
-                                : "N/A"}
+                              {formatTime(todayAttendance?.clockOut)}
                             </td>
                             <td>{todayAttendance?.overtimeHours || 0} hours</td>
                             <td>
@@ -2779,9 +2859,15 @@ export default function HumanResourcePage() {
                       value={reportPeriod}
                       onChange={(e) => handleReportPeriodChange(e.target.value)}
                     >
-                      <option value="daily">Daily</option>
-                      <option value="weekly">Weekly</option>
-                      <option value="monthly">Monthly</option>
+                      <option value="daily">Today</option>
+                      <option value="weekly">This Week</option>
+                      <option value="monthly">This Month</option>
+                      <option value="previous-month-1">{getReportPeriodDisplayName('previous-month-1')}</option>
+                      <option value="previous-month-2">{getReportPeriodDisplayName('previous-month-2')}</option>
+                      <option value="previous-month-3">{getReportPeriodDisplayName('previous-month-3')}</option>
+                      <option value="previous-month-4">{getReportPeriodDisplayName('previous-month-4')}</option>
+                      <option value="previous-month-5">{getReportPeriodDisplayName('previous-month-5')}</option>
+                      <option value="previous-month-6">{getReportPeriodDisplayName('previous-month-6')}</option>
                     </select>
                   </div>
                 </div>
@@ -2860,8 +2946,7 @@ export default function HumanResourcePage() {
                           <i className="fas fa-calendar-alt fa-2x text-success mb-2"></i>
                           <h6>Report Period</h6>
                           <p className="fw-bold">
-                            {reportPeriod.charAt(0).toUpperCase() +
-                              reportPeriod.slice(1)}
+                            {getReportPeriodDisplayName(reportPeriod)}
                           </p>
                           <small className="text-muted">
                             {employeeReportData.dateRange.start} to{" "}
@@ -3126,20 +3211,10 @@ export default function HumanResourcePage() {
                                   {new Date(record.date).toLocaleDateString()}
                                 </td>
                                 <td>
-                                  {record.clockIn
-                                    ? new Date(record.clockIn).toLocaleTimeString([], {
-                                        hour: '2-digit',
-                                        minute: '2-digit'
-                                      })
-                                    : '-'}
+                                  {record.clockIn ? formatTime(record.clockIn) : '-'}
                                 </td>
                                 <td>
-                                  {record.clockOut
-                                    ? new Date(record.clockOut).toLocaleTimeString([], {
-                                        hour: '2-digit',
-                                        minute: '2-digit'
-                                      })
-                                    : '-'}
+                                  {record.clockOut ? formatTime(record.clockOut) : '-'}
                                 </td>
                                 <td>
                                   <span
@@ -3697,7 +3772,7 @@ export default function HumanResourcePage() {
                     />
                     <div className="form-text">
                       <i className="fas fa-info-circle me-1"></i>
-                      Current time: {new Date().toLocaleTimeString()}
+                      Current time: {formatTime(new Date().toISOString())}
                     </div>
                   </div>
 
@@ -3783,6 +3858,7 @@ export default function HumanResourcePage() {
                   >
                     <option value="sick">Sick Leave</option>
                     <option value="casual">Casual Leave</option>
+                    <option value="paid">Paid Leave</option>
                   </select>
                 </div>
 
@@ -4214,16 +4290,23 @@ export default function HumanResourcePage() {
                               />
                             </div>
                             <div className="col-md-3">
-                              <label className="form-label small">Break (min)</label>
-                              <input
-                                type="number"
-                                min="0"
-                                max="480"
-                                value={entry.breakDuration}
-                                onChange={(e) => updateDateEntry(index, 'breakDuration', parseInt(e.target.value) || 0)}
-                                className="form-control form-control-sm border-2"
+                              <label className="form-label small">Status</label>
+                              <select
+                                value={entry.status}
+                                onChange={(e) => updateDateEntry(index, 'status', e.target.value)}
+                                className="form-select form-select-sm border-2"
                                 style={{ borderColor: "#245e99" }}
-                              />
+                              >
+                                <option value="on time">On Time</option>
+                                <option value="late">Late</option>
+                                <option value="absent">Absent</option>
+                                <option value="sick leave">Sick Leave</option>
+                                <option value="casual leave">Casual Leave</option>
+                                <option value="paid leave">Paid Leave</option>
+                                <option value="half day">Half Day</option>
+                                <option value="work from home">Work From Home</option>
+                                <option value="off day">Off Day</option>
+                              </select>
                             </div>
                           </div>
                         ))}
@@ -4272,32 +4355,36 @@ export default function HumanResourcePage() {
                     </div>
                   )}
 
-                  {/* Break Duration and Reason - Only for Single Mode */}
+                  {/* Status and Reason - Only for Single Mode */}
                   {!bulkTimeEntry.isBulkMode && (
                     <div className="row">
                       <div className="col-md-6 mb-3">
                         <label className="form-label fw-medium">
-                          <i className="fas fa-coffee me-2 text-info"></i>
-                          Break Duration (minutes)
+                          <i className="fas fa-info-circle me-2 text-info"></i>
+                          Status *
                         </label>
-                        <input
-                          type="number"
-                          min="0"
-                          max="480"
-                          value={manualTimeFormData.breakDuration}
+                        <select
+                          required
+                          value={manualTimeFormData.status}
                           onChange={(e) =>
                             setManualTimeFormData({
                               ...manualTimeFormData,
-                              breakDuration: parseInt(e.target.value) || 0,
+                              status: e.target.value,
                             })
                           }
-                          className="form-control border-2"
+                          className="form-select border-2"
                           style={{ borderColor: "#245e99" }}
-                        />
-                        <div className="form-text">
-                          <i className="fas fa-info-circle me-1"></i>
-                          Default: 60 minutes
-                        </div>
+                        >
+                          <option value="on time">On Time</option>
+                          <option value="late">Late</option>
+                          <option value="absent">Absent</option>
+                          <option value="sick leave">Sick Leave</option>
+                          <option value="casual leave">Casual Leave</option>
+                          <option value="paid leave">Paid Leave</option>
+                          <option value="half day">Half Day</option>
+                          <option value="work from home">Work From Home</option>
+                          <option value="off day">Off Day</option>
+                        </select>
                       </div>
                       <div className="col-md-6 mb-3">
                         <label className="form-label fw-medium">
@@ -4492,29 +4579,30 @@ export default function HumanResourcePage() {
                   </div>
                 </div>
                 
-                {editingReportRecord?.entryType !== 'manual' && (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Status
-                    </label>
-                    <select
-                      value={reportEditData.status}
-                      onChange={(e) =>
-                        setReportEditData({
-                          ...reportEditData,
-                          status: e.target.value,
-                        })
-                      }
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                    >
-                      <option value="on time">On Time</option>
-                      <option value="late">Late</option>
-                      <option value="absent">Absent</option>
-                      <option value="present">Present</option>
-                      <option value="half day">Half Day</option>
-                    </select>
-                  </div>
-                )}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Status
+                  </label>
+                  <select
+                    value={reportEditData.status}
+                    onChange={(e) =>
+                      setReportEditData({
+                        ...reportEditData,
+                        status: e.target.value,
+                      })
+                    }
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                  >
+                    <option value="on time">On Time</option>
+                    <option value="late">Late</option>
+                    <option value="absent">Absent</option>
+                    <option value="present">Present</option>
+                    <option value="half day">Half Day</option>
+                    <option value="casual leave">Casual Leave</option>
+                    <option value="sick leave">Sick Leave</option>
+                    <option value="government vacation">Government Vacation</option>
+                  </select>
+                </div>
                 
                 {editingReportRecord?.entryType === 'manual' && (
                   <>

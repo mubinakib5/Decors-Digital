@@ -24,7 +24,35 @@ function getDateRange(period) {
       end.setHours(23, 59, 59, 999);
       break;
     case 'monthly':
+      start = new Date(now.getFullYear(), now.getMonth(), 1);
+      end = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+      break;
+    case 'previous-month-1':
+      start = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+      end = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59, 999);
+      break;
+    case 'previous-month-2':
+      start = new Date(now.getFullYear(), now.getMonth() - 2, 1);
+      end = new Date(now.getFullYear(), now.getMonth() - 1, 0, 23, 59, 59, 999);
+      break;
+    case 'previous-month-3':
+      start = new Date(now.getFullYear(), now.getMonth() - 3, 1);
+      end = new Date(now.getFullYear(), now.getMonth() - 2, 0, 23, 59, 59, 999);
+      break;
+    case 'previous-month-4':
+      start = new Date(now.getFullYear(), now.getMonth() - 4, 1);
+      end = new Date(now.getFullYear(), now.getMonth() - 3, 0, 23, 59, 59, 999);
+      break;
+    case 'previous-month-5':
+      start = new Date(now.getFullYear(), now.getMonth() - 5, 1);
+      end = new Date(now.getFullYear(), now.getMonth() - 4, 0, 23, 59, 59, 999);
+      break;
+    case 'previous-month-6':
+      start = new Date(now.getFullYear(), now.getMonth() - 6, 1);
+      end = new Date(now.getFullYear(), now.getMonth() - 5, 0, 23, 59, 59, 999);
+      break;
     default:
+      // Default to current month
       start = new Date(now.getFullYear(), now.getMonth(), 1);
       end = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
       break;
@@ -61,9 +89,9 @@ function calculateAttendanceChartData(attendanceRecords, leaveRecords, period) {
     totalDays: 0
   };
 
-  // Count attendance records
+  // Count attendance records (includes both regular attendance and manual entries)
   attendanceRecords.forEach(record => {
-    if (record.status === 'on time') {
+    if (record.status === 'on time' || record.status === 'present') {
       stats.onTime++;
     } else if (record.status === 'late') {
       stats.late++;
@@ -190,7 +218,6 @@ export async function GET(request, { params }) {
       .toArray();
 
     // Get manual time entries for the period
-    // Get manual time entries for the period
     const manualTimeEntries = await db.collection("manual_time_entries")
       .find({
         employeeId: id,
@@ -198,7 +225,7 @@ export async function GET(request, { params }) {
       })
       .sort({ date: 1 })
       .toArray();
-
+    
     // Convert manual time entries to attendance record format
     const manualAttendanceRecords = manualTimeEntries.map(entry => {
       // Skip entries with invalid dates (Unix epoch indicates corrupted data)
@@ -206,10 +233,6 @@ export async function GET(request, { params }) {
       const isValidEndTime = entry.endTime && entry.endTime.getTime() > 0;
       
       if (!isValidStartTime || !isValidEndTime) {
-        console.warn(`Skipping manual entry ${entry._id} with invalid dates:`, {
-          startTime: entry.startTime,
-          endTime: entry.endTime
-        });
         return null; // Will be filtered out
       }
       
