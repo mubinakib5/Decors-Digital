@@ -48,7 +48,7 @@ export default clientPromise;
 export async function connectToDatabase() {
   try {
     const client = await clientPromise;
-    const db = client.db('hr_system'); // Use a specific database name
+    const db = client.db('admin_system'); // Use a specific database name
     return { client, db };
   } catch (error) {
     console.error('Failed to connect to database:', error);

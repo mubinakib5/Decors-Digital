@@ -14,30 +14,8 @@ export function middleware(request) {
   }
   
   // Allow access to login pages and prevent redirect loops
-  if (pathname === '/admin/login' || pathname.startsWith('/admin/login/') ||
-      pathname === '/admin/human-resource/login' || pathname.startsWith('/admin/human-resource/login/')) {
+  if (pathname === '/admin/login' || pathname.startsWith('/admin/login/')) {
     return NextResponse.next();
-  }
-  
-  // Handle HR routes with separate authentication
-  if (pathname.startsWith('/admin/human-resource')) {
-    const hrToken = request.cookies.get('hr-admin-token');
-    
-    if (!hrToken) {
-      const loginUrl = new URL('/admin/human-resource/login', request.url);
-      loginUrl.searchParams.set('redirect', pathname);
-      return NextResponse.redirect(loginUrl);
-    }
-    
-    // For Edge Runtime compatibility, we'll do basic token existence check
-    // Full JWT verification will be done in API routes
-    if (hrToken && hrToken.value && hrToken.value.length > 10) {
-      return NextResponse.next();
-    } else {
-      const loginUrl = new URL('/admin/human-resource/login', request.url);
-      loginUrl.searchParams.set('redirect', pathname);
-      return NextResponse.redirect(loginUrl);
-    }
   }
   
   // Check authentication for other admin routes using regular admin token

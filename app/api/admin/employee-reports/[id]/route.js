@@ -141,32 +141,17 @@ function calculateAttendanceChartData(attendanceRecords, leaveRecords, period) {
 // Force dynamic rendering for API routes
 export const dynamic = "force-dynamic";
 
-// Middleware to check authentication (supports both admin and HR tokens)
+// Middleware to check authentication (admin only)
 async function checkAuth(request) {
   const cookieStore = await cookies();
   const adminToken = cookieStore.get("admin-token");
-  const hrToken = cookieStore.get("hr-admin-token");
 
-  // Try admin token first
   if (adminToken) {
     try {
       jwt.verify(adminToken.value, process.env.JWT_SECRET || "fallback-secret");
       return true;
     } catch (error) {
-      // Continue to try HR token
-    }
-  }
-
-  // Try HR token
-  if (hrToken) {
-    try {
-      const decoded = jwt.verify(hrToken.value, process.env.JWT_SECRET || "fallback-secret");
-      // Verify HR role
-      if (decoded.role === "hr_admin" && decoded.department === "human_resource") {
-        return true;
-      }
-    } catch (error) {
-      // Token invalid
+      return false;
     }
   }
 
