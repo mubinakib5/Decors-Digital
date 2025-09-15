@@ -190,4 +190,8 @@ export const COMPANY_INFO = {
   name: "Decor's Digital",
   tagline: "We create high-performing digital solutions that elevate brands and enhance conversions.",
   description: "We craft innovative digital solutions that amplify brand identity and drive meaningful results",
+  mission: "At Decor's Digital, we aim to empower brands by crafting integrated, innovative marketing strategies that fuel evolution and resonate deeply with audiences.",
+  vision: "We visualize a world where digital innovation and meaningful brand communication lead the way in transforming businesses. As a partner in your growth journey, we harness the power of creativity, technology, and strategic insight to create impactful solutions that inspire, connect, and elevate brands to new heights.",
+  purpose: "Our vision is to trigger your brand's evolution, shaping the future of marketing with every strategy, every campaign, and every interaction.",
+  fullDescription: "At Decor's Digital, we aim to empower brands by crafting integrated, innovative marketing strategies that fuel evolution and resonate deeply with audiences. We visualize a world where digital innovation and meaningful brand communication lead the way in transforming businesses. As a partner in your growth journey, we harness the power of creativity, technology, and strategic insight to create impactful solutions that inspire, connect, and elevate brands to new heights. Our vision is to trigger your brand's evolution, shaping the future of marketing with every strategy, every campaign, and every interaction."
 };

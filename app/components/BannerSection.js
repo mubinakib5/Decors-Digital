@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { CALENDLY_URL } from "../constants";
+import { CALENDLY_URL, COMPANY_INFO } from "../constants";
 
 export default function BannerSection() {
   const handleBookCall = () => {
@@ -42,9 +42,7 @@ export default function BannerSection() {
                   className="img-fluid animate-spin"
                 />
                 <p className="mb-0 text-white fs-5 text-opacity-70">
-                  We create
-                  <span className="text-primary"> high-performing</span> digital
-                  solutions that elevate brands and enhance conversions.
+                  {COMPANY_INFO.mission}
                 </p>
               </div>
             </div>

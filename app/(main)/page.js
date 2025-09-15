@@ -14,7 +14,7 @@ import { COMPANY_INFO } from "../constants";
 
 export const metadata = {
   title: COMPANY_INFO.name,
-  description: COMPANY_INFO.tagline,
+  description: COMPANY_INFO.fullDescription,
   keywords: [
     "digital agency",
     "web development",
@@ -26,12 +26,16 @@ export const metadata = {
     "SaaS development",
     "motion graphics",
     "3D modeling",
+    "integrated marketing strategies",
+    "brand evolution",
+    "digital innovation",
+    "creative solutions",
     "Chattogram",
     "Bangladesh",
   ],
   openGraph: {
     title: COMPANY_INFO.name,
-    description: COMPANY_INFO.tagline,
+    description: COMPANY_INFO.fullDescription,
     url: "https://decorsdigital.com",
     siteName: COMPANY_INFO.name,
     images: [
@@ -48,7 +52,7 @@ export const metadata = {
   twitter: {
     card: "summary_large_image",
     title: COMPANY_INFO.name,
-    description: COMPANY_INFO.tagline,
+    description: COMPANY_INFO.fullDescription,
     images: ["/assets/images/logos/logo-dark.png"],
   },
   alternates: {

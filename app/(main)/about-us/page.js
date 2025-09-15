@@ -5,6 +5,7 @@ import Link from 'next/link';
 import AosInit from '../../components/AosInit';
 import Footer from '../../components/Footer';
 import { teamData } from '../../data';
+import { COMPANY_INFO } from '../../constants';
 
 export default function AboutUs() {
   return (
@@ -93,26 +94,26 @@ export default function AboutUs() {
                     data-aos-delay="200"
                     data-aos-duration="1000"
                   >
-                    <p className="mb-0 fs-5 text-dark">
-                      It's a canvas for your creativity. It's your opportunity to
-                      transform bold ideas into dynamic, interactive experiences.
-                      Your work can shape identities, tell compelling stories, or
-                      spark meaningful change. As the digital landscape grows, so
-                      do the possibilities. And whether you thrive working
-                      remotely or in a buzzing agency space, the thrill of seeing
-                      your vision come to life is unmatched.
-                    </p>
-                    <p className="mb-0 fs-5 text-dark">
-                      At Studiova, we bring ideas to life through a range of
-                      services: branding, web development, agency solutions,
-                      content creation, SaaS, and motion & 3D modeling. As a web
-                      designer, you merge artistry and technology to craft
-                      "digital experiences" that inform, captivate, and inspire.
-                      Every day brings something new — one moment you're sketching
-                      innovative concepts, the next you're turning them into
-                      seamless, responsive designs. Web design keeps you pushing
-                      boundaries and creating at every turn!
-                    </p>
+                    <div className="d-flex flex-column gap-4">
+                      <h3 className="mb-0 fs-6 text-primary fw-bold">Our Mission</h3>
+                      <p className="mb-0 fs-5 text-dark">
+                        {COMPANY_INFO.mission}
+                      </p>
+                    </div>
+                    
+                    <div className="d-flex flex-column gap-4">
+                      <h3 className="mb-0 fs-6 text-primary fw-bold">Our Vision</h3>
+                      <p className="mb-0 fs-5 text-dark">
+                        {COMPANY_INFO.vision}
+                      </p>
+                    </div>
+                    
+                    <div className="d-flex flex-column gap-4">
+                      <h3 className="mb-0 fs-6 text-primary fw-bold">Our Purpose</h3>
+                      <p className="mb-0 fs-5 text-dark">
+                        {COMPANY_INFO.purpose}
+                      </p>
+                    </div>
                   </div>
                 </div>
               </div>
