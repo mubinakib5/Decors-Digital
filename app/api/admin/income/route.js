@@ -1,12 +1,28 @@
 import { verify } from "jsonwebtoken";
+import { getToken } from "next-auth/jwt";
 import { NextResponse } from "next/server";
 import clientPromise from "../../../utils/mongodb";
 
 // Force dynamic rendering for API routes
 export const dynamic = "force-dynamic";
 
-// Middleware to verify authentication
+// Middleware to verify authentication (supports both NextAuth and legacy tokens)
 async function verifyAuth(request) {
+  // First try NextAuth token
+  try {
+    const nextAuthToken = await getToken({ 
+      req: request, 
+      secret: process.env.NEXTAUTH_SECRET 
+    });
+    
+    if (nextAuthToken && nextAuthToken.role === 'admin') {
+      return { user: { username: nextAuthToken.name || nextAuthToken.email } };
+    }
+  } catch (error) {
+    // NextAuth token verification failed, continue to legacy token
+  }
+
+  // Fallback to legacy token
   const token = request.cookies.get("admin-token")?.value;
 
   if (!token) {

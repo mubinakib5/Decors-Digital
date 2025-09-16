@@ -1,0 +1,101 @@
+import { NextResponse } from 'next/server';
+import { MongoClient } from 'mongodb';
+import bcrypt from 'bcryptjs';
+
+const client = new MongoClient(process.env.MONGODB_URI);
+
+export async function POST(request) {
+  try {
+    const { username, email, password, name } = await request.json();
+
+    // Validate required fields
+    if (!username || !email || !password) {
+      return NextResponse.json(
+        { error: 'Username, email, and password are required' },
+        { status: 400 }
+      );
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return NextResponse.json(
+        { error: 'Invalid email format' },
+        { status: 400 }
+      );
+    }
+
+    // Validate password strength
+    if (password.length < 6) {
+      return NextResponse.json(
+        { error: 'Password must be at least 6 characters long' },
+        { status: 400 }
+      );
+    }
+
+    // Connect to MongoDB
+    await client.connect();
+    const db = client.db('decors_digital');
+    const usersCollection = db.collection('users');
+
+    // Check if user already exists
+    const existingUser = await usersCollection.findOne({
+      $or: [
+        { username: username },
+        { email: email }
+      ]
+    });
+
+    if (existingUser) {
+      return NextResponse.json(
+        { error: 'User with this username or email already exists' },
+        { status: 409 }
+      );
+    }
+
+    // Hash password
+    const saltRounds = 12;
+    const hashedPassword = await bcrypt.hash(password, saltRounds);
+
+    // Create user object
+    const newUser = {
+      username,
+      email,
+      name: name || username,
+      password: hashedPassword,
+      role: 'user',
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+
+    // Insert user into database
+    const result = await usersCollection.insertOne(newUser);
+
+    // Return success response (without password)
+    const userResponse = {
+      id: result.insertedId,
+      username: newUser.username,
+      email: newUser.email,
+      name: newUser.name,
+      role: newUser.role,
+      createdAt: newUser.createdAt
+    };
+
+    return NextResponse.json(
+      { 
+        message: 'User registered successfully',
+        user: userResponse
+      },
+      { status: 201 }
+    );
+
+  } catch (error) {
+    console.error('Registration error:', error);
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
+  } finally {
+    await client.close();
+  }
+}

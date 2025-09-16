@@ -1,0 +1,171 @@
+import NextAuth from "next-auth";
+import CredentialsProvider from "next-auth/providers/credentials";
+import { MongoClient } from "mongodb";
+import bcrypt from "bcryptjs";
+
+console.log("NextAuth route file loaded");
+
+const client = new MongoClient(process.env.MONGODB_URI);
+
+const authOptions = {
+  providers: [
+    CredentialsProvider({
+      id: "credentials", 
+      name: "credentials",
+      credentials: {
+        username: { label: "Username", type: "text" },
+        password: { label: "Password", type: "password" },
+        rememberMe: { label: "Remember Me", type: "checkbox" }
+      },
+      async authorize(credentials, req) {
+        console.log("=== AUTHORIZE FUNCTION CALLED ===");
+        console.log("Credentials received:", credentials);
+        
+        if (!credentials?.username || !credentials?.password) {
+          console.log("NextAuth - Missing credentials");
+          return null;
+        }
+
+        try {
+          // First check environment admin credentials
+          const adminUsername = process.env.ADMIN_USERNAME;
+          const adminPassword = process.env.ADMIN_PASSWORD;
+
+          console.log("Admin credentials from env:", { 
+            adminUsername, 
+            adminPassword: adminPassword ? "SET" : "NOT SET" 
+          });
+
+          if (adminUsername && adminPassword && 
+              credentials.username === adminUsername && 
+              credentials.password === adminPassword) {
+            console.log("NextAuth - Environment admin authentication successful");
+            return {
+              id: "admin",
+              name: "Admin",
+              email: "admin@decordigital.com",
+              role: "admin",
+              username: adminUsername
+            };
+          }
+
+          // Connect to MongoDB and check users collection
+          console.log("NextAuth - Connecting to MongoDB for user authentication");
+          await client.connect();
+          const db = client.db('decors_digital');
+          const usersCollection = db.collection('users');
+
+          // Find user by username or email
+          const user = await usersCollection.findOne({
+            $or: [
+              { username: credentials.username },
+              { email: credentials.username }
+            ]
+          });
+
+          console.log("NextAuth - User found in database:", user ? "YES" : "NO");
+
+          if (user) {
+            console.log("NextAuth - User details:", {
+              id: user._id,
+              username: user.username,
+              email: user.email,
+              role: user.role,
+              hasPassword: !!user.password
+            });
+
+            // Verify password
+            const isPasswordValid = await bcrypt.compare(credentials.password, user.password);
+            console.log("NextAuth - Password validation:", isPasswordValid);
+
+            if (isPasswordValid) {
+              console.log("NextAuth - User authentication successful");
+              return {
+                id: user._id.toString(),
+                name: user.name || user.username,
+                email: user.email,
+                role: user.role || "user",
+                username: user.username
+              };
+            } else {
+              console.log("NextAuth - Password validation failed");
+            }
+          }
+
+          console.log("NextAuth - Authentication failed for:", credentials.username);
+          return null;
+
+        } catch (error) {
+          console.error("NextAuth - Authentication error:", error);
+          return null;
+        } finally {
+          try {
+            await client.close();
+          } catch (closeError) {
+            console.error("NextAuth - Error closing MongoDB connection:", closeError);
+          }
+        }
+      }
+    })
+  ],
+  session: {
+    strategy: "jwt",
+    maxAge: 24 * 60 * 60,
+  },
+  jwt: {
+    maxAge: 24 * 60 * 60,
+  },
+  callbacks: {
+    async jwt({ token, user, account }) {
+      console.log("NextAuth - JWT callback called");
+      console.log("NextAuth - JWT token:", token);
+      console.log("NextAuth - JWT user:", user);
+      console.log("NextAuth - JWT account:", account);
+      
+      if (user) {
+        token.role = user.role;
+        token.username = user.username;
+        
+        // Set token expiration based on rememberMe
+        if (user.rememberMe === "on" || user.rememberMe === true) {
+          token.exp = Math.floor(Date.now() / 1000) + (30 * 24 * 60 * 60); // 30 days
+          console.log("NextAuth - JWT token set to 30 days");
+        } else {
+          token.exp = Math.floor(Date.now() / 1000) + (24 * 60 * 60); // 1 day
+          console.log("NextAuth - JWT token set to 1 day");
+        }
+      }
+      
+      console.log("NextAuth - JWT token after processing:", token);
+      return token;
+    },
+    async session({ session, token }) {
+      console.log("NextAuth - Session callback called");
+      console.log("NextAuth - Session token:", token);
+      
+      if (token) {
+        session.user.role = token.role;
+        session.user.username = token.username;
+        session.user.id = token.sub;
+      }
+      
+      console.log("NextAuth - Session after processing:", session);
+      return session;
+    },
+    async redirect({ url, baseUrl }) {
+      // Handle redirects after sign in
+      if (url.startsWith("/")) return `${baseUrl}${url}`;
+      else if (new URL(url).origin === baseUrl) return url;
+      return baseUrl;
+    }
+  },
+  pages: {
+    signIn: "/admin/auth/signin",
+    signUp: "/admin/auth/signup",
+    error: "/admin/auth/error"
+  },
+  secret: process.env.NEXTAUTH_SECRET,
+};
+
+const handler = NextAuth(authOptions);
+export { handler as GET, handler as POST };

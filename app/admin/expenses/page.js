@@ -2,6 +2,7 @@
 
 import { ArcElement, Chart as ChartJS, Legend, Tooltip } from "chart.js";
 import jsPDF from "jspdf";
+import { useSession, signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Pie } from "react-chartjs-2";
@@ -10,6 +11,8 @@ import { Pie } from "react-chartjs-2";
 ChartJS.register(ArcElement, Tooltip, Legend);
 
 export default function FinancialManagementPage() {
+  const { data: session, status } = useSession();
+  const router = useRouter();
   const [expenses, setExpenses] = useState([]);
   const [income, setIncome] = useState([]);
   const [filteredExpenses, setFilteredExpenses] = useState([]);
@@ -58,8 +61,6 @@ export default function FinancialManagementPage() {
     subcategories: [],
   });
   const [newSubcategory, setNewSubcategory] = useState("");
-
-  const router = useRouter();
 
   // Toast notification helper
   const showToast = (message, type = "success") => {
@@ -152,8 +153,16 @@ export default function FinancialManagementPage() {
   ];
 
   useEffect(() => {
-    fetchData();
-  }, []);
+    // Redirect to signin if not authenticated
+    if (status === "loading") return; // Still loading
+    if (status === "unauthenticated") {
+      router.push("/admin/auth/signin");
+      return;
+    }
+    if (session) {
+      fetchData();
+    }
+  }, [session, status, router]);
 
   useEffect(() => {
     applyFilters();
@@ -181,7 +190,7 @@ export default function FinancialManagementPage() {
         const expensesData = await expensesResponse.json();
         setExpenses(expensesData.expenses);
       } else if (expensesResponse.status === 401) {
-        router.push("/admin/login");
+        router.push("/admin/auth/signin");
         return;
       }
 
@@ -189,7 +198,7 @@ export default function FinancialManagementPage() {
         const incomeData = await incomeResponse.json();
         setIncome(incomeData.income);
       } else if (incomeResponse.status === 401) {
-        router.push("/admin/login");
+        router.push("/admin/auth/signin");
         return;
       }
 
@@ -197,7 +206,7 @@ export default function FinancialManagementPage() {
         const categoriesData = await categoriesResponse.json();
         setCategories(categoriesData.categories);
       } else if (categoriesResponse.status === 401) {
-        router.push("/admin/login");
+        router.push("/admin/auth/signin");
         return;
       }
     } catch (error) {
@@ -450,19 +459,12 @@ export default function FinancialManagementPage() {
 
   const handleLogout = async () => {
     try {
-      const response = await fetch("/api/admin/logout", {
-        method: "POST",
+      showToast("Logging out...");
+      // Use NextAuth signOut
+      await signOut({ 
+        callbackUrl: "/admin/auth/signin",
+        redirect: true 
       });
-
-      if (response.ok) {
-        showToast("Logged out successfully!");
-        // Redirect to login page after a short delay
-        setTimeout(() => {
-          router.push("/admin/login");
-        }, 1000);
-      } else {
-        showToast("Failed to logout", "error");
-      }
     } catch (error) {
       showToast("Failed to logout", "error");
     }
