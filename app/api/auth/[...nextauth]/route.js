@@ -52,7 +52,7 @@ const authOptions = {
           // Connect to MongoDB and check users collection
           console.log("NextAuth - Connecting to MongoDB for user authentication");
           await client.connect();
-          const db = client.db('decors_digital');
+          const db = client.db('expense_tracker');
           const usersCollection = db.collection('users');
 
           // Find user by username or email

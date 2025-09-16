@@ -36,7 +36,7 @@ export async function middleware(request) {
   console.log('Middleware - Pathname:', pathname);
   console.log('Middleware - Full token details:', nextAuthToken);
   
-  if (nextAuthToken && (nextAuthToken.role === 'admin' || nextAuthToken.role === 'user')) {
+  if (nextAuthToken && nextAuthToken.role === 'admin') {
     console.log('Middleware - NextAuth authentication successful');
     return NextResponse.next();
   }

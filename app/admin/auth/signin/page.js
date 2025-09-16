@@ -57,9 +57,21 @@ function SignInContent() {
         console.log("Sign in error:", result.error);
         setError("Invalid credentials. Please try again.");
       } else if (result?.ok) {
-        console.log("Sign in successful, redirecting immediately...");
-        // Use window.location for immediate redirect
-        window.location.href = "/admin/expenses";
+        console.log("Sign in successful, checking session...");
+        
+        // Wait a moment for the session to be established
+        setTimeout(async () => {
+          const session = await getSession();
+          console.log("Session after signin:", session);
+          
+          if (session?.user?.role === "admin") {
+            console.log("Admin role confirmed, redirecting...");
+            window.location.href = "/admin/expenses";
+          } else {
+            console.log("Not admin role, showing error");
+            setError("Access denied. Admin privileges required.");
+          }
+        }, 100);
         return;
       } else {
         setError("Invalid credentials. Please try again.");
