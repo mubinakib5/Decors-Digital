@@ -165,6 +165,8 @@ const authOptions = {
     error: "/admin/auth/error"
   },
   secret: process.env.NEXTAUTH_SECRET,
+  // Automatically detect URL in production
+  url: process.env.NEXTAUTH_URL || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000'),
 };
 
 const handler = NextAuth(authOptions);
