@@ -5,6 +5,25 @@ import bcrypt from "bcryptjs";
 
 console.log("NextAuth route file loaded");
 
+// Validate required environment variables
+const requiredEnvVars = {
+  MONGODB_URI: process.env.MONGODB_URI,
+  NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET,
+  ADMIN_USERNAME: process.env.ADMIN_USERNAME,
+  ADMIN_PASSWORD: process.env.ADMIN_PASSWORD
+};
+
+const missingVars = Object.entries(requiredEnvVars)
+  .filter(([key, value]) => !value)
+  .map(([key]) => key);
+
+if (missingVars.length > 0) {
+  console.error("NextAuth - Missing required environment variables:", missingVars);
+  throw new Error(`Missing required environment variables: ${missingVars.join(', ')}`);
+}
+
+console.log("NextAuth - All required environment variables are present");
+
 const client = new MongoClient(process.env.MONGODB_URI);
 
 const authOptions = {
@@ -207,6 +226,26 @@ const authOptions = {
   secret: process.env.NEXTAUTH_SECRET,
   // Automatically detect URL in production
   url: process.env.NEXTAUTH_URL || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000'),
+  
+  // Add error handling for configuration issues
+  events: {
+    async signIn({ user, account, profile, isNewUser }) {
+      console.log("NextAuth - Sign in event:", { user: user?.email, account: account?.provider });
+      return true;
+    },
+    async signOut({ session, token }) {
+      console.log("NextAuth - Sign out event");
+      return true;
+    },
+    async createUser({ user }) {
+      console.log("NextAuth - Create user event:", user?.email);
+      return true;
+    },
+    async session({ session, token }) {
+      console.log("NextAuth - Session event:", session?.user?.email);
+      return true;
+    }
+  }
 };
 
 const handler = NextAuth(authOptions);
