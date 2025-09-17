@@ -36,10 +36,10 @@ export async function POST(request) {
     // Connect to MongoDB
     await client.connect();
     const db = client.db('decors_digital');
-    const usersCollection = db.collection('users');
+    const adminsCollection = db.collection('admins');
 
     // Check if user already exists
-    const existingUser = await usersCollection.findOne({
+    const existingUser = await adminsCollection.findOne({
       $or: [
         { username: username },
         { email: email }
@@ -63,13 +63,13 @@ export async function POST(request) {
       email,
       name: name || username,
       password: hashedPassword,
-      role: 'user',
+      role: 'admin',
       createdAt: new Date(),
       updatedAt: new Date()
     };
 
     // Insert user into database
-    const result = await usersCollection.insertOne(newUser);
+    const result = await adminsCollection.insertOne(newUser);
 
     // Return success response (without password)
     const userResponse = {

@@ -1,6 +1,6 @@
 "use client";
 
-import { signIn, getSession } from "next-auth/react";
+import { signIn, signOut, getSession } from "next-auth/react";
 import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
@@ -43,7 +43,14 @@ function SignInContent() {
     setError("");
 
     try {
-      console.log("Attempting sign in with:", credentials.username);
+      console.log("Attempting to sign in with:", { username: credentials.username, password: "***" });
+      
+      // First, sign out any existing session
+      await signOut({ redirect: false });
+      
+      // Wait a moment for the sign out to complete
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
       const result = await signIn("credentials", {
         username: credentials.username,
         password: credentials.password,
@@ -51,30 +58,37 @@ function SignInContent() {
         redirect: false,
       });
 
-      console.log("Sign in result:", result);
+      console.log("SignIn result:", result);
 
       if (result?.error) {
-        console.log("Sign in error:", result.error);
+        console.log("SignIn error:", result.error);
         setError("Invalid credentials. Please try again.");
       } else if (result?.ok) {
-        console.log("Sign in successful, checking session...");
+        console.log("SignIn successful, checking session...");
         
         // Wait a moment for the session to be established
         setTimeout(async () => {
           const session = await getSession();
-          console.log("Session after signin:", session);
+          console.log("New session after signin:", session);
           
-          if (session?.user?.role === "admin") {
-            console.log("Admin role confirmed, redirecting...");
-            window.location.href = "/admin/expenses";
+          if (session?.user) {
+            console.log("User role:", session.user.role);
+            if (session.user.role === "admin") {
+              console.log("Admin role confirmed, redirecting...");
+              window.location.href = "/admin/expenses";
+            } else {
+              console.log("User role is not admin:", session.user.role);
+              setError(`Access denied. Admin privileges required. Current role: ${session.user.role || 'none'}`);
+            }
           } else {
-            console.log("Not admin role, showing error");
-            setError("Access denied. Admin privileges required.");
+            console.log("No session user found");
+            setError("Authentication failed. No session established.");
           }
-        }, 100);
+        }, 1000); // Increased timeout to 1 second
         return;
       } else {
-        setError("Invalid credentials. Please try again.");
+        console.log("SignIn failed with unknown result:", result);
+        setError("Authentication failed. Please try again.");
       }
       } catch (error) {
         console.error("Sign in error:", error);
