@@ -149,21 +149,12 @@
 }
 
 
+// Simplified accordion styles that don't interfere with Bootstrap functionality
 .accordion-button {
     &::after {
-        width: 44px;
-        height: 44px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border-radius: 100%;
-        background-position: center;
-        background-size: inherit;
-        background-color: var(--bs-light-gray);
-    }
-
-    &:not(.collapsed)::after {
-        background-color: var(--bs-primary);
+        width: 1.25rem;
+        height: 1.25rem;
+        // Removed custom styling that could interfere with Bootstrap
     }
 
     &:not(.collapsed) {

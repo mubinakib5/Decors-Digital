@@ -1,21 +1,22 @@
-// 导航菜单数据
+// Navigation menu data - Updated for new sitemap
 export const navigationData = {
   mainMenu: [
-    { name: "Home", href: "/", icon: "secondary-leaf" },
-    { name: "About", href: "/about-us", icon: "secondary-leaf" },
-    { name: "Projects", href: "/projects", icon: "secondary-leaf" },
-    { name: "Blog", href: "/blog", icon: "secondary-leaf" },
+    { name: "The Company", href: "/", icon: "secondary-leaf" },
     { name: "Services", href: "/services", icon: "secondary-leaf" },
+    { name: "Clients Diary", href: "/clients", icon: "secondary-leaf" },
+    { name: "Newsletter", href: "/newsletter", icon: "secondary-leaf" },
+    { name: "Career", href: "/career", icon: "secondary-leaf" },
     { name: "Contact", href: "/contact", icon: "secondary-leaf" },
-    { name: "Docs", href: "/docs", icon: "secondary-leaf" },
   ],
   footerMenu: [
-    { name: "Home", href: "/" },
-    { name: "About", href: "/about-us" },
+    { name: "The Company", href: "/" },
     { name: "Services", href: "/services" },
-    { name: "Work", href: "/projects" },
-    { name: "Terms", href: "/terms-and-conditions" },
-    { name: "Privacy Policy", href: "/privacy-policy" },
+    { name: "Clients Diary", href: "/clients" },
+    { name: "Newsletter", href: "/newsletter" },
+    { name: "Career", href: "/career" },
+    { name: "Contact", href: "/contact" },
+    { name: "Privacy Policy", href: "/privacy" },
+    { name: "Terms", href: "/terms" },
   ],
   socialLinks: [
     {
@@ -114,35 +115,67 @@ export const aboutStatsData = [
 export const servicesData = [
   {
     id: 0,
-    name: "Advertising",
+    name: "Brand Strategy & Communication",
     description:
-      "When selecting an advertising agency, it's essential to consider its reputation, experience, and the specific needs of your project.",
+      "We develop comprehensive brand strategies that define your unique voice, positioning, and messaging framework. Our approach ensures consistent communication across all touchpoints, building strong brand recognition and customer loyalty.",
     image: "/assets/images/services/services-img-1.jpg",
     icon: "lucide:megaphone",
   },
   {
     id: 1,
-    name: "Digital Marketing",
+    name: "Creative Content Production",
     description:
-      "When selecting an advertising agency, it's essential to consider its reputation, experience, and the specific needs of your project.",
+      "From compelling copywriting to stunning visual content, we create engaging materials that resonate with your audience. Our creative team produces high-quality content for digital platforms, print media, and multimedia campaigns.",
     image: "/assets/images/services/services-img-2.jpg",
-    icon: "lucide:trending-up",
-  },
-  {
-    id: 2,
-    name: "Content creation",
-    description:
-      "When selecting an advertising agency, it's essential to consider its reputation, experience, and the specific needs of your project.",
-    image: "/assets/images/services/services-img-3.jpg",
     icon: "lucide:edit",
   },
   {
-    id: 3,
-    name: "Web Development",
+    id: 2,
+    name: "Paid Marketing & Promotions",
     description:
-      "When selecting an advertising agency, it's essential to consider its reputation, experience, and the specific needs of your project.",
+      "Maximize your ROI with strategic paid advertising campaigns across Google Ads, Facebook, Instagram, and other platforms. We optimize campaigns for conversions, brand awareness, and customer acquisition.",
+    image: "/assets/images/services/services-img-3.jpg",
+    icon: "lucide:trending-up",
+  },
+  {
+    id: 3,
+    name: "Visual Design & Branding",
+    description:
+      "Create memorable brand identities with our comprehensive design services. From logos and brand guidelines to marketing materials and digital assets, we ensure visual consistency across all brand touchpoints.",
     image: "/assets/images/services/services-img-4.jpg",
+    icon: "lucide:palette",
+  },
+  {
+    id: 4,
+    name: "Website Design & Development",
+    description:
+      "Build responsive, user-friendly websites that drive conversions and enhance user experience. Our development team creates custom solutions using modern technologies and best practices for optimal performance.",
+    image: "/assets/images/services/services-img-1.jpg",
     icon: "lucide:code",
+  },
+  {
+    id: 5,
+    name: "Consultation/Strategy/Training",
+    description:
+      "Empower your team with expert guidance and strategic insights. We provide consultation services, develop comprehensive strategies, and offer training programs to enhance your marketing capabilities and business growth.",
+    image: "/assets/images/services/services-img-2.jpg",
+    icon: "lucide:lightbulb",
+  },
+  {
+    id: 6,
+    name: "Digital & Social Media Management",
+    description:
+      "Manage your digital presence with our comprehensive social media and digital marketing services. We create engaging content, manage communities, and implement strategies that build meaningful connections with your audience.",
+    image: "/assets/images/services/services-img-3.jpg",
+    icon: "lucide:share-2",
+  },
+  {
+    id: 7,
+    name: "SEO & AEO",
+    description:
+      "Improve your online visibility with our advanced SEO and Answer Engine Optimization (AEO) services. We optimize your content for search engines and AI-powered answer engines to increase organic traffic and brand discovery.",
+    image: "/assets/images/services/services-img-4.jpg",
+    icon: "lucide:search",
   },
 ];
 

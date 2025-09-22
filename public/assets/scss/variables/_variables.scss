@@ -218,18 +218,19 @@ $link-color: $dark !default;
 
 $link-hover-color: $primary !default;
 
-// Accordion
-$accordion-padding-y: 28px;
-$accordion-padding-x: 0;
-$accordion-button-color: $dark;
+// Accordion - Using Bootstrap defaults for proper functionality
+$accordion-padding-y: 1rem;
+$accordion-padding-x: 1.25rem;
+$accordion-button-color: var(--bs-body-color);
 $accordion-body-padding-y: 1rem;
-$accordion-border-color: $border-color;
-$accordion-button-active-bg: transparent !default;
-$accordion-button-active-color: $dark;
-$accordion-icon-color: #0000008a;
-$accordion-icon-active-color: #0000008a;
-$accordion-button-icon: url("../images/svgs/icon-plus.svg");
-$accordion-button-active-icon: url("../images/svgs/icon-x.svg");
+$accordion-border-color: var(--bs-border-color);
+$accordion-button-active-bg: var(--bs-primary-bg-subtle);
+$accordion-button-active-color: var(--bs-primary-text-emphasis);
+$accordion-icon-color: var(--bs-body-color);
+$accordion-icon-active-color: var(--bs-primary-text-emphasis);
+// Using Bootstrap's default icons for proper functionality
+// $accordion-button-icon: url("../images/svgs/icon-plus.svg");
+// $accordion-button-active-icon: url("../images/svgs/icon-x.svg");
 
 $container-max-widths: (
   sm: 540px,

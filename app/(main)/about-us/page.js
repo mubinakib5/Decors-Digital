@@ -28,18 +28,11 @@ export default function AboutUs() {
               <div className="row align-items-center">
                 <div className="col-xl-4">
                   <div
-                    className="d-flex align-items-center gap-4"
+                    className="d-flex align-items-center gap-2 mb-3"
                     data-aos="fade-up"
                     data-aos-delay="100"
                     data-aos-duration="1000"
                   >
-                    <Image
-                      src="/assets/images/svgs/primary-leaf.svg"
-                      alt=""
-                      width={24}
-                      height={24}
-                      className="img-fluid animate-spin"
-                    />
                     <p className="mb-0 text-white fs-5 text-opacity-70">
                       We craft
                       <span className="text-primary"> innovative digital</span>

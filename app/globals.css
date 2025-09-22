@@ -1,21 +1,91 @@
 @import "tailwindcss";
 
+/* Brand Color Palette */
+:root {
+  --decor-red: #D2212E;
+  --decor-red-rgb: 210, 33, 46;
+  --deep-charcoal: #1C1C1C;
+  --deep-charcoal-rgb: 28, 28, 28;
+  --soft-white: #F9F9F9;
+  --soft-white-rgb: 249, 249, 249;
+  --light-gray: #E0E0E0;
+  --light-gray-rgb: 224, 224, 224;
+  
+  /* Hover variations */
+  --decor-red-light: #E63946;
+  --decor-red-dark: #B71C1C;
+}
+
 /* Custom styles to resolve conflicts between Tailwind and Bootstrap */
 @layer components {
   .btn {
-    @apply inline-flex items-center justify-center gap-2;
+    @apply inline-flex items-center justify-center gap-2 font-semibold transition-all duration-300 transform;
+  }
+
+  .btn:hover {
+    @apply scale-105;
+  }
+
+  .btn-primary {
+    background: linear-gradient(135deg, var(--decor-red) 0%, #E63946 100%);
+    color: white;
+    border: 1px solid var(--decor-red);
+    box-shadow: 0 4px 15px rgba(210, 33, 46, 0.3);
+    transition: all 0.3s ease;
+  }
+
+  .btn-primary:hover {
+    background: linear-gradient(135deg, var(--decor-red-dark) 0%, var(--decor-red) 100%);
+    border-color: var(--decor-red-dark);
+    color: white;
+    box-shadow: 0 6px 20px rgba(210, 33, 46, 0.4);
+    transform: translateY(-2px) scale(1.02);
   }
 
   .btn-secondary {
-    @apply bg-gray-500 text-white;
+    background: linear-gradient(135deg, var(--light-gray) 0%, #F0F0F0 100%);
+    color: var(--deep-charcoal);
+    border: 1px solid var(--light-gray);
+    transition: all 0.3s ease;
+  }
+
+  .btn-secondary:hover {
+    background: linear-gradient(135deg, var(--decor-red) 0%, #E63946 100%);
+    color: white;
+    border-color: var(--decor-red);
+    transform: translateY(-2px) scale(1.02);
   }
 
   .btn-dark {
-    @apply bg-gray-900 text-white;
+    background: linear-gradient(135deg, var(--deep-charcoal) 0%, #2C2C2C 100%);
+    color: var(--soft-white);
+    border: 1px solid var(--deep-charcoal);
+    transition: all 0.3s ease;
+  }
+
+  .btn-dark:hover {
+    background: linear-gradient(135deg, #2C2C2C 0%, var(--deep-charcoal) 100%);
+    transform: translateY(-2px) scale(1.02);
   }
 
   .btn-outline-light {
-    @apply border border-white text-white hover:bg-white hover:text-gray-900;
+    @apply border-2 border-white text-white hover:bg-white hover:text-gray-900 transition-all duration-300;
+  }
+
+  .btn-outline-light:hover {
+    @apply transform -translate-y-1 scale-105;
+  }
+
+  .bg-primary {
+    background-color: var(--decor-red) !important;
+  }
+
+  .text-primary {
+    color: var(--decor-red) !important;
+  }
+
+  .border-primary {
+    border-color: var(--decor-red) !important;
   }
 
   .container {
@@ -58,13 +128,96 @@
     @apply gap-6;
   }
 
+  /* Typography improvements */
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-bold leading-tight;
+    color: var(--deep-charcoal);
+    margin-bottom: 1rem;
+  }
+
+  h1 {
+    @apply text-4xl md:text-5xl lg:text-6xl;
+    line-height: 1.1;
+  }
+
+  h2 {
+    @apply text-3xl md:text-4xl lg:text-5xl;
+    line-height: 1.2;
+  }
+
+  h3 {
+    @apply text-2xl md:text-3xl lg:text-4xl;
+    line-height: 1.3;
+  }
+
+  h4 {
+    @apply text-xl md:text-2xl lg:text-3xl;
+    line-height: 1.4;
+  }
+
+  h5 {
+    @apply text-lg md:text-xl lg:text-2xl;
+    line-height: 1.4;
+  }
+
+  h6 {
+    @apply text-base md:text-lg lg:text-xl;
+    line-height: 1.4;
+  }
+
+  p {
+    @apply text-base leading-relaxed;
+    color: var(--deep-charcoal);
+    margin-bottom: 1rem;
+  }
+
+  .lead {
+    @apply text-lg md:text-xl leading-relaxed;
+    color: var(--deep-charcoal);
+    opacity: 0.8;
+  }
+
+  /* Consistent spacing utilities */
+  .section-padding {
+    @apply py-16 md:py-20 lg:py-24;
+  }
+
+  .container-padding {
+    @apply px-4 md:px-6 lg:px-8;
+  }
+
+  .content-spacing {
+    @apply space-y-6 md:space-y-8 lg:space-y-10;
+  }
+
+  .card-spacing {
+    @apply p-6 md:p-8 lg:p-10;
+  }
+
   /* Text utilities */
   .text-dark {
-    @apply text-gray-900;
+    color: var(--deep-charcoal);
   }
 
   .text-white {
-    @apply text-white;
+    color: var(--soft-white);
+  }
+
+  .text-muted {
+    color: var(--light-gray);
+  }
+
+  /* Background utilities */
+  .bg-soft-white {
+    background-color: var(--soft-white);
+  }
+
+  .bg-light-gray {
+    background-color: var(--light-gray);
+  }
+
+  .bg-deep-charcoal {
+    background-color: var(--deep-charcoal);
   }
 
   .fs-5 {

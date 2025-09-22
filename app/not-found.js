@@ -27,11 +27,17 @@ export default function NotFound() {
               <h2 className="mb-0 text-center" data-aos="fade-up" data-aos-delay="200" data-aos-duration="1000">
                 Oops! Page Not Found
               </h2>
-              <Link href="/" className="btn mx-auto" data-aos="fade-up" data-aos-delay="300" data-aos-duration="1000">
+              <Link 
+                href="/" 
+                className="btn btn-primary mx-auto px-8 py-3 font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 hover:-translate-y-1" 
+                data-aos="fade-up" 
+                data-aos-delay="300" 
+                data-aos-duration="1000"
+              >
                 <span className="btn-text">Back to Home</span>
                 <iconify-icon 
                   icon="lucide:arrow-up-right"
-                  className="btn-icon bg-white text-dark round-52 rounded-circle hstack justify-content-center fs-7 shadow-sm"
+                  className="btn-icon bg-white text-dark round-52 rounded-circle hstack justify-content-center fs-7 shadow-sm transition-all duration-300"
                 ></iconify-icon>
               </Link>
             </div>

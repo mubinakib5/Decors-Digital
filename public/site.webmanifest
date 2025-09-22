@@ -1,25 +1,27 @@
 {
-  "name": "Decor's Digital",
-  "short_name": "DecorsDigital",
-  "description": "At Decor's Digital, we aim to empower brands by crafting integrated, innovative marketing strategies that fuel evolution and resonate deeply with audiences.",
+  "name": "Decor's Digital - Premium Digital Marketing Agency",
+  "short_name": "Decor's Digital",
+  "description": "Premium digital marketing agency specializing in brand strategy, content creation, paid marketing, visual design, and web development.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#000000",
+  "background_color": "#F9F9F9",
+  "theme_color": "#D2212E",
   "orientation": "portrait-primary",
-            "icons": [
-            {
-              "src": "/assets/images/logos/logo-dark.png",
-              "sizes": "192x192",
-              "type": "image/png"
-            },
-            {
-              "src": "/assets/images/logos/logo-dark.png",
-              "sizes": "512x512",
-              "type": "image/png"
-            }
-          ],
-  "categories": ["business", "productivity", "utilities"],
+  "icons": [
+    {
+      "src": "/assets/images/logos/logo-dark.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/assets/images/logos/logo-dark.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable any"
+    }
+  ],
+  "categories": ["business", "marketing", "design"],
   "lang": "en",
   "dir": "ltr"
 }

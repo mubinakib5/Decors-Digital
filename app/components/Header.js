@@ -2,12 +2,14 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { CALENDLY_URL } from "../constants";
 import { contactData, navigationData } from "../data";
 
 export default function Header() {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const pathname = usePathname();
 
   useEffect(() => {
     // Initialize Bootstrap dropdowns
@@ -31,23 +33,34 @@ export default function Header() {
   };
 
   return (
-    <header className="header border-top border-primary position-fixed start-0 top-0 w-100">
+    <header
+      className="header border-top border-primary position-fixed start-0 top-0 w-100"
+      role="banner"
+    >
       <div className="container">
         <div className="header-wrapper d-flex align-items-center justify-content-between">
           <div className="logo">
-            <Link href="/" className="logo-white">
+            <Link
+              href="/"
+              className="logo-white"
+              aria-label="Decor's Digital - Home"
+            >
               <Image
                 src="/assets/images/logos/logo-white.png"
-                alt="logo"
+                alt="Decor's Digital Logo"
                 width={60}
                 height={20}
                 className="img-fluid"
               />
             </Link>
-            <Link href="/" className="logo-dark">
+            <Link
+              href="/"
+              className="logo-dark"
+              aria-label="Decor's Digital - Home"
+            >
               <Image
                 src="/assets/images/logos/logo-dark.png"
-                alt="logo"
+                alt="Decor's Digital Logo"
                 width={60}
                 height={20}
                 className="img-fluid"
@@ -55,24 +68,39 @@ export default function Header() {
             </Link>
           </div>
           <div className="d-flex align-items-center gap-4">
-            <div className="btn-group">
+            <nav
+              className="btn-group"
+              role="navigation"
+              aria-label="Main navigation"
+            >
               <button
-                className="btn btn-secondary toggle-menu round-45 p-2 d-flex align-items-center justify-content-center bg-white rounded-circle"
+                className="btn btn-secondary toggle-menu round-45 p-2 d-flex align-items-center justify-content-center rounded-circle"
                 type="button"
                 data-bs-toggle="dropdown"
                 data-bs-auto-close="true"
                 aria-expanded={isDropdownOpen}
+                aria-haspopup="true"
+                aria-label="Toggle navigation menu"
                 onClick={toggleDropdown}
+                style={{
+                  backgroundColor: '#FF6B6B',
+                  border: 'none',
+                  width: '45px',
+                  height: '45px'
+                }}
               >
                 <iconify-icon
                   icon="solar:hamburger-menu-line-duotone"
-                  className="menu-icon fs-8 text-dark"
+                  className="menu-icon fs-8 text-white"
+                  aria-hidden="true"
                 ></iconify-icon>
               </button>
               <ul
                 className={`dropdown-menu dropdown-menu-end p-4 ${
                   isDropdownOpen ? "show" : ""
                 }`}
+                role="menu"
+                aria-labelledby="navigation-toggle"
                 style={{
                   position: "absolute",
                   top: "100%",
@@ -93,34 +121,42 @@ export default function Header() {
                     <button
                       type="button"
                       className="btn-close opacity-75"
-                      aria-label="Close"
+                      aria-label="Close navigation menu"
                       onClick={() => setIsDropdownOpen(false)}
                     ></button>
                   </div>
                   <div className="d-flex flex-column gap-3">
-                    <ul className="header-menu list-unstyled mb-0 d-flex flex-column gap-2">
-                      {navigationData.mainMenu.map((item, index) => (
-                        <li key={index} className="header-item">
-                          <Link
-                            href={item.href}
-                            className="header-link hstack gap-2 fs-7 fw-bold text-dark"
-                            onClick={() => setIsDropdownOpen(false)}
-                          >
-                            <Image
-                              src={`/assets/images/svgs/${item.icon}.svg`}
-                              alt=""
-                              width={20}
-                              height={20}
-                              className="img-fluid animate-spin"
-                            />
-                            {item.name}
-                          </Link>
-                        </li>
-                      ))}
+                    <ul
+                      className="header-menu list-unstyled mb-0 d-flex flex-column gap-2"
+                      role="menubar"
+                    >
+                      {navigationData.mainMenu.map((item, index) => {
+                        // Improved active state logic
+                        const isActive = 
+                          pathname === item.href || 
+                          (item.href !== "/" && pathname.startsWith(item.href));
+                        return (
+                          <li key={index} className="header-item" role="none">
+                            <Link
+                              href={item.href}
+                              className={`header-link hstack gap-2 fs-7 fw-bold d-block px-3 py-2 rounded ${
+                                isActive
+                                  ? "bg-primary text-white"
+                                  : "text-dark hover-bg-secondary hover-text-primary"
+                              }`}
+                              role="menuitem"
+                              onClick={() => setIsDropdownOpen(false)}
+                            >
+                              {item.name}
+                            </Link>
+                          </li>
+                        );
+                      })}
                     </ul>
                     <div className="hstack gap-3">
                       <button
                         className="btn btn-primary fs-6 px-3 py-2 w-100 hstack justify-content-center"
+                        aria-label="Book a consultation call"
                         onClick={() => {
                           handleBookCall();
                           setIsDropdownOpen(false);
@@ -129,28 +165,35 @@ export default function Header() {
                         <iconify-icon
                           icon="lucide:calendar"
                           className="fs-6 me-2"
+                          aria-hidden="true"
                         ></iconify-icon>
                         Book a Call
                       </button>
                     </div>
                   </div>
-                  <div className="d-flex flex-column gap-1">
+                  <div
+                    className="d-flex flex-column gap-1"
+                    role="group"
+                    aria-label="Contact information"
+                  >
                     <a
                       className="text-dark text-opacity-70"
                       href={`tel:${contactData.phone}`}
+                      aria-label={`Call us at ${contactData.phone}`}
                     >
                       {contactData.phone}
                     </a>
                     <a
                       className="text-dark fw-bold"
                       href={`mailto:${contactData.email}`}
+                      aria-label={`Email us at ${contactData.email}`}
                     >
                       {contactData.email}
                     </a>
                   </div>
                 </div>
               </ul>
-            </div>
+            </nav>
           </div>
         </div>
       </div>

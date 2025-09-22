@@ -72,26 +72,27 @@ export default function ServicesSection() {
                 </div>
               </div>
               <div className="col-xl-8">
-                <div className="d-flex flex-column gap-5">
+                <div className="d-flex flex-column gap-6 gap-lg-8">
                   <ul className="nav nav-tabs" id="myTab" role="tablist" data-aos="fade-up" data-aos-delay="200" data-aos-duration="1000">
                     {servicesData.map((service) => (
-                      <li key={service.id} className="nav-item py-4 py-lg-8 border-top border-white border-opacity-10 d-flex align-items-center w-100" role="presentation">
-                        <div className="row w-100 align-items-center gx-3">
-                          <div className="col-lg-6 col-xxl-5">
+                      <li key={service.id} className="nav-item py-4 py-lg-6 border-top border-white border-opacity-10 d-flex align-items-start w-100" role="presentation">
+                        <div className="row w-100 gx-4 gy-3">
+                          <div className="col-12 col-md-5 col-lg-4 col-xl-5">
                             <button 
-                              className={`nav-link fs-10 fw-bold py-1 px-0 border-0 rounded-0 flex-shrink-0 ${activeService === service.id ? 'active' : ''}`} 
+                              className={`nav-link fs-6 fs-lg-5 fw-bold py-2 px-0 border-0 rounded-0 text-start w-100 ${activeService === service.id ? 'active' : ''}`} 
                               id={`service-${service.id}-tab`} 
                               type="button" 
                               role="tab" 
                               aria-controls={`service-${service.id}`} 
                               aria-selected={activeService === service.id}
                               onClick={() => handleServiceClick(service.id)}
+                              style={{ lineHeight: '1.3', whiteSpace: 'normal' }}
                             >
                               {service.name}
                             </button>
                           </div>
-                          <div className="col-lg-6 col-xxl-7">
-                            <p className="text-white text-opacity-70 mb-0">
+                          <div className="col-12 col-md-7 col-lg-8 col-xl-7">
+                            <p className="text-white text-opacity-70 mb-0 fs-6" style={{ lineHeight: '1.5' }}>
                               {service.description}
                             </p>
                           </div>
@@ -99,10 +100,19 @@ export default function ServicesSection() {
                       </li>
                     ))}
                   </ul>
-                  <Button href="/projects" variant="outline" className="border border-white border-opacity-25" data-aos="fade-up" data-aos-delay="300" data-aos-duration="1000">
-                    <span className="btn-text">See our Work</span>
-                    <iconify-icon icon="lucide:arrow-up-right" className="btn-icon bg-white text-dark round-52 rounded-circle hstack justify-content-center fs-7 shadow-sm"></iconify-icon>
-                  </Button>
+                  <div className="mt-4">
+                    <Button 
+                      href="/projects" 
+                      variant="outline" 
+                      className="border-2 border-white border-opacity-30 text-white hover:bg-white hover:text-gray-900 transition-all duration-300 transform hover:scale-105 hover:-translate-y-1 shadow-lg hover:shadow-xl" 
+                      data-aos="fade-up" 
+                      data-aos-delay="300" 
+                      data-aos-duration="1000"
+                    >
+                      <span className="btn-text font-semibold">See our Work</span>
+                      <iconify-icon icon="lucide:arrow-up-right" className="btn-icon bg-white text-dark round-52 rounded-circle hstack justify-content-center fs-7 shadow-sm transition-all duration-300"></iconify-icon>
+                    </Button>
+                  </div>
                 </div>
               </div>
             </div>

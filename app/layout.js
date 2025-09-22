@@ -14,56 +14,58 @@ const inter = Inter({
 
 export const metadata = {
   title: {
-    default: COMPANY_INFO.name,
-    template: `%s | ${COMPANY_INFO.name}`,
+    default: "The Company - Decor's Digital",
+    template: `%s | Decor's Digital`,
   },
-  description: COMPANY_INFO.tagline,
+  description: "Premium digital marketing agency specializing in brand strategy, content creation, paid marketing, visual design, and web development. Transforming businesses through innovative digital solutions.",
   keywords: [
-    "digital agency",
-    "web development",
-    "branding",
-    "digital marketing",
-    "web design",
-    "SEO",
+    "digital marketing agency",
+    "brand strategy",
     "content creation",
-    "SaaS development",
-    "motion graphics",
-    "3D modeling",
-    "Chattogram",
+    "paid marketing",
+    "visual design",
+    "web development",
+    "digital transformation",
+    "marketing consultation",
+    "premium digital services",
+    "business growth",
+    "creative agency",
+    "digital solutions",
     "Bangladesh",
+    "Chattogram",
   ],
-  authors: [{ name: COMPANY_INFO.name }],
-  creator: COMPANY_INFO.name,
-  publisher: COMPANY_INFO.name,
+  authors: [{ name: "Decor's Digital" }],
+  creator: "Decor's Digital",
+  publisher: "Decor's Digital",
   formatDetection: {
     email: false,
     address: false,
     telephone: false,
   },
-  metadataBase: new URL("https://decorsdigital.com"),
+  metadataBase: new URL("https://www.thedecorbd.com"),
   alternates: {
     canonical: "/",
   },
   openGraph: {
     type: "website",
     locale: "en_US",
-    url: "https://decorsdigital.com",
-    siteName: COMPANY_INFO.name,
-    title: COMPANY_INFO.name,
-    description: COMPANY_INFO.tagline,
+    url: "https://www.thedecorbd.com",
+    siteName: "Decor's Digital",
+    title: "The Company - Decor's Digital | Premium Digital Marketing Agency",
+    description: "Premium digital marketing agency specializing in brand strategy, content creation, paid marketing, visual design, and web development. Transforming businesses through innovative digital solutions.",
     images: [
       {
         url: "/assets/images/logos/logo-dark.png",
         width: 1200,
         height: 630,
-        alt: COMPANY_INFO.name,
+        alt: "Decor's Digital - Premium Digital Marketing Agency",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: COMPANY_INFO.name,
-    description: COMPANY_INFO.tagline,
+    title: "The Company - Decor's Digital | Premium Digital Marketing Agency",
+    description: "Premium digital marketing agency specializing in brand strategy, content creation, paid marketing, visual design, and web development.",
     images: ["/assets/images/logos/logo-dark.png"],
     creator: "@DecorsDigital",
   },
@@ -83,17 +85,17 @@ export const metadata = {
     yandex: "your-yandex-verification-code",
     yahoo: "your-yahoo-verification-code",
   },
-  category: "technology",
+  category: "business",
 };
 
 export default function RootLayout({ children }) {
   const structuredData = {
     "@context": "https://schema.org",
     "@type": "Organization",
-    name: COMPANY_INFO.name,
-    description: COMPANY_INFO.description,
-    url: "https://decorsdigital.com",
-    logo: "https://decorsdigital.com/assets/images/logos/logo-dark.png",
+    name: "Decor's Digital",
+    description: "Premium digital marketing agency specializing in brand strategy, content creation, paid marketing, visual design, and web development. Transforming businesses through innovative digital solutions.",
+    url: "https://www.thedecorbd.com",
+    logo: "https://www.thedecorbd.com/assets/images/logos/logo-dark.png",
     contactPoint: {
       "@type": "ContactPoint",
       telephone: CONTACT_INFO.phone,
@@ -121,6 +123,33 @@ export default function RootLayout({ children }) {
       },
       geoRadius: "50000",
     },
+    services: [
+      {
+        "@type": "Service",
+        name: "Brand Strategy",
+        description: "Comprehensive brand development and positioning strategies"
+      },
+      {
+        "@type": "Service", 
+        name: "Content Creation",
+        description: "High-quality content development for digital platforms"
+      },
+      {
+        "@type": "Service",
+        name: "Paid Marketing",
+        description: "Strategic paid advertising campaigns across digital channels"
+      },
+      {
+        "@type": "Service",
+        name: "Visual Design",
+        description: "Creative visual design solutions for brands and businesses"
+      },
+      {
+        "@type": "Service",
+        name: "Web Development",
+        description: "Modern, responsive website development and optimization"
+      }
+    ]
   };
 
   return (
@@ -154,197 +183,85 @@ export default function RootLayout({ children }) {
           href="/assets/images/logos/logo-dark.png"
         />
         <link rel="manifest" href="/site.webmanifest" />
-        <meta name="theme-color" content="#000000" />
-        <meta name="msapplication-TileColor" content="#000000" />
+        <meta name="theme-color" content="#D2212E" />
+        <meta name="msapplication-TileColor" content="#D2212E" />
         <link
           rel="stylesheet"
           href="/assets/libs/owl.carousel/dist/assets/owl.carousel.min.css"
         />
         <link rel="stylesheet" href="/assets/libs/aos-master/dist/aos.css" />
         <link rel="stylesheet" href="/assets/css/styles.css" />
+        <link
+          rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+          integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw=="
+          crossOrigin="anonymous"
+          referrerPolicy="no-referrer"
+        />
         <style
           dangerouslySetInnerHTML={{
             __html: `
-              /* Button default and hover styles for all buttons */
+              /* Updated button styles using new brand colors */
               .btn {
-                background-color: #ff6b6b !important;
-                border-color: #ff6b6b !important;
+                background-color: var(--decor-red) !important;
+                border-color: var(--decor-red) !important;
                 color: #ffffff !important;
+                transition: all 0.3s ease;
               }
               
               .btn:hover {
                 background-color: #ffffff !important;
-                border-color: #ff6b6b !important;
-                color: #ff6b6b !important;
+                border-color: var(--decor-red) !important;
+                color: var(--decor-red) !important;
+                transform: translateY(-2px);
+                box-shadow: 0 4px 12px rgba(210, 33, 46, 0.3);
               }
               
               .btn:focus {
                 background-color: #ffffff !important;
-                border-color: #ff6b6b !important;
-                color: #ff6b6b !important;
-                box-shadow: 0 0 0 0.25rem rgba(255, 107, 107, 0.5) !important;
+                border-color: var(--decor-red) !important;
+                color: var(--decor-red) !important;
+                box-shadow: 0 0 0 0.25rem rgba(210, 33, 46, 0.25) !important;
               }
               
-              .btn:active {
-                background-color: #ffffff !important;
-                border-color: #ff6b6b !important;
-                color: #ff6b6b !important;
+              /* Accessibility improvements */
+              .btn:focus-visible {
+                outline: 2px solid var(--decor-red);
+                outline-offset: 2px;
               }
               
-              /* Specific button types - default styles */
-              .btn-primary,
-              .btn-success,
-              .btn-danger,
-              .btn-secondary,
-              .btn-warning,
-              .btn-info,
-              .btn-light,
-              .btn-dark {
-                background-color: #ff6b6b !important;
-                border-color: #ff6b6b !important;
-                color: #ffffff !important;
+              /* Skip to main content link for accessibility */
+              .skip-link {
+                position: absolute;
+                top: -40px;
+                left: 6px;
+                background: var(--decor-red);
+                color: white;
+                padding: 8px;
+                text-decoration: none;
+                z-index: 1000;
+                border-radius: 4px;
               }
               
-              .btn-primary:hover,
-              .btn-primary:focus,
-              .btn-primary:active {
-                background-color: #ffffff !important;
-                border-color: #ff6b6b !important;
-                color: #ff6b6b !important;
+              .skip-link:focus {
+                top: 6px;
               }
               
-              .btn-success:hover,
-              .btn-success:focus,
-              .btn-success:active {
-                background-color: #ffffff !important;
-                border-color: #ff6b6b !important;
-                color: #ff6b6b !important;
+              /* High contrast mode support */
+              @media (prefers-contrast: high) {
+                .btn {
+                  border: 2px solid !important;
+                }
               }
               
-              .btn-danger:hover,
-              .btn-danger:focus,
-              .btn-danger:active {
-                background-color: #ffffff !important;
-                border-color: #ff6b6b !important;
-                color: #ff6b6b !important;
-              }
-              
-              .btn-secondary:hover,
-              .btn-secondary:focus,
-              .btn-secondary:active {
-                background-color: #ffffff !important;
-                border-color: #ff6b6b !important;
-                color: #ff6b6b !important;
-              }
-              
-              .btn-warning:hover,
-              .btn-warning:focus,
-              .btn-warning:active {
-                background-color: #ffffff !important;
-                border-color: #ff6b6b !important;
-                color: #ff6b6b !important;
-              }
-              
-              .btn-info:hover,
-              .btn-info:focus,
-              .btn-info:active {
-                background-color: #ffffff !important;
-                border-color: #ff6b6b !important;
-                color: #ff6b6b !important;
-              }
-              
-              .btn-light:hover,
-              .btn-light:focus,
-              .btn-light:active {
-                background-color: #ffffff !important;
-                border-color: #ff6b6b !important;
-                color: #ff6b6b !important;
-              }
-              
-              .btn-dark:hover,
-              .btn-dark:focus,
-              .btn-dark:active {
-                background-color: #ffffff !important;
-                border-color: #ff6b6b !important;
-                color: #ff6b6b !important;
-              }
-              
-              /* Outline button styles - default */
-              .btn-outline-primary,
-              .btn-outline-success,
-              .btn-outline-danger,
-              .btn-outline-secondary,
-              .btn-outline-warning,
-              .btn-outline-info,
-              .btn-outline-light,
-              .btn-outline-dark {
-                background-color: #ff6b6b !important;
-                border-color: #ff6b6b !important;
-                color: #ffffff !important;
-              }
-              
-              .btn-outline-primary:hover,
-              .btn-outline-primary:focus,
-              .btn-outline-primary:active {
-                background-color: #ffffff !important;
-                border-color: #ff6b6b !important;
-                color: #ff6b6b !important;
-              }
-              
-              .btn-outline-success:hover,
-              .btn-outline-success:focus,
-              .btn-outline-success:active {
-                background-color: #ffffff !important;
-                border-color: #ff6b6b !important;
-                color: #ff6b6b !important;
-              }
-              
-              .btn-outline-danger:hover,
-              .btn-outline-danger:focus,
-              .btn-outline-danger:active {
-                background-color: #ffffff !important;
-                border-color: #ff6b6b !important;
-                color: #ff6b6b !important;
-              }
-              
-              .btn-outline-secondary:hover,
-              .btn-outline-secondary:focus,
-              .btn-outline-secondary:active {
-                background-color: #ffffff !important;
-                border-color: #ff6b6b !important;
-                color: #ff6b6b !important;
-              }
-              
-              .btn-outline-warning:hover,
-              .btn-outline-warning:focus,
-              .btn-outline-warning:active {
-                background-color: #ffffff !important;
-                border-color: #ff6b6b !important;
-                color: #ff6b6b !important;
-              }
-              
-              .btn-outline-info:hover,
-              .btn-outline-info:focus,
-              .btn-outline-info:active {
-                background-color: #ffffff !important;
-                border-color: #ff6b6b !important;
-                color: #ff6b6b !important;
-              }
-              
-              .btn-outline-light:hover,
-              .btn-outline-light:focus,
-              .btn-outline-light:active {
-                background-color: #ffffff !important;
-                border-color: #ff6b6b !important;
-                color: #ff6b6b !important;
-              }
-              
-              .btn-outline-dark:hover,
-              .btn-outline-dark:focus,
-              .btn-outline-dark:active {
-                background-color: #ffffff !important;
-                border-color: #ff6b6b !important;
-                color: #ff6b6b !important;
+              /* Reduced motion support */
+              @media (prefers-reduced-motion: reduce) {
+                .btn {
+                  transition: none !important;
+                }
+                .btn:hover {
+                  transform: none !important;
+                }
               }
             `,
           }}
@@ -387,6 +304,9 @@ export default function RootLayout({ children }) {
         </Script>
       </head>
       <body className={inter.className}>
+        <a href="#main-content" className="skip-link">
+          Skip to main content
+        </a>
         {children}
 
         {/* Scripts */}
@@ -408,6 +328,7 @@ export default function RootLayout({ children }) {
         />
         <OwlCarouselInit />
         <Script src="/assets/js/custom.js" strategy="afterInteractive" />
+        <Script src="/assets/js/accordion-fix.js" strategy="afterInteractive" />
         <Script
           src="https://cdn.jsdelivr.net/npm/iconify-icon@1.0.8/dist/iconify-icon.min.js"
           strategy="afterInteractive"
