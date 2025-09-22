@@ -9,12 +9,19 @@ import ScrollToTop from "../../components/ui/ScrollToTop";
 const openPositions = [
   {
     title: "Video Editor",
+    link: "https://forms.gle/tPqJL3wdssJdyvUX9",
   },
   {
     title: "3D Motion Designer",
+    link: "https://forms.gle/9zxoVpWMGunB1cp89",
   },
   {
     title: "Designer",
+    link: "https://forms.gle/Navu9DpfkZpKxZwP7",
+  },
+  {
+    title: "Copywriter",
+    link: "https://forms.gle/22A3qfv9DnRjKRZE7",
   },
 ];
 
@@ -90,13 +97,12 @@ export default function Career() {
         {/* Hero Section */}
         <PageBanner
           title="Join Us"
-          description="The #1 attachment is here. We, as WIPOOL, believe in flexibility & reliability. We are passionate and work like workaholic, so everyone works remote."
           backgroundImage="/images/career-hero-bg.jpg"
+          className="text-center"
         >
           <div className="text-center mt-8">
             <p className="text-lg text-gray-200 mb-8">
-              We are building the future of digital marketing in Bangladesh.
-              Join our remote-first team.
+              Join Decor's Digital – a leading 360° marketing agency in Bangladesh. From bold campaigns to smart digital strategies, we bring creativity to life. We believe in creativity, innovation, and the power of doing things differently. Our team is passionate, dynamic, and driven to reshape the future of digital marketing in Bangladesh.
             </p>
             <button
               className="btn bg-red-600 hover:bg-red-700 text-white px-8 py-4 text-lg rounded-lg font-medium transition-colors duration-300"
@@ -124,23 +130,25 @@ export default function Career() {
               </p>
             </div>
 
-            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-              {applicationProcess.map((process, index) => (
-                <div key={index} className="text-center group">
-                  <div className="bg-blue-50 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-6 group-hover:bg-blue-100 transition-colors duration-300">
-                    <span className="text-3xl">{process.icon}</span>
+            <div className="flex justify-center">
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-4xl">
+                {applicationProcess.map((process, index) => (
+                  <div key={index} className="text-center group">
+                    <div className="bg-blue-50 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-6 group-hover:bg-blue-100 transition-colors duration-300">
+                      <span className="text-3xl">{process.icon}</span>
+                    </div>
+                    <div className="bg-red-600 text-white rounded-full w-8 h-8 flex items-center justify-center mx-auto mb-4 text-sm font-bold">
+                      {process.step}
+                    </div>
+                    <h3 className="text-xl font-bold text-deep-charcoal mb-3">
+                      {process.title}
+                    </h3>
+                    <p className="text-gray-600 text-sm leading-relaxed">
+                      {process.description}
+                    </p>
                   </div>
-                  <div className="bg-red-600 text-white rounded-full w-8 h-8 flex items-center justify-center mx-auto mb-4 text-sm font-bold">
-                    {process.step}
-                  </div>
-                  <h3 className="text-xl font-bold text-deep-charcoal mb-3">
-                    {process.title}
-                  </h3>
-                  <p className="text-gray-600 text-sm leading-relaxed">
-                    {process.description}
-                  </p>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           </div>
         </section>
@@ -170,9 +178,14 @@ export default function Career() {
                   </div>
 
                   <div className="flex justify-center">
-                    <button className="btn bg-red-600 hover:bg-red-700 text-white py-3 px-8 rounded-lg font-medium transition-colors duration-300">
+                    <a 
+                      href={position.link} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="btn bg-red-600 hover:bg-red-700 text-white py-3 px-8 rounded-lg font-medium transition-colors duration-300 no-underline"
+                    >
                       Apply Now
-                    </button>
+                    </a>
                   </div>
                 </div>
               ))}
