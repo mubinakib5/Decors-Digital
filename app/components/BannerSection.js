@@ -94,18 +94,7 @@ export default function BannerSection() {
             data-aos-delay="100"
             data-aos-duration="1000"
           >
-            <h1 className="mb-0 fs-16 text-white lh-1">Decor's Digital</h1>
-            <a
-              href="javascript:void(0)"
-              className="p-1 ps-7 bg-primary rounded-pill"
-            >
-              <span className="bg-white round-52 rounded-circle d-flex align-items-center justify-content-center">
-                <iconify-icon
-                  icon="lucide:arrow-up-right"
-                  className="fs-8 text-dark"
-                ></iconify-icon>
-              </span>
-            </a>
+            <h1 className="mb-0 fs-16 text-white lh-1"></h1>
           </div>
           <div
             className="subheading-section"
@@ -115,9 +104,6 @@ export default function BannerSection() {
             style={{ marginTop: "24px" }}
           >
             <p className="mb-0 text-white fs-5 text-opacity-90 leading-relaxed">
-              At Decor's Digital, we aim to empower brands by crafting
-              integrated, innovative marketing strategies that fuel evolution
-              and resonate deeply with audiences.
             </p>
           </div>
           <div
@@ -126,18 +112,7 @@ export default function BannerSection() {
             data-aos-delay="300"
             data-aos-duration="1000"
           >
-            <button
-              className="btn btn-primary fs-6 px-4 py-3 hstack justify-content-center gap-2"
-              onClick={handleBookCall}
-            >
-              <iconify-icon
-                icon="lucide:calendar"
-                className="fs-6"
-              ></iconify-icon>
-              Book a Call
-            </button>
             <p className="mb-0 text-white text-opacity-70 fs-6">
-              Let's discuss your project and see how we can help you succeed
             </p>
 
             {/* Mute/Unmute Button - Positioned in bottom right */}

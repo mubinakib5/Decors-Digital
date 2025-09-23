@@ -338,20 +338,6 @@ export default function BlogDetail({ params }) {
 
         <Footer />
       </main>
-
-      {/* Scroll to Top Button */}
-      <div className="get-template hstack gap-2">
-        <button
-          className="btn bg-primary p-2 round-52 rounded-circle hstack justify-content-center flex-shrink-0"
-          id="scrollToTopBtn"
-          aria-label="Scroll to top"
-        >
-          <iconify-icon
-            icon="lucide:arrow-up"
-            className="fs-7 text-dark"
-          ></iconify-icon>
-        </button>
-      </div>
     </>
   );
 }

@@ -286,19 +286,6 @@ export default function Projects() {
 
         <Footer />
       </div>
-
-      {/* Scroll to Top Button */}
-      <div className="get-template hstack gap-2 position-fixed bottom-0 end-0 m-4" style={{ zIndex: 1000 }}>
-        <button
-          className="btn bg-primary p-2 round-52 rounded-circle hstack justify-content-center flex-shrink-0 hidden"
-          id="scrollToTopBtn"
-        >
-          <iconify-icon
-            icon="lucide:arrow-up"
-            className="fs-7 text-dark"
-          ></iconify-icon>
-        </button>
-      </div>
     </>
   );
 }

@@ -1,8 +1,8 @@
-import AosInit from "../../components/AosInit";
+import { Metadata } from 'next'
 import Footer from "../../components/Footer";
-import BlogCard from "../../components/ui/BlogCard";
 import PageBanner from "../../components/ui/PageBanner";
-import ScrollToTop from "../../components/ui/ScrollToTop";
+import BlogCard from "../../components/ui/BlogCard";
+import AosInit from "../../components/AosInit";
 import { bannerImages, blogData, pageConfig } from "../../data";
 
 export default function Blog() {
@@ -39,8 +39,6 @@ export default function Blog() {
 
         <Footer />
       </div>
-
-      <ScrollToTop />
     </>
   );
 }

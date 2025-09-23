@@ -1,9 +1,9 @@
+import { Metadata } from 'next'
 import { docsData, pageConfig, bannerImages } from '../../data';
 import PageBanner from '../../components/ui/PageBanner';
 import DocCard from '../../components/ui/DocCard';
 import AosInit from '../../components/AosInit';
 import Footer from '../../components/Footer';
-import ScrollToTop from '../../components/ui/ScrollToTop';
 
 export default function Docs() {
   return (
@@ -39,8 +39,6 @@ export default function Docs() {
 
         <Footer />
       </div>
-
-      <ScrollToTop />
     </>
   );
 }

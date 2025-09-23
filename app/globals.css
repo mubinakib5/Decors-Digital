@@ -10,7 +10,7 @@
   --soft-white-rgb: 249, 249, 249;
   --light-gray: #E0E0E0;
   --light-gray-rgb: 224, 224, 224;
-  
+
   /* Hover variations */
   --decor-red-light: #E63946;
   --decor-red-dark: #B71C1C;
@@ -129,7 +129,12 @@
   }
 
   /* Typography improvements */
-  h1, h2, h3, h4, h5, h6 {
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
     @apply font-bold leading-tight;
     color: var(--deep-charcoal);
     margin-bottom: 1rem;

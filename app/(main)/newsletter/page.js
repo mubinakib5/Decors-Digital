@@ -1,6 +1,5 @@
 import { Metadata } from 'next'
 import Footer from "../../components/Footer";
-import ScrollToTop from "../../components/ui/ScrollToTop";
 import PageBanner from "../../components/ui/PageBanner";
 import AosInit from "../../components/AosInit";
 
@@ -238,8 +237,6 @@ export default function Newsletter() {
 
         <Footer />
       </div>
-
-      <ScrollToTop />
     </>
   );
 }

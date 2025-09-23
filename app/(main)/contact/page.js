@@ -1,7 +1,6 @@
 import AosInit from "@/components/AosInit";
 import Footer from "@/components/Footer";
 import PageBanner from "@/components/ui/PageBanner";
-import ScrollToTop from "@/components/ui/ScrollToTop";
 
 export const metadata = {
   title: "Contact - Decor's Digital | Get In Touch",
@@ -515,7 +514,6 @@ export default function Contact() {
         </section>
 
         <Footer />
-        <ScrollToTop />
       </div>
     </>
   );
