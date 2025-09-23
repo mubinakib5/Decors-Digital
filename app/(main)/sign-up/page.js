@@ -164,13 +164,13 @@ export default function SignUp() {
         style={{ zIndex: 1000 }}
       >
         <button
-          className="btn bg-primary p-2 round-52 rounded-circle hstack justify-content-center flex-shrink-0"
+          className="btn bg-primary p-2 round-52 rounded-circle d-flex align-items-center justify-content-center flex-shrink-0"
           id="scrollToTopBtn"
           style={{ display: "none" }}
         >
           <iconify-icon
             icon="lucide:arrow-up"
-            className="fs-7 text-dark"
+            className="fs-7 text-white"
           ></iconify-icon>
         </button>
       </div>

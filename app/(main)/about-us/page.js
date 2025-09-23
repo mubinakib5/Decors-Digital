@@ -24,28 +24,11 @@ export default function AboutUs() {
           }}
         >
           <div className="container">
-            <div className="d-flex flex-column gap-4 pb-5 pb-xl-10 position-relative z-1">
-              <div className="row align-items-center">
-                <div className="col-xl-4">
-                  <div
-                    className="d-flex align-items-center gap-2 mb-3"
-                    data-aos="fade-up"
-                    data-aos-delay="100"
-                    data-aos-duration="1000"
-                  >
-                    <p className="mb-0 text-white fs-5 text-opacity-70">
-                      We craft
-                      <span className="text-primary"> innovative digital</span>
-                      solutions that amplify brand identity and drive meaningful
-                      results
-                    </p>
-                  </div>
-                </div>
-              </div>
+            <div className="d-flex flex-column gap-4 pb-5 pb-xl-10 position-relative z-1" style={{ paddingTop: '128px' }}>
               <div
                 className="d-flex align-items-end gap-3"
                 data-aos="fade-up"
-                data-aos-delay="200"
+                data-aos-delay="100"
                 data-aos-duration="1000"
               >
                 <h1 className="mb-0 fs-16 text-white lh-1">About us</h1>
@@ -60,6 +43,23 @@ export default function AboutUs() {
                     ></iconify-icon>
                   </span>
                 </a>
+              </div>
+              <div className="row align-items-center" style={{ marginTop: '24px' }}>
+                <div className="col-xl-4">
+                  <div
+                    className="d-flex align-items-center gap-2 mb-3"
+                    data-aos="fade-up"
+                    data-aos-delay="200"
+                    data-aos-duration="1000"
+                  >
+                    <p className="mb-0 text-white fs-5 text-opacity-70">
+                      We craft
+                      <span className="text-primary"> innovative digital</span>
+                      solutions that amplify brand identity and drive meaningful
+                      results
+                    </p>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -413,12 +413,12 @@ export default function AboutUs() {
       {/* Scroll to Top Button */}
       <div className="get-template hstack gap-2 position-fixed bottom-0 end-0 m-4" style={{ zIndex: 1000 }}>
         <button
-          className="btn bg-primary p-2 round-52 rounded-circle hstack justify-content-center flex-shrink-0 hidden"
+          className="btn bg-primary p-2 round-52 rounded-circle d-flex align-items-center justify-content-center flex-shrink-0 hidden"
           id="scrollToTopBtn"
         >
           <iconify-icon
             icon="lucide:arrow-up"
-            className="fs-7 text-dark"
+            className="fs-7 text-white"
           ></iconify-icon>
         </button>
       </div>

@@ -292,7 +292,7 @@ export default function Contact() {
                           <a
                             key={index}
                             href={social.url}
-                            className="btn btn-outline-light d-flex align-items-center justify-content-center text-white"
+                            className="btn btn-outline-light d-flex align-items-center justify-content-center text-white social-icon-btn"
                             style={{
                               width: "50px",
                               height: "50px",
@@ -302,13 +302,14 @@ export default function Contact() {
                               display: "flex",
                               alignItems: "center",
                               justifyContent: "center",
+                              transition: "all 0.3s ease",
                             }}
                             target="_blank"
                             rel="noopener noreferrer"
                           >
                             <i
-                              className={`${social.icon} text-white`}
-                              style={{ fontSize: "18px" }}
+                              className={`${social.icon} text-white social-icon`}
+                              style={{ fontSize: "18px", transition: "color 0.3s ease" }}
                             ></i>
                           </a>
                         ))}
@@ -323,7 +324,7 @@ export default function Contact() {
                     <div className="d-grid gap-2">
                       <a
                         href={`tel:${contactInfo.office.phone}`}
-                        className="btn btn-primary"
+                        className="btn btn-outline-primary"
                       >
                         <i className="fas fa-phone me-2"></i>Call Now
                       </a>
@@ -500,11 +501,12 @@ export default function Contact() {
                   Let's schedule a call to discuss your goals and how we can
                   help bring your vision to life.
                 </p>
-                <button className="btn btn-outline-light btn-lg px-5 py-3 fw-bold shadow d-flex align-items-center gap-2 mx-auto">
+                <button className="btn btn-lg px-5 py-3 fw-bold shadow d-flex align-items-center gap-2 mx-auto" style={{backgroundColor: 'white !important', color: 'var(--decor-red) !important', border: '2px solid white !important'}}>
                   Schedule a Free Consultation
                   <iconify-icon
                     icon="lucide:calendar"
                     className="fs-6"
+                    style={{color: 'var(--decor-red) !important'}}
                   ></iconify-icon>
                 </button>
               </div>

@@ -389,25 +389,7 @@
   }
 }
 
-/* Button styles with proper hover effects */
-.btn-primary {
-  background-color: #dc3545 !important;
-  border-color: #dc3545 !important;
-  color: white !important;
-}
-
-.btn-primary:hover {
-  background-color: white !important;
-  border-color: #dc3545 !important;
-  color: #dc3545 !important;
-}
-
-.btn-primary:focus {
-  background-color: white !important;
-  border-color: #dc3545 !important;
-  color: #dc3545 !important;
-  box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25) !important;
-}
+/* Removed conflicting button styles - using the main btn-primary styles defined earlier */
 
 .btn-primary:active {
   background-color: white !important;
@@ -580,4 +562,14 @@ body {
 
 .featured-projects-slider .owl-carousel .owl-item {
   display: block;
+}
+
+/* Social Media Icons Hover Styling */
+.social-icon-btn:hover {
+  background-color: white !important;
+  border-color: white !important;
+}
+
+.social-icon-btn:hover .social-icon {
+  color: var(--decor-red) !important;
 }

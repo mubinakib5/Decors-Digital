@@ -38,7 +38,10 @@ export default function Header() {
       role="banner"
     >
       <div className="container">
-        <div className="header-wrapper d-flex align-items-center justify-content-between">
+        <div
+          className="header-wrapper d-flex align-items-center justify-content-between"
+          style={{ gap: "64px" }}
+        >
           <div className="logo">
             <Link
               href="/"
@@ -83,10 +86,10 @@ export default function Header() {
                 aria-label="Toggle navigation menu"
                 onClick={toggleDropdown}
                 style={{
-                  backgroundColor: '#FF6B6B',
-                  border: 'none',
-                  width: '45px',
-                  height: '45px'
+                  backgroundColor: "#FF6B6B",
+                  border: "none",
+                  width: "45px",
+                  height: "45px",
                 }}
               >
                 <iconify-icon
@@ -132,8 +135,8 @@ export default function Header() {
                     >
                       {navigationData.mainMenu.map((item, index) => {
                         // Improved active state logic
-                        const isActive = 
-                          pathname === item.href || 
+                        const isActive =
+                          pathname === item.href ||
                           (item.href !== "/" && pathname.startsWith(item.href));
                         return (
                           <li key={index} className="header-item" role="none">

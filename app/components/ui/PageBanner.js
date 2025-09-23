@@ -1,21 +1,19 @@
-import Image from 'next/image';
-
-const PageBanner = ({ 
-  title, 
-  description, 
-  backgroundImage, 
+const PageBanner = ({
+  title,
+  description,
+  backgroundImage,
   isVideo = false,
-  className = '',
-  children 
+  className = "",
+  children,
 }) => {
   return (
     <section
       className={`banner-section banner-inner-section position-relative overflow-hidden d-flex align-items-end ${className}`}
       style={{
-        backgroundImage: !isVideo ? `url('${backgroundImage}')` : 'none',
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        minHeight: '60vh'
+        backgroundImage: !isVideo ? `url('${backgroundImage}')` : "none",
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        minHeight: "60vh",
       }}
     >
       {isVideo && (
@@ -29,27 +27,13 @@ const PageBanner = ({
           <source src={backgroundImage} type="video/mp4" />
         </video>
       )}
-      
+
       <div className="container">
-        <div className="d-flex flex-column gap-4 pb-5 pb-xl-10 position-relative z-1">
-          <div className="row align-items-center">
-            <div className="col-xl-4">
-              <div
-                className="d-flex align-items-center gap-2 mb-3"
-                data-aos="fade-up"
-                data-aos-delay="100"
-                data-aos-duration="1000"
-              >
-                <p className="mb-0 text-white fs-5 text-opacity-70">
-                  {description}
-                </p>
-              </div>
-            </div>
-          </div>
+        <div className="d-flex flex-column gap-4 pb-5 pb-xl-10 position-relative z-1" style={{ paddingTop: '128px' }}>
           <div
             className={`d-flex align-items-end gap-3 ${className?.includes('text-center') ? 'justify-content-center' : ''}`}
             data-aos="fade-up"
-            data-aos-delay="200"
+            data-aos-delay="100"
             data-aos-duration="1000"
           >
             <h1 className="mb-0 fs-16 text-white lh-1">{title}</h1>
@@ -66,6 +50,20 @@ const PageBanner = ({
                 </span>
               </a>
             )}
+          </div>
+          <div className="row align-items-center" style={{ marginTop: '24px' }}>
+            <div className="col-xl-4">
+              <div
+                className="d-flex align-items-center gap-2 mb-3"
+                data-aos="fade-up"
+                data-aos-delay="200"
+                data-aos-duration="1000"
+              >
+                <p className="mb-0 text-white fs-5 text-opacity-70">
+                  {description}
+                </p>
+              </div>
+            </div>
           </div>
           {children}
         </div>

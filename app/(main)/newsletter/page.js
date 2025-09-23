@@ -1,6 +1,8 @@
 import { Metadata } from 'next'
 import Footer from "../../components/Footer";
 import ScrollToTop from "../../components/ui/ScrollToTop";
+import PageBanner from "../../components/ui/PageBanner";
+import AosInit from "../../components/AosInit";
 
 export const metadata = {
   title: 'Newsletter - Decor\'s Digital',
@@ -64,212 +66,170 @@ const pastEditions = [
 export default function Newsletter() {
   return (
     <>
+      <AosInit />
+      
       {/* Page Wrapper */}
       <div className="page-wrapper overflow-hidden">
-        {/* Hero Section */}
-        <section className="bg-deep-charcoal text-white py-20">
-          <div className="container">
-            <div className="max-w-4xl mx-auto text-center">
-              <h1 className="text-5xl font-bold mb-6">Newsletter</h1>
-              <p className="text-xl text-gray-300 mb-8">
-                Stay ahead with the latest digital marketing insights, trends, and exclusive content delivered to your inbox
-              </p>
-            </div>
-          </div>
-        </section>
+        <PageBanner
+          title="Newsletter"
+          description="Stay ahead with the latest digital marketing insights, trends, and exclusive content delivered to your inbox"
+          backgroundImage="/assets/images/backgrounds/newsletter-banner.jpg"
+        />
 
         {/* Newsletter Subscription Section */}
-        <section className="py-20 bg-soft-white">
+        <section className="py-5 py-lg-11 py-xl-12 bg-light">
           <div className="container">
+            <div className="text-center mb-5 mb-lg-8">
+              <h2 className="fs-2 fw-bold text-dark mb-4">Subscribe to Our Newsletter</h2>
+              <p className="fs-5 text-muted">Get exclusive insights, industry trends, and actionable tips delivered straight to your inbox every month.</p>
+            </div>
+            
             <div className="max-w-3xl mx-auto">
-              <div className="bg-white rounded-lg shadow-lg p-8 md:p-12">
-                <div className="text-center mb-8">
-                  <h2 className="text-3xl font-bold text-deep-charcoal mb-4">Subscribe to Our Newsletter</h2>
-                  <p className="text-lg text-gray-600">
-                    Get exclusive insights, industry trends, and actionable tips delivered straight to your inbox every month.
-                  </p>
-                </div>
-                
-                <form className="space-y-6">
-                  <div className="grid md:grid-cols-2 gap-4">
-                    <div>
-                      <label htmlFor="firstName" className="block text-sm font-medium text-deep-charcoal mb-2">
-                        First Name *
-                      </label>
-                      <input
-                        type="text"
-                        id="firstName"
-                        name="firstName"
-                        required
-                        className="w-full px-4 py-3 border border-light-gray rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                        placeholder="Enter your first name"
-                      />
-                    </div>
-                    <div>
-                      <label htmlFor="lastName" className="block text-sm font-medium text-deep-charcoal mb-2">
-                        Last Name *
-                      </label>
-                      <input
-                        type="text"
-                        id="lastName"
-                        name="lastName"
-                        required
-                        className="w-full px-4 py-3 border border-light-gray rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                        placeholder="Enter your last name"
-                      />
-                    </div>
+              <div className="bg-white rounded shadow-lg p-4 p-md-5">
+                <form className="row g-4">
+                  <div className="col-md-6">
+                    <label htmlFor="firstName" className="form-label fw-bold text-dark">
+                      First Name *
+                    </label>
+                    <input
+                      type="text"
+                      className="form-control"
+                      id="firstName"
+                      name="firstName"
+                      required
+                    />
                   </div>
-                  
-                  <div>
-                    <label htmlFor="email" className="block text-sm font-medium text-deep-charcoal mb-2">
+                  <div className="col-md-6">
+                    <label htmlFor="lastName" className="form-label fw-bold text-dark">
+                      Last Name *
+                    </label>
+                    <input
+                      type="text"
+                      className="form-control"
+                      id="lastName"
+                      name="lastName"
+                      required
+                    />
+                  </div>
+                  <div className="col-12">
+                    <label htmlFor="email" className="form-label fw-bold text-dark">
                       Email Address *
                     </label>
                     <input
                       type="email"
+                      className="form-control"
                       id="email"
                       name="email"
                       required
-                      className="w-full px-4 py-3 border border-light-gray rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                      placeholder="Enter your email address"
                     />
                   </div>
-                  
-                  <div>
-                    <label htmlFor="company" className="block text-sm font-medium text-deep-charcoal mb-2">
+                  <div className="col-12">
+                    <label htmlFor="company" className="form-label fw-bold text-dark">
                       Company (Optional)
                     </label>
                     <input
                       type="text"
+                      className="form-control"
                       id="company"
                       name="company"
-                      className="w-full px-4 py-3 border border-light-gray rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                      placeholder="Enter your company name"
                     />
                   </div>
-                  
-                  <div>
-                    <label className="block text-sm font-medium text-deep-charcoal mb-3">
-                      What topics interest you most? (Select all that apply)
-                    </label>
-                    <div className="grid md:grid-cols-2 gap-3">
-                      {["Digital Marketing", "SEO & SEM", "Social Media", "Content Strategy", "E-commerce", "Brand Strategy"].map((topic) => (
-                        <label key={topic} className="flex items-center">
-                          <input
-                            type="checkbox"
-                            name="interests"
-                            value={topic}
-                            className="w-4 h-4 text-primary border-light-gray rounded focus:ring-primary"
-                          />
-                          <span className="ml-2 text-sm text-gray-600">{topic}</span>
-                        </label>
-                      ))}
+                  <div className="col-12">
+                    <div className="form-check">
+                      <input
+                        className="form-check-input"
+                        type="checkbox"
+                        id="consent"
+                        name="consent"
+                        required
+                      />
+                      <label className="form-check-label text-muted" htmlFor="consent">
+                        I agree to receive marketing communications from Decor's Digital. You can unsubscribe at any time.
+                      </label>
                     </div>
                   </div>
-                  
-                  <div className="flex items-start">
-                    <input
-                      type="checkbox"
-                      id="consent"
-                      name="consent"
-                      required
-                      className="w-4 h-4 text-primary border-light-gray rounded focus:ring-primary mt-1"
-                    />
-                    <label htmlFor="consent" className="ml-2 text-sm text-gray-600">
-                      I agree to receive marketing communications from Decor's Digital. You can unsubscribe at any time. *
-                    </label>
+                  <div className="col-12 text-center">
+                    <button type="submit" className="btn btn-primary btn-lg px-5">
+                      Subscribe Now
+                    </button>
                   </div>
-                  
-                  <button
-                    type="submit"
-                    className="w-full btn btn-primary py-4 text-lg font-medium"
-                  >
-                    Subscribe Now
-                  </button>
                 </form>
-                
-                <div className="mt-8 text-center">
-                  <p className="text-sm text-gray-500">
-                    Join 5,000+ marketing professionals who trust our insights
-                  </p>
-                </div>
               </div>
             </div>
           </div>
         </section>
 
-        {/* Newsletter Archive Section */}
-        <section className="py-20 bg-white">
+        {/* Past Editions Section */}
+        <section className="py-5 py-lg-11 py-xl-12 bg-white">
           <div className="container">
-            <div className="text-center mb-16">
-              <h2 className="text-4xl font-bold text-deep-charcoal mb-4">Newsletter Archive</h2>
-              <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-                Catch up on our previous editions packed with valuable insights and actionable strategies
+            <div className="text-center mb-5 mb-lg-10">
+              <h2 className="fs-1 fw-bold text-dark mb-4">Past Editions</h2>
+              <p className="fs-5 text-muted mx-auto" style={{maxWidth: '32rem'}}>
+                Catch up on our previous newsletters and discover valuable insights you might have missed.
               </p>
             </div>
-            
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <div className="row g-4 g-lg-5">
               {pastEditions.map((edition, index) => (
-                <div key={index} className="bg-soft-white rounded-lg p-6 hover:shadow-lg transition-shadow duration-300">
-                  <div className="mb-4">
-                    <span className="text-sm text-primary font-medium">{edition.date}</span>
-                  </div>
-                  <h3 className="text-xl font-bold text-deep-charcoal mb-3">{edition.title}</h3>
-                  <p className="text-gray-600 mb-4">{edition.description}</p>
-                  
-                  <div className="mb-6">
-                    <h4 className="text-sm font-semibold text-deep-charcoal mb-2">Topics Covered:</h4>
-                    <div className="flex flex-wrap gap-2">
+                <div key={index} className="col-lg-6">
+                  <div className="bg-light rounded p-4 p-lg-5 h-100">
+                    <div className="d-flex justify-content-between align-items-start mb-3">
+                      <span className="badge bg-primary text-white">{edition.date}</span>
+                    </div>
+                    <h3 className="fs-4 fw-bold text-dark mb-3">{edition.title}</h3>
+                    <p className="text-muted mb-4">{edition.description}</p>
+                    <div className="d-flex flex-wrap gap-2 mb-4">
                       {edition.topics.map((topic, topicIndex) => (
-                        <span
-                          key={topicIndex}
-                          className="px-3 py-1 bg-light-gray text-xs font-medium text-deep-charcoal rounded-full"
-                        >
+                        <span key={topicIndex} className="badge bg-light text-dark border">
                           {topic}
                         </span>
                       ))}
                     </div>
+                    <button className="btn btn-outline-primary">
+                      Read Edition
+                    </button>
                   </div>
-                  
-                  <button className="btn btn-secondary w-full hover:bg-primary hover:text-white transition-colors">
-                    Read Edition
-                  </button>
                 </div>
               ))}
             </div>
           </div>
         </section>
 
-        {/* Benefits Section */}
-        <section className="py-16 bg-light-gray">
+        {/* Newsletter Benefits Section */}
+        <section className="py-5 py-lg-11 py-xl-12 bg-light">
           <div className="container">
-            <div className="max-w-4xl mx-auto">
-              <div className="text-center mb-12">
-                <h2 className="text-3xl font-bold text-deep-charcoal mb-4">Why Subscribe?</h2>
+            <div className="text-center mb-5 mb-lg-8">
+              <h2 className="fs-2 fw-bold text-dark mb-4">Why Subscribe?</h2>
+              <p className="fs-5 text-muted">Join thousands of professionals who rely on our insights to stay ahead</p>
+            </div>
+            
+            <div className="row g-4 g-lg-5">
+              <div className="col-lg-4">
+                <div className="text-center">
+                  <div className="d-flex align-items-center justify-content-center bg-primary rounded-circle mx-auto mb-4" style={{width: '4rem', height: '4rem'}}>
+                    <span className="text-white fs-4">📊</span>
+                  </div>
+                  <h3 className="fs-4 fw-bold text-dark mb-3">Exclusive Insights</h3>
+                  <p className="text-muted">Get access to industry data and trends not available anywhere else</p>
+                </div>
               </div>
               
-              <div className="grid md:grid-cols-3 gap-8">
+              <div className="col-lg-4">
                 <div className="text-center">
-                  <div className="w-16 h-16 bg-primary rounded-full flex items-center justify-center mx-auto mb-4">
-                    <span className="text-white text-2xl">📊</span>
+                  <div className="d-flex align-items-center justify-content-center bg-primary rounded-circle mx-auto mb-4" style={{width: '4rem', height: '4rem'}}>
+                    <span className="text-white fs-4">🚀</span>
                   </div>
-                  <h3 className="text-xl font-bold text-deep-charcoal mb-3">Exclusive Insights</h3>
-                  <p className="text-gray-600">Get access to industry data and trends not available anywhere else</p>
+                  <h3 className="fs-4 fw-bold text-dark mb-3">Actionable Tips</h3>
+                  <p className="text-muted">Practical strategies you can implement immediately in your business</p>
                 </div>
-                
+              </div>
+              
+              <div className="col-lg-4">
                 <div className="text-center">
-                  <div className="w-16 h-16 bg-primary rounded-full flex items-center justify-center mx-auto mb-4">
-                    <span className="text-white text-2xl">🚀</span>
+                  <div className="d-flex align-items-center justify-content-center bg-primary rounded-circle mx-auto mb-4" style={{width: '4rem', height: '4rem'}}>
+                    <span className="text-white fs-4">⏰</span>
                   </div>
-                  <h3 className="text-xl font-bold text-deep-charcoal mb-3">Actionable Tips</h3>
-                  <p className="text-gray-600">Practical strategies you can implement immediately in your business</p>
-                </div>
-                
-                <div className="text-center">
-                  <div className="w-16 h-16 bg-primary rounded-full flex items-center justify-center mx-auto mb-4">
-                    <span className="text-white text-2xl">⏰</span>
-                  </div>
-                  <h3 className="text-xl font-bold text-deep-charcoal mb-3">Stay Ahead</h3>
-                  <p className="text-gray-600">Be the first to know about emerging trends and opportunities</p>
+                  <h3 className="fs-4 fw-bold text-dark mb-3">Stay Ahead</h3>
+                  <p className="text-muted">Be the first to know about emerging trends and opportunities</p>
                 </div>
               </div>
             </div>

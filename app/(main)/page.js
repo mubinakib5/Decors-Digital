@@ -110,7 +110,7 @@ export default function TheCompany() {
                       ></div>
                       <div className="bg-white p-6 rounded-2xl shadow-lg border border-gray-100 group-hover:shadow-xl transition-all duration-300">
                         <h5 className="text-xl font-bold text-deep-charcoal mb-3">
-                          March 2023 - Décor's Digital Launch
+                          March 2023 - Decor's Digital Launch
                         </h5>
                         <p className="text-gray-600 leading-relaxed">
                           Launched as a sister concern of The Decor, initially focusing on basic social media marketing services.
@@ -427,12 +427,12 @@ export default function TheCompany() {
           style={{ zIndex: 1000 }}
         >
           <button
-            className="btn bg-primary p-2 round-52 rounded-circle hstack justify-content-center flex-shrink-0 hidden"
+            className="btn bg-primary p-2 round-52 rounded-circle d-flex align-items-center justify-content-center flex-shrink-0 hidden"
             id="scrollToTopBtn"
           >
             <iconify-icon
               icon="lucide:arrow-up"
-              className="fs-7 text-dark"
+              className="fs-7 text-white"
             ></iconify-icon>
           </button>
         </div>
