@@ -74,8 +74,28 @@ function SignInContent() {
           if (session?.user) {
             console.log("User role:", session.user.role);
             if (session.user.role === "admin") {
-              console.log("Admin role confirmed, redirecting...");
-              window.location.href = "/admin/expenses";
+              console.log("Admin role confirmed, setting legacy token...");
+              
+              // Set the legacy JWT token for API compatibility
+              try {
+                const tokenResponse = await fetch("/api/auth/set-legacy-token", {
+                  method: "POST",
+                  headers: {
+                    "Content-Type": "application/json",
+                  },
+                });
+                
+                if (tokenResponse.ok) {
+                  console.log("Legacy token set successfully, redirecting...");
+                  window.location.href = "/admin/expenses";
+                } else {
+                  console.error("Failed to set legacy token");
+                  setError("Authentication setup failed. Please try again.");
+                }
+              } catch (error) {
+                console.error("Error setting legacy token:", error);
+                setError("Authentication setup failed. Please try again.");
+              }
             } else {
               console.log("User role is not admin:", session.user.role);
               setError(`Access denied. Admin privileges required. Current role: ${session.user.role || 'none'}`);

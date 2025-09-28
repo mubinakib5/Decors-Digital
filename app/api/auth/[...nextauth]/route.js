@@ -2,6 +2,7 @@ import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { MongoClient } from "mongodb";
 import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
 
 console.log("NextAuth route file loaded");
 
@@ -178,6 +179,25 @@ const authOptions = {
         } else {
           token.exp = Math.floor(Date.now() / 1000) + (24 * 60 * 60); // 1 day
           console.log("NextAuth - JWT token set to 1 day");
+        }
+
+        // Create legacy JWT token for API compatibility
+        try {
+          const legacyToken = jwt.sign(
+            { 
+              username: user.username || user.name,
+              role: user.role,
+              id: user.id
+            },
+            process.env.JWT_SECRET,
+            { expiresIn: user.rememberMe ? '30d' : '1d' }
+          );
+          
+          // Store the legacy token in the NextAuth token for later use
+          token.legacyToken = legacyToken;
+          console.log("NextAuth - Legacy JWT token created for API compatibility");
+        } catch (error) {
+          console.error("NextAuth - Failed to create legacy JWT token:", error);
         }
       }
       
