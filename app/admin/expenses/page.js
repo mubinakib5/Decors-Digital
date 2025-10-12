@@ -474,9 +474,9 @@ export default function FinancialManagementPage() {
     try {
       showToast("Logging out...");
       // Use NextAuth signOut
-      await signOut({ 
+      await signOut({
         callbackUrl: "/admin/auth/signin",
-        redirect: true 
+        redirect: true,
       });
     } catch (error) {
       showToast("Failed to logout", "error");
@@ -1418,16 +1418,16 @@ export default function FinancialManagementPage() {
                     </select>
                   </div>
                   {selectedCategory &&
-                    getSubcategoriesForCategory(
-                      selectedCategory,
-                      "expense"
-                    ).length > 0 && (
+                    getSubcategoriesForCategory(selectedCategory, "expense")
+                      .length > 0 && (
                       <div className="col-md-2">
                         <label className="form-label">Subcategory</label>
                         <select
                           className="form-select border rounded"
                           value={selectedSubcategory || ""}
-                          onChange={(e) => setSelectedSubcategory(e.target.value)}
+                          onChange={(e) =>
+                            setSelectedSubcategory(e.target.value)
+                          }
                           style={{ padding: "8px 12px" }}
                         >
                           <option value="">All Subcategories</option>
@@ -1662,16 +1662,16 @@ export default function FinancialManagementPage() {
                     </select>
                   </div>
                   {selectedCategory &&
-                    getSubcategoriesForCategory(
-                      selectedCategory,
-                      "income"
-                    ).length > 0 && (
+                    getSubcategoriesForCategory(selectedCategory, "income")
+                      .length > 0 && (
                       <div className="col-md-2">
                         <label className="form-label">Subcategory</label>
                         <select
                           className="form-select border rounded"
                           value={selectedSubcategory || ""}
-                          onChange={(e) => setSelectedSubcategory(e.target.value)}
+                          onChange={(e) =>
+                            setSelectedSubcategory(e.target.value)
+                          }
                           style={{ padding: "8px 12px" }}
                         >
                           <option value="">All Subcategories</option>
