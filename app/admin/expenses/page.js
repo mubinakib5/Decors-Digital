@@ -96,6 +96,7 @@ export default function FinancialManagementPage() {
   const [selectedMonth, setSelectedMonth] = useState("");
   const [selectedYear, setSelectedYear] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
+  const [selectedSubcategory, setSelectedSubcategory] = useState("");
   const [sortBy, setSortBy] = useState("date");
   const [sortOrder, setSortOrder] = useState("desc");
   const [isFilterExpanded, setIsFilterExpanded] = useState(true);
@@ -106,6 +107,7 @@ export default function FinancialManagementPage() {
     setSelectedMonth("");
     setSelectedYear("");
     setSelectedCategory("");
+    setSelectedSubcategory("");
     setSortBy("date");
     setSortOrder("desc");
   };
@@ -173,6 +175,7 @@ export default function FinancialManagementPage() {
     selectedMonth,
     selectedYear,
     selectedCategory,
+    selectedSubcategory,
     sortBy,
     sortOrder,
   ]);
@@ -261,6 +264,16 @@ export default function FinancialManagementPage() {
       );
       filteredInc = filteredInc.filter(
         (income) => income.category === selectedCategory
+      );
+    }
+
+    // Subcategory filter
+    if (selectedSubcategory !== "") {
+      filteredExp = filteredExp.filter(
+        (expense) => (expense.subcategory || "") === selectedSubcategory
+      );
+      filteredInc = filteredInc.filter(
+        (income) => (income.subcategory || "") === selectedSubcategory
       );
     }
 
@@ -634,6 +647,8 @@ export default function FinancialManagementPage() {
       if (selectedYear !== "") filterInfo.push(`Year: ${selectedYear}`);
       if (selectedCategory !== "")
         filterInfo.push(`Category: ${selectedCategory}`);
+      if (selectedSubcategory !== "")
+        filterInfo.push(`Subcategory: ${selectedSubcategory}`);
 
       if (filterInfo.length > 0) {
         doc.setFontSize(10);
@@ -1388,7 +1403,10 @@ export default function FinancialManagementPage() {
                     <select
                       className="form-select border rounded"
                       value={selectedCategory || ""}
-                      onChange={(e) => setSelectedCategory(e.target.value)}
+                      onChange={(e) => {
+                        setSelectedCategory(e.target.value);
+                        setSelectedSubcategory("");
+                      }}
                       style={{ padding: "8px 12px" }}
                     >
                       <option value="">All Categories</option>
@@ -1399,6 +1417,31 @@ export default function FinancialManagementPage() {
                       ))}
                     </select>
                   </div>
+                  {selectedCategory &&
+                    getSubcategoriesForCategory(
+                      selectedCategory,
+                      "expense"
+                    ).length > 0 && (
+                      <div className="col-md-2">
+                        <label className="form-label">Subcategory</label>
+                        <select
+                          className="form-select border rounded"
+                          value={selectedSubcategory || ""}
+                          onChange={(e) => setSelectedSubcategory(e.target.value)}
+                          style={{ padding: "8px 12px" }}
+                        >
+                          <option value="">All Subcategories</option>
+                          {getSubcategoriesForCategory(
+                            selectedCategory,
+                            "expense"
+                          ).map((subcat) => (
+                            <option key={subcat} value={subcat}>
+                              {subcat}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
                   <div className="col-md-3">
                     <label className="form-label">Sort By</label>
                     <div className="d-flex gap-2">
@@ -1604,7 +1647,10 @@ export default function FinancialManagementPage() {
                     <select
                       className="form-select border rounded"
                       value={selectedCategory || ""}
-                      onChange={(e) => setSelectedCategory(e.target.value)}
+                      onChange={(e) => {
+                        setSelectedCategory(e.target.value);
+                        setSelectedSubcategory("");
+                      }}
                       style={{ padding: "8px 12px" }}
                     >
                       <option value="">All Categories</option>
@@ -1615,6 +1661,31 @@ export default function FinancialManagementPage() {
                       ))}
                     </select>
                   </div>
+                  {selectedCategory &&
+                    getSubcategoriesForCategory(
+                      selectedCategory,
+                      "income"
+                    ).length > 0 && (
+                      <div className="col-md-2">
+                        <label className="form-label">Subcategory</label>
+                        <select
+                          className="form-select border rounded"
+                          value={selectedSubcategory || ""}
+                          onChange={(e) => setSelectedSubcategory(e.target.value)}
+                          style={{ padding: "8px 12px" }}
+                        >
+                          <option value="">All Subcategories</option>
+                          {getSubcategoriesForCategory(
+                            selectedCategory,
+                            "income"
+                          ).map((subcat) => (
+                            <option key={subcat} value={subcat}>
+                              {subcat}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
                   <div className="col-md-3">
                     <label className="form-label">Sort By</label>
                     <div className="d-flex gap-2">
