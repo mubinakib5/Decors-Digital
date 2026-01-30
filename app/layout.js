@@ -185,6 +185,7 @@ export default function RootLayout({ children }) {
         <link rel="manifest" href="/site.webmanifest" />
         <meta name="theme-color" content="#D2212E" />
         <meta name="msapplication-TileColor" content="#D2212E" />
+        <meta name="facebook-domain-verification" content="xuzoabmodv6edu953cgojicixnzdga" />
         <link
           rel="stylesheet"
           href="/assets/libs/owl.carousel/dist/assets/owl.carousel.min.css"
