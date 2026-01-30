@@ -1,7 +1,7 @@
 import { Inter } from "next/font/google";
 import Script from "next/script";
 import OwlCarouselInit from "./components/OwlCarouselInit";
-import { COMPANY_INFO, CONTACT_INFO, SOCIAL_LINKS } from "./constants";
+import { CONTACT_INFO, SOCIAL_LINKS } from "./constants";
 import "./globals.css";
 
 const inter = Inter({
@@ -17,7 +17,8 @@ export const metadata = {
     default: "The Company - Decor's Digital",
     template: `%s | Decor's Digital`,
   },
-  description: "Premium digital marketing agency specializing in brand strategy, content creation, paid marketing, visual design, and web development. Transforming businesses through innovative digital solutions.",
+  description:
+    "Premium digital marketing agency specializing in brand strategy, content creation, paid marketing, visual design, and web development. Transforming businesses through innovative digital solutions.",
   keywords: [
     "digital marketing agency",
     "brand strategy",
@@ -52,7 +53,8 @@ export const metadata = {
     url: "https://www.thedecorbd.com",
     siteName: "Decor's Digital",
     title: "The Company - Decor's Digital | Premium Digital Marketing Agency",
-    description: "Premium digital marketing agency specializing in brand strategy, content creation, paid marketing, visual design, and web development. Transforming businesses through innovative digital solutions.",
+    description:
+      "Premium digital marketing agency specializing in brand strategy, content creation, paid marketing, visual design, and web development. Transforming businesses through innovative digital solutions.",
     images: [
       {
         url: "/assets/images/logos/logo-dark.png",
@@ -65,7 +67,8 @@ export const metadata = {
   twitter: {
     card: "summary_large_image",
     title: "The Company - Decor's Digital | Premium Digital Marketing Agency",
-    description: "Premium digital marketing agency specializing in brand strategy, content creation, paid marketing, visual design, and web development.",
+    description:
+      "Premium digital marketing agency specializing in brand strategy, content creation, paid marketing, visual design, and web development.",
     images: ["/assets/images/logos/logo-dark.png"],
     creator: "@DecorsDigital",
   },
@@ -93,7 +96,8 @@ export default function RootLayout({ children }) {
     "@context": "https://schema.org",
     "@type": "Organization",
     name: "Decor's Digital",
-    description: "Premium digital marketing agency specializing in brand strategy, content creation, paid marketing, visual design, and web development. Transforming businesses through innovative digital solutions.",
+    description:
+      "Premium digital marketing agency specializing in brand strategy, content creation, paid marketing, visual design, and web development. Transforming businesses through innovative digital solutions.",
     url: "https://www.thedecorbd.com",
     logo: "https://www.thedecorbd.com/assets/images/logos/logo-dark.png",
     contactPoint: {
@@ -127,29 +131,32 @@ export default function RootLayout({ children }) {
       {
         "@type": "Service",
         name: "Brand Strategy",
-        description: "Comprehensive brand development and positioning strategies"
+        description:
+          "Comprehensive brand development and positioning strategies",
       },
       {
-        "@type": "Service", 
+        "@type": "Service",
         name: "Content Creation",
-        description: "High-quality content development for digital platforms"
+        description: "High-quality content development for digital platforms",
       },
       {
         "@type": "Service",
         name: "Paid Marketing",
-        description: "Strategic paid advertising campaigns across digital channels"
+        description:
+          "Strategic paid advertising campaigns across digital channels",
       },
       {
         "@type": "Service",
         name: "Visual Design",
-        description: "Creative visual design solutions for brands and businesses"
+        description:
+          "Creative visual design solutions for brands and businesses",
       },
       {
         "@type": "Service",
         name: "Web Development",
-        description: "Modern, responsive website development and optimization"
-      }
-    ]
+        description: "Modern, responsive website development and optimization",
+      },
+    ],
   };
 
   return (
@@ -185,7 +192,10 @@ export default function RootLayout({ children }) {
         <link rel="manifest" href="/site.webmanifest" />
         <meta name="theme-color" content="#D2212E" />
         <meta name="msapplication-TileColor" content="#D2212E" />
-        <meta name="facebook-domain-verification" content="xuzoabmodv6edu953cgojicixnzdga" />
+        <meta
+          name="facebook-domain-verification"
+          content="xuzoabmodv6edu953cgojicixnzdga"
+        />
         <link
           rel="stylesheet"
           href="/assets/libs/owl.carousel/dist/assets/owl.carousel.min.css"

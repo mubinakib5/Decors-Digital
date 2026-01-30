@@ -1,19 +1,28 @@
-import { NextResponse } from "next/server";
 import { MongoClient } from "mongodb";
-
-const uri = process.env.MONGODB_URI;
-const client = new MongoClient(uri);
+import { NextResponse } from "next/server";
 
 export async function POST(request) {
+  let client;
   try {
     const { token } = await request.json();
 
     if (!token) {
       return NextResponse.json(
         { message: "Token is required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
+
+    if (!process.env.MONGODB_URI) {
+      console.error("MONGODB_URI is not defined");
+      return NextResponse.json(
+        { message: "Server configuration error" },
+        { status: 500 },
+      );
+    }
+
+    const uri = process.env.MONGODB_URI;
+    client = new MongoClient(uri);
 
     await client.connect();
     const db = client.db("decors_digital");
@@ -28,22 +37,20 @@ export async function POST(request) {
     if (!admin) {
       return NextResponse.json(
         { message: "Invalid or expired token" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
-    return NextResponse.json(
-      { message: "Token is valid" },
-      { status: 200 }
-    );
-
+    return NextResponse.json({ message: "Token is valid" }, { status: 200 });
   } catch (error) {
     console.error("Token verification error:", error);
     return NextResponse.json(
       { message: "An error occurred while verifying the token" },
-      { status: 500 }
+      { status: 500 },
     );
   } finally {
-    await client.close();
+    if (client) {
+      await client.close();
+    }
   }
 }

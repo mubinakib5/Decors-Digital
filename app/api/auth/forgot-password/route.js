@@ -1,15 +1,12 @@
-import { NextResponse } from "next/server";
-import { MongoClient } from "mongodb";
 import crypto from "crypto";
+import { MongoClient } from "mongodb";
+import { NextResponse } from "next/server";
 import nodemailer from "nodemailer";
-
-const uri = process.env.MONGODB_URI;
-const client = new MongoClient(uri);
 
 // Create email transporter
 const createTransporter = () => {
   return nodemailer.createTransport({
-    service: 'gmail', // or your email service
+    service: "gmail", // or your email service
     auth: {
       user: process.env.EMAIL_USER,
       pass: process.env.EMAIL_PASS,
@@ -18,13 +15,24 @@ const createTransporter = () => {
 };
 
 export async function POST(request) {
+  let client;
   try {
     const { email } = await request.json();
+
+    if (!process.env.MONGODB_URI) {
+      return NextResponse.json(
+        { message: "Server configuration error" },
+        { status: 500 },
+      );
+    }
+
+    const uri = process.env.MONGODB_URI;
+    client = new MongoClient(uri);
 
     if (!email) {
       return NextResponse.json(
         { message: "Email is required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -34,17 +42,20 @@ export async function POST(request) {
 
     // Check if admin exists
     const admin = await adminsCollection.findOne({ email });
-    
+
     if (!admin) {
       // Don't reveal if email exists or not for security
       return NextResponse.json(
-        { message: "If an account with that email exists, we've sent password reset instructions." },
-        { status: 200 }
+        {
+          message:
+            "If an account with that email exists, we've sent password reset instructions.",
+        },
+        { status: 200 },
       );
     }
 
     // Generate reset token
-    const resetToken = crypto.randomBytes(32).toString('hex');
+    const resetToken = crypto.randomBytes(32).toString("hex");
     const resetTokenExpiry = new Date(Date.now() + 3600000); // 1 hour from now
 
     // Save reset token to database
@@ -55,7 +66,7 @@ export async function POST(request) {
           resetToken,
           resetTokenExpiry,
         },
-      }
+      },
     );
 
     // Create reset URL
@@ -63,11 +74,11 @@ export async function POST(request) {
 
     // Send email
     const transporter = createTransporter();
-    
+
     const mailOptions = {
       from: process.env.EMAIL_FROM || process.env.EMAIL_USER,
       to: email,
-      subject: 'Password Reset Request - Decors Digital Admin',
+      subject: "Password Reset Request - Decors Digital Admin",
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
           <h2 style="color: #4f46e5;">Password Reset Request</h2>
@@ -96,16 +107,17 @@ export async function POST(request) {
 
     return NextResponse.json(
       { message: "Password reset instructions have been sent to your email." },
-      { status: 200 }
+      { status: 200 },
     );
-
   } catch (error) {
     console.error("Forgot password error:", error);
     return NextResponse.json(
       { message: "An error occurred while processing your request" },
-      { status: 500 }
+      { status: 500 },
     );
   } finally {
-    await client.close();
+    if (client) {
+      await client.close();
+    }
   }
 }

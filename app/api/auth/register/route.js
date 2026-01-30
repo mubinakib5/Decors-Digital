@@ -1,18 +1,26 @@
-import { NextResponse } from 'next/server';
-import { MongoClient } from 'mongodb';
-import bcrypt from 'bcryptjs';
-
-const client = new MongoClient(process.env.MONGODB_URI);
+import bcrypt from "bcryptjs";
+import { MongoClient } from "mongodb";
+import { NextResponse } from "next/server";
 
 export async function POST(request) {
+  let client;
   try {
     const { username, email, password, name } = await request.json();
+
+    if (!process.env.MONGODB_URI) {
+      return NextResponse.json(
+        { error: "Server configuration error" },
+        { status: 500 },
+      );
+    }
+
+    client = new MongoClient(process.env.MONGODB_URI);
 
     // Validate required fields
     if (!username || !email || !password) {
       return NextResponse.json(
-        { error: 'Username, email, and password are required' },
-        { status: 400 }
+        { error: "Username, email, and password are required" },
+        { status: 400 },
       );
     }
 
@@ -20,36 +28,33 @@ export async function POST(request) {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
       return NextResponse.json(
-        { error: 'Invalid email format' },
-        { status: 400 }
+        { error: "Invalid email format" },
+        { status: 400 },
       );
     }
 
     // Validate password strength
     if (password.length < 6) {
       return NextResponse.json(
-        { error: 'Password must be at least 6 characters long' },
-        { status: 400 }
+        { error: "Password must be at least 6 characters long" },
+        { status: 400 },
       );
     }
 
     // Connect to MongoDB
     await client.connect();
-    const db = client.db('decors_digital');
-    const adminsCollection = db.collection('admins');
+    const db = client.db("decors_digital");
+    const adminsCollection = db.collection("admins");
 
     // Check if user already exists
     const existingUser = await adminsCollection.findOne({
-      $or: [
-        { username: username },
-        { email: email }
-      ]
+      $or: [{ username: username }, { email: email }],
     });
 
     if (existingUser) {
       return NextResponse.json(
-        { error: 'User with this username or email already exists' },
-        { status: 409 }
+        { error: "User with this username or email already exists" },
+        { status: 409 },
       );
     }
 
@@ -63,9 +68,9 @@ export async function POST(request) {
       email,
       name: name || username,
       password: hashedPassword,
-      role: 'admin',
+      role: "admin",
       createdAt: new Date(),
-      updatedAt: new Date()
+      updatedAt: new Date(),
     };
 
     // Insert user into database
@@ -78,24 +83,25 @@ export async function POST(request) {
       email: newUser.email,
       name: newUser.name,
       role: newUser.role,
-      createdAt: newUser.createdAt
+      createdAt: newUser.createdAt,
     };
 
     return NextResponse.json(
-      { 
-        message: 'User registered successfully',
-        user: userResponse
+      {
+        message: "User registered successfully",
+        user: userResponse,
       },
-      { status: 201 }
+      { status: 201 },
     );
-
   } catch (error) {
-    console.error('Registration error:', error);
+    console.error("Registration error:", error);
     return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
+      { error: "Internal server error" },
+      { status: 500 },
     );
   } finally {
-    await client.close();
+    if (client) {
+      await client.close();
+    }
   }
 }

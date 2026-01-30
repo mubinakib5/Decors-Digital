@@ -1,26 +1,34 @@
-import { NextResponse } from "next/server";
-import { MongoClient } from "mongodb";
 import bcrypt from "bcryptjs";
-
-const uri = process.env.MONGODB_URI;
-const client = new MongoClient(uri);
+import { MongoClient } from "mongodb";
+import { NextResponse } from "next/server";
 
 export async function POST(request) {
+  let client;
   try {
     const { name, username, email, password } = await request.json();
+
+    if (!process.env.MONGODB_URI) {
+      return NextResponse.json(
+        { message: "Server configuration error" },
+        { status: 500 },
+      );
+    }
+
+    const uri = process.env.MONGODB_URI;
+    client = new MongoClient(uri);
 
     // Validation
     if (!name || !username || !email || !password) {
       return NextResponse.json(
         { message: "All fields are required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     if (password.length < 6) {
       return NextResponse.json(
         { message: "Password must be at least 6 characters long" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -29,7 +37,7 @@ export async function POST(request) {
     if (!emailRegex.test(email)) {
       return NextResponse.json(
         { message: "Please enter a valid email address" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -39,14 +47,14 @@ export async function POST(request) {
 
     // Check if admin already exists
     const existingAdmin = await adminsCollection.findOne({
-      $or: [{ email }, { username }]
+      $or: [{ email }, { username }],
     });
 
     if (existingAdmin) {
       const field = existingAdmin.email === email ? "email" : "username";
       return NextResponse.json(
         { message: `An admin with this ${field} already exists` },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -68,26 +76,27 @@ export async function POST(request) {
 
     if (result.insertedId) {
       return NextResponse.json(
-        { 
+        {
           message: "Admin account created successfully",
-          adminId: result.insertedId 
+          adminId: result.insertedId,
         },
-        { status: 201 }
+        { status: 201 },
       );
     } else {
       return NextResponse.json(
         { message: "Failed to create admin account" },
-        { status: 500 }
+        { status: 500 },
       );
     }
-
   } catch (error) {
     console.error("Signup error:", error);
     return NextResponse.json(
       { message: "An error occurred while creating the account" },
-      { status: 500 }
+      { status: 500 },
     );
   } finally {
-    await client.close();
+    if (client) {
+      await client.close();
+    }
   }
 }
